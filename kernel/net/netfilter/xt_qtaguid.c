@@ -55,10 +55,6 @@ module_param_named(stats_perms, proc_stats_perms, uint, S_IRUGO | S_IWUSR);
 
 static struct proc_dir_entry *xt_qtaguid_ctrl_file;
 
-/* Everybody can write. But proc_ctrl_write_limited is true by default which
- * limits what can be controlled. See the can_*() functions.
- */
-
 #ifdef CONFIG_ANDROID_PARANOID_NETWORK
 #include <linux/android_aid.h>
 static gid_t proc_stats_readall_gid = AID_NET_BW_STATS;
@@ -1836,12 +1832,6 @@ static bool qtaguid_mt(const struct sk_buff *skb, struct xt_action_param *par)
 		 * couldn't find the owner, so for now we just count them
 		 * against the system.
 		 */
-		/*
-		 * TODO: unhack how to force just accounting.
-		 * For now we only do iface stats when the uid-owner is not
-		 * requested.
-		 */
-		if (!(info->match & XT_QTAGUID_UID))
 			account_for_uid(skb, sk, 0, par);
 		MT_DEBUG("qtaguid[%d]: leaving (sk?sk->sk_socket)=%p\n",
 			par->hooknum,
@@ -2619,11 +2609,9 @@ static int pp_stats_line(struct proc_print_info *ppi, int cnt_set)
 	} else {
 		tag_t tag = ppi->ts_entry->tn.tag;
 		uid_t stat_uid = get_uid_from_tag(tag);
-		//if (!can_read_other_uid_stats(stat_uid)) {
 		/* Detailed tags are not available to everybody */
 		if (get_atag_from_tag(tag)
 		    && !can_read_other_uid_stats(stat_uid)) {
-
 			CT_DEBUG("qtaguid: stats line: "
 				 "%s 0x%llx %u: insufficient priv "
 				 "from pid=%u tgid=%u uid=%u stats.gid=%u\n",
