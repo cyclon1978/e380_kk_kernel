@@ -1,0 +1,12 @@
+How to build kernel open source
+Steps for building
+
+1) Untar alps_kernel_source_XXXX.tar.gz
+Example: tar zxf alps_kernel_source_XXXX.tar.gz
+
+2) Copy your tools-chain (prebuilts) to the package folder
+Example: $cp –rf prebuitls alps/
+
+3) ./mk simcom89_we_kk n k
+
+
