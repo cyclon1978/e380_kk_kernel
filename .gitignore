@@ -1,1 +1,4 @@
 out
+kernel-assembly/boot.img
+kernel-assembly/testkernel.zip
+kernel-assembly/boot.img-kernel.img

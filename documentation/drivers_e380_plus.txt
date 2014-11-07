@@ -1,0 +1,113 @@
+/sys/bus/i2c/drivers/st480
+
+ls -l 
+lrwxrwxrwx root     root              2014-11-07 13:15 3-000c -> ../../../../devices/platform/mt-i2c.3/i2c-3/3-000c
+--w------- root     root         4096 2014-11-07 13:15 bind
+--w------- root     root         4096 2014-11-07 13:15 uevent
+--w------- root     root         4096 2014-11-07 13:15 unbind
+
+root@acer_e3:/sys/bus/i2c/drivers/st480/3-000c # ls -l
+lrwxrwxrwx root     root              2014-11-07 12:44 driver -> ../../../../../bus/i2c/drivers/st480
+-r--r--r-- root     root         4096 2014-11-07 12:44 modalias
+-r--r--r-- root     root         4096 2014-11-07 12:44 name
+drwxr-xr-x root     root              2014-11-07 12:44 power
+lrwxrwxrwx root     root              2014-11-07 12:44 subsystem -> ../../../../../bus/i2c
+-rw-r--r-- root     root         4096 2014-11-07 12:44 uevent
+
+root@acer_e3:/sys/devices/platform/mt-i2c.3 # ls -l
+lrwxrwxrwx root     root              2014-11-07 12:44 driver -> ../../../bus/platform/drivers/mt-i2c
+drwxr-xr-x root     root              2014-11-07 12:44 i2c-3
+-r--r--r-- root     root         4096 2014-11-07 12:44 modalias
+drwxr-xr-x root     root              2014-11-07 12:44 power
+lrwxrwxrwx root     root              2014-11-07 12:44 subsystem -> ../../../bus/platform
+-rw-r--r-- root     root         4096 2014-11-07 12:44 uevent
+root@acer_e3:/sys/devices/platform/mt-i2c.3 # cat uevent                       
+DRIVER=mt-i2c
+MODALIAS=platform:mt-i2c
+
+root@acer_e3:/sys/devices/platform/mt-i2c.3/i2c-3 # ls -l
+drwxr-xr-x root     root              2014-11-07 12:44 3-000c
+drwxr-xr-x root     root              2014-11-07 12:44 3-000d
+drwxr-xr-x root     root              2014-11-07 12:44 3-0018
+drwxr-xr-x root     root              2014-11-07 12:44 3-001e
+drwxr-xr-x root     root              2014-11-07 12:44 3-004c
+drwxr-xr-x root     root              2014-11-07 12:44 3-0060
+--w------- root     root         4096 2014-11-07 12:44 delete_device
+lrwxrwxrwx root     root              2014-11-07 12:44 device -> ../../mt-i2c.3
+-r--r--r-- root     root         4096 2014-11-07 12:44 name
+--w------- root     root         4096 2014-11-07 12:44 new_device
+drwxr-xr-x root     root              2014-11-07 12:44 power
+lrwxrwxrwx root     root              2014-11-07 12:44 subsystem -> ../../../../bus/i2c
+-rw-r--r-- root     root         4096 2014-11-07 12:44 uevent
+
+root@acer_e3:/sys/devices/platform/mt-i2c.3/i2c-3/3-000c # ls -l
+lrwxrwxrwx root     root              2014-11-07 12:44 driver -> ../../../../../bus/i2c/drivers/st480
+-r--r--r-- root     root         4096 2014-11-07 12:44 modalias
+-r--r--r-- root     root         4096 2014-11-07 12:44 name
+drwxr-xr-x root     root              2014-11-07 12:44 power
+lrwxrwxrwx root     root              2014-11-07 12:44 subsystem -> ../../../../../bus/i2c
+-rw-r--r-- root     root         4096 2014-11-07 12:44 uevent
+at uevent                                                                     <
+DRIVER=st480
+MODALIAS=i2c:st480
+
+
+***********************************************
+
+root@acer_e3:/sys/bus/i2c/devices # 
+
+cat 0-0038/uevent                         
+DRIVER=FT5x36
+MODALIAS=i2c:FT5x36
+
+cat 1-0050/uevent                         
+DRIVER=dummy_eeprom
+MODALIAS=i2c:dummy_eeprom
+
+cat 1-0051/uevent                         
+DRIVER=CAM_CAL_DRV
+MODALIAS=i2c:CAM_CAL_DRV
+
+cat 1-0072/uevent                         
+DRIVER=LC898212AF
+MODALIAS=i2c:LC898212AF
+
+cat 1-007f/uevent                         
+DRIVER=kd_camera_hw
+MODALIAS=i2c:kd_camera_hw
+
+cat 2-007f/uevent                         
+DRIVER=kd_camera_hw_bus2
+MODALIAS=i2c:kd_camera_hw_bus2
+
+cat 3-000c/uevent                         
+DRIVER=st480
+MODALIAS=i2c:st480
+
+cat /sys/module/st480/version
+7.0
+
+cat 3-000d/uevent                         
+MODALIAS=i2c:akm8963
+
+
+cat /sys/module/akm8963/version
+1.0.1
+
+cat 3-0018/uevent                         
+MODALIAS=i2c:BMA222E
+
+cat 3-001e/uevent                         
+MODALIAS=i2c:af7133
+
+cat 3-004c/uevent                         
+DRIVER=MC3210
+MODALIAS=i2c:MC3210
+
+cat 3-0060/uevent                         
+DRIVER=cm36283
+MODALIAS=i2c:cm36283
+
+cat 6-006a/uevent                         
+DRIVER=bq24158
+MODALIAS=i2c:bq24158

@@ -1,0 +1,82 @@
+***********************************************
+
+root@acer_e3:/sys/bus/i2c/devices # 
+
+cat 0-0038/uevent  
+DRIVER=FT5x36
+MODALIAS=i2c:FT5x36
+
+cat 1-0050/uevent 
+DRIVER=dummy_eeprom
+MODALIAS=i2c:dummy_eeprom
+
+cat 1-0051/uevent                          
+DRIVER=CAM_CAL_DRV
+MODALIAS=i2c:CAM_CAL_DRV
+
+cat 1-0072/uevent                          
+DRIVER=LC898212AF
+MODALIAS=i2c:LC898212AF
+
+cat 1-007f/uevent                          
+DRIVER=kd_camera_hw
+MODALIAS=i2c:kd_camera_hw
+
+cat 2-007f/uevent                          
+DRIVER=kd_camera_hw_bus2
+MODALIAS=i2c:kd_camera_hw_bus2
+
+cat 3-000c/uevent                          
+MODALIAS=i2c:st480
+
+
+cat /sys/module/st480/version
+7.0
+
+cat 3-000d/uevent                          
+DRIVER=akm8963
+MODALIAS=i2c:akm8963
+
+cat /sys/module/akm8963/version
+1.0.1
+
+cat 3-0018/uevent                          
+MODALIAS=i2c:BMA222E
+
+cat 3-001e/uevent                          
+MODALIAS=i2c:af7133
+
+cat 3-004c/uevent                          
+DRIVER=MC3210
+MODALIAS=i2c:MC3210
+
+cat 3-0060/uevent                          
+DRIVER=cm36283
+MODALIAS=i2c:cm36283
+
+cat 6-006a/uevent                          
+DRIVER=bq24158
+MODALIAS=i2c:bq24158
+
+
+0-0038
+1-0050
+1-0051
+1-0072
+1-007f
+2-007f
+3-000c
+3-000d
+3-0018
+3-001e
+3-004c
+3-0060
+6-006a
+i2c-0
+i2c-1
+i2c-2
+i2c-3
+i2c-4
+i2c-5
+i2c-6
+

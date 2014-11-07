@@ -67,7 +67,8 @@ CUSTOM_HAL_MAIN_IMGSENSOR=imx135_mipi_raw
 CUSTOM_HAL_MAIN_LENS=lc898212af
 
 # M-sensor hal layer library including daemon
-CUSTOM_HAL_MSENSORLIB=mmc328x akm8975 ami304 yamaha530 mag3110 akmd8963 bmm050 mc6420 mmc3416x s62xd lsm303md hscdtd006 qmc5983 akmd09911 mc64xx bmm056 mc41xx st480 af7133d
+# CUSTOM_HAL_MSENSORLIB=mmc328x akm8975 ami304 yamaha530 mag3110 akmd8963 bmm050 mc6420 mmc3416x s62xd lsm303md hscdtd006 qmc5983 akmd09911 mc64xx bmm056 mc41xx st480 af7133d
+CUSTOM_HAL_MSENSORLIB=mmc328x akm8975 ami304 yamaha530 mag3110 akmd8963 bmm050 mc6420 mmc3416x s62xd lsm303md hscdtd006 qmc5983 akmd09911 mc64xx bmm056 mc41xx st480
 
 # sensor hal layer common part
 CUSTOM_HAL_SENSORS=sensor
@@ -125,8 +126,9 @@ CUSTOM_KERNEL_LEDS=mt65xx
 # same as CUSTOM_HAL_LENS
 CUSTOM_KERNEL_LENS=lc898212af dummy_lens dummy_lens
 
-# compass driver to detect compass raw data and report orientatino data
-CUSTOM_KERNEL_MAGNETOMETER =st480 akm8963 af7133
+# compass driver to detect compass raw data and report orientation data
+# CUSTOM_KERNEL_MAGNETOMETER =st480 akm8963 af7133 # this breaks compass on st480 devices, so we only support them...
+CUSTOM_KERNEL_MAGNETOMETER =st480
 CUSTOM_KERNEL_MAIN2_BACKUP_IMGSENSOR=
 CUSTOM_KERNEL_MAIN2_IMGSENSOR=
 
