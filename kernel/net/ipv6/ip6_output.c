@@ -439,7 +439,7 @@ int ip6_forward(struct sk_buff *skb)
 		return -ETIMEDOUT;
 	}
 
-#ifdef MTK_IPV6_TETHER_NDP_MODE
+#ifdef CONFIG_MTK_IPV6_TETHER_NDP_MODE
 	/* mtk80842: for unicast NA/NS/RA */
 	{
 		struct ipv6hdr *hdr = ipv6_hdr(skb);

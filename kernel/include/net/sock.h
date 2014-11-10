@@ -705,17 +705,14 @@ static inline bool sk_rcvqueues_full(const struct sock *sk, const struct sk_buff
 {
 	unsigned int qsize = sk->sk_backlog.len + atomic_read(&sk->sk_rmem_alloc);
 
-	return qsize > (sk->sk_rcvbuf+sk->sk_sndbuf);
+	return qsize > sk->sk_rcvbuf;
 }
 
 /* The per-socket spinlock must be held here. */
 static inline __must_check int sk_add_backlog(struct sock *sk, struct sk_buff *skb)
 {
 	if (sk_rcvqueues_full(sk, skb))
-	{
-		printk(KERN_ERR "[mtk_net][sock]sk_add_backlog->sk_rcvqueues_full sk->sk_rcvbuf:%d,sk->sk_sndbuf:%d ",sk->sk_rcvbuf,sk->sk_sndbuf);	
 		return -ENOBUFS;
-	}
 
 	__sk_add_backlog(sk, skb);
 	sk->sk_backlog.len += skb->truesize;

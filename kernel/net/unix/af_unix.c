@@ -268,7 +268,6 @@ static struct proc_dir_entry *gunix_socket_track_aee_entry = NULL;
 #define UNIX_SOCK_TRACK_PROC_AEE_SIZE 3072
 
 static volatile unsigned int unix_sock_track_stop_flag = 0;
-#define unix_peer(sk) (unix_sk(sk)->peer)
 
 #ifdef CONFIG_UNIX_SOCKET_TRACK_TOOL
 static unsigned int g_buf_len = 0;
@@ -281,18 +280,16 @@ static void unix_sock_track_dump_socket_info(void)
 {
     unsigned char *tmp = 0;
     unsigned long flags;
-    #ifdef CONFIG_MTK_NET_LOGGING 
-    printk("[mtk_net][af_unix] stop socket record, start output infor \n");   
-    #endif    
+
+    printk("[usktrk] stop socket record, start output infor \n");       
     g_buf_len = 0;
   
     if (unix_sock_track_stop_flag == 0)
     {
         //unix_sock_track_stop_flag = 1; 
     }
-    #ifdef CONFIG_MTK_NET_LOGGING 
-    printk("[mtk_net][unix] dump_socket_info unix_sock_track_stop_flag=%d\n", unix_sock_track_stop_flag);  
-    #endif
+    printk("[usktrk] dump_socket_info unix_sock_track_stop_flag=%d\n", unix_sock_track_stop_flag);  
+
     memset(unix_sock_track_out_buf, 0, __UNIX_SOCKET_OUTPUT_BUF_SIZE__);
 
 unix_sock_track_dump_next_list:    
@@ -362,23 +359,18 @@ unix_sock_track_dump_next_list:
     }
     
     spin_unlock_irqrestore(&(unix_sock_track_head[unix_sock_blc_out_index].list_lock), flags); 
-    #ifdef CONFIG_MTK_NET_LOGGING 
-    printk("[mtk_net][unix] unix_sock_track_dump_socket_info1 g_buf_len=%d\n", g_buf_len);
-    #endif
+    printk("[usktrk] unix_sock_track_dump_socket_info1 g_buf_len=%d\n", g_buf_len);
 }
 
 static int unix_sock_track_dev_proc_for_aee_read(char *page, char **start, off_t off, int count, int *eof, void *data)
 {
     unix_sock_track_blc* outcheck_tmp = NULL;
     unsigned int len = 0;
-    #ifdef CONFIG_MTK_NET_LOGGING 
-    printk("[mtk_net][unix] for aee page(%p)off(%d)count(%d)\n", page, off, count);
-    #endif
+    printk("[usktrk] for aee page(%p)off(%d)count(%d)\n", page, off, count);
     
     unix_sock_track_dump_socket_info();
-    #ifdef CONFIG_MTK_NET_LOGGING 
-    printk("[mtk_net][unix] unix_sock_track_dev_proc_for_aee_read g_buf_len=%d\n", g_buf_len);
-    #endif
+    
+    printk("[usktrk] unix_sock_track_dev_proc_for_aee_read g_buf_len=%d\n", g_buf_len);
     if (g_buf_len > 0)
     {
         memcpy(page, unix_sock_track_out_buf, g_buf_len);
@@ -427,9 +419,7 @@ int unix_sock_track_dev_proc_for_aee_setup(void)
     gunix_socket_track_aee_entry= create_proc_entry(UNIX_SOCK_TRACK_AEE_PROCNAME, 0664, NULL);
     if(gunix_socket_track_aee_entry == NULL)
     {
-       #ifdef CONFIG_MTK_NET_LOGGING 
-        printk("[mtk_net][unix] Unable to create / usktrk_aee proc entry\n\r");
-        #endif
+        printk("[usktrk] Unable to create / usktrk_aee proc entry\n\r");
         return -1;
     }
     gunix_socket_track_aee_entry->read_proc = unix_sock_track_dev_proc_for_aee_read;
@@ -448,17 +438,14 @@ int unix_sock_track_dev_proc_for_aee_remove(void)
 
 static int unix_sock_track_open(struct inode *inode, struct file *file)
 {
-	#ifdef CONFIG_MTK_NET_LOGGING 
-    printk("[mtk_net][unix] unix_sock_track_open\n");
-    #endif
+    printk("[usktrk] unix_sock_track_open\n");
     return 0;
 }
 
 static int unix_sock_track_close(struct inode *inode, struct file *file)
 {
-	#ifdef CONFIG_MTK_NET_LOGGING 
-    printk("[mtk_net][unix] unix_sock_track\n");
-    #endif
+    printk("[usktrk] unix_sock_track\n");
+
     return 0;
 }
 
@@ -492,18 +479,14 @@ static int unix_sock_track_init(void)
     dev_t devID = MKDEV(gusktrkMajor, 0);
     int cdevErr = -1;
     int ret = -1;
-    #ifdef CONFIG_MTK_NET_LOGGING 
-    printk("[mtk_net][unix] Version= %s DATE=%s\n", MTK_USKTRK_VERSION, MTK_USKTRK_DATE);
-    #endif
+    printk("[usktrk] Version= %s DATE=%s\n", MTK_USKTRK_VERSION, MTK_USKTRK_DATE);
     /* Prepare a UCHAR device */
     /*static allocate chrdev*/
 
     ret = register_chrdev_region(devID, USKTRK_DEV_NUM, USKTRK_DRIVER_NAME);
     if (ret) 
     {
-    	#ifdef CONFIG_MTK_NET_LOGGING 
-        printk("[mtk_net][unix] fail to register chrdev\n");
-        #endif
+        printk("[usktrk] fail to register chrdev\n");
         return ret;
     }
 
@@ -513,24 +496,20 @@ static int unix_sock_track_init(void)
     cdevErr = cdev_add(&gusktrkCdev, devID, USKTRK_DEV_NUM);
     if (cdevErr) 
     {
-    	#ifdef CONFIG_MTK_NET_LOGGING 
-        printk("[mtk_net][unix] cdev_add() fails (%d)\n", cdevErr);
-        #endif
+        printk("[usktrk] cdev_add() fails (%d)\n", cdevErr);
         goto error;
     }
-    #ifdef CONFIG_MTK_NET_LOGGING 
-    printk("[mtk_net][unix] driver(major %d) installed \n", gusktrkMajor);
-    #endif
+    printk("[usktrk] driver(major %d) installed \n", gusktrkMajor);
+
     unix_sock_track_dev_proc_for_aee_setup();
-    #ifdef CONFIG_MTK_NET_LOGGING 
-    printk("[mtk_net][unix] dev register success \n");
-    #endif
+
+    printk("[usktrk] dev register success \n");
     return 0;
 
 error:
-    #ifdef CONFIG_MTK_NET_LOGGING 
-    printk("[mtk_net][unix] dev register fail \n");
-    #endif
+
+    printk("[usktrk] dev register fail \n");
+
     return -1;
 }
 
@@ -543,9 +522,8 @@ static void unix_sock_track_exit (void)
     cdev_del(&gusktrkCdev);
     unregister_chrdev_region(dev, USKTRK_DEV_NUM);
     gusktrkMajor = -1;
-    #ifdef CONFIG_MTK_NET_LOGGING 
-    printk("[mtk_net][unix] exit done\n");
-    #endif
+
+    printk("[usktrk] exit done\n");
 }
 
 module_init(unix_sock_track_init);
@@ -588,35 +566,27 @@ void unix_test_time_log(struct socket *sock, int doing)
         }
       
         memset(name, 0, sizeof(name));
-        sprintf(name, "[mtk_net][unix], nod= %u time:%02d-%02d-%02d:%lu, tv_sec=%u",
+        sprintf(name, "[usktrk], nod= %u time:%02d-%02d-%02d:%lu, tv_sec=%u",
         inod, tm.tm_hour, tm.tm_min, tm.tm_sec, tv.tv_usec, tv.tv_sec);    
 
         if (doing == 1)
         {
-        	#ifdef CONFIG_MTK_NET_LOGGING 
-            printk("[mtk_net][unix] %s:  do read\n", name);
-            #endif
+            printk("[usktrk] %s:  do read\n", name);
         }
     
         if (doing == 2)
         {
-        	#ifdef CONFIG_MTK_NET_LOGGING 
-            printk("[mtk_net][unix] %s:  do write\n", name);
-            #endif
+            printk("[usktrk] %s:  do write\n", name);
         }
 
         if (doing == 3)
         {
-        	#ifdef CONFIG_MTK_NET_LOGGING 
-            printk("[mtk_net][unix] %s:  do poll\n", name);
-            #endif
+            printk("[usktrk] %s:  do poll\n", name);
         } 
 
         if (doing == 4)
         {
-        	#ifdef CONFIG_MTK_NET_LOGGING 
-            printk("[mtk_net][unix] %s:  do accept\n", name);
-            #endif
+            printk("[usktrk] %s:  do accept\n", name);
         }
     }
 #endif
@@ -655,9 +625,7 @@ static unix_sock_track_blc* unix_sock_track_find_blc_with_action(unsigned int ac
             if (unix_sock_track_head[hash_value].list_head == NULL)
             {
                 unix_sock_track_head[hash_value].list_head = (unsigned char*)tmp;
-                #ifdef CONFIG_MTK_NET_LOGGING 
-                printk("[mtk_net][unix]action unix_sock_blc_head=NULL \n");    
-                #endif 
+                printk("[usktrk]action unix_sock_blc_head=NULL \n");     
             }
             else
             {
@@ -898,17 +866,14 @@ unix_sock_track_blc* unix_sock_track_socket_create1(unsigned long ino, unsigned 
             }
             else
             {
-            	#ifdef CONFIG_MTK_NET_LOGGING 
-                printk("[mtk_net][unix] alloc unix_sock_blc fail\n");
-                #endif
+                printk("[usktrk] alloc unix_sock_blc fail\n");
+
                 kfree(sock_infor);
             }              
         }
         else
         {
-        	#ifdef CONFIG_MTK_NET_LOGGING 
-            printk("[mtk_net][unix]alloc sock_infor fail\n");
-            #endif
+            printk("[usktrk]alloc sock_infor fail\n");
         }
     }
   
@@ -925,9 +890,7 @@ void unix_sock_track_socket_create(unsigned long ino, unsigned int socket_type)
     tmp = unix_sock_track_socket_create1(ino, socket_type);
     if (tmp == NULL)
     {
-    	#ifdef CONFIG_MTK_NET_LOGGING 
-        printk("[mtk_net][unix] unix_sock_track_socket_create1 error\n");
-        #endif
+        printk("[usktrk] unix_sock_track_socket_create1 error\n");
     }
     
 }
@@ -942,9 +905,7 @@ void unix_sock_track_socket_accept_create(unsigned long ino, unsigned int socket
     tmp = unix_sock_track_socket_create1(ino, socket_type);
     if (tmp == NULL)
     {
-    	#ifdef CONFIG_MTK_NET_LOGGING 
-        printk("[mtk_net][unix] create1 error\n");
-        #endif
+        printk("[usktrk] create1 error\n");
     }    
 }
 
@@ -966,9 +927,7 @@ static void unix_socket_track_socket_pino(unix_sock_track_blc *blc, struct sock 
                 {
                     if (blc->peer_ino != 0)
                     {
-                    	#ifdef CONFIG_MTK_NET_LOGGING 
-                        printk("[mtk_net][unix] prev=%ul, now=%ul\n", blc->peer_ino, peer_ino);
-                        #endif
+                        printk("[usktrk] prev=%ul, now=%ul\n", blc->peer_ino, peer_ino);
                     }
                     blc->peer_ino = peer_ino;
                 }
@@ -986,9 +945,7 @@ void unix_sock_track_socket_pair_create(unsigned long ino, unsigned int socket_t
     tmp = unix_sock_track_socket_create1(ino, socket_type);
     if (tmp == NULL)
     {
-    	#ifdef CONFIG_MTK_NET_LOGGING 
-        printk("[mtk_net][unix] create error\n");
-        #endif
+        printk("[usktrk] create error\n");
     }
     else
         tmp->peer_ino = ino1;
@@ -996,9 +953,7 @@ void unix_sock_track_socket_pair_create(unsigned long ino, unsigned int socket_t
     tmp1 = unix_sock_track_socket_create1(ino1, socket_type1);
     if (tmp1 == NULL)
     {
-    	#ifdef CONFIG_MTK_NET_LOGGING 
-        printk("[mtk_net][unix] create1 error\n");
-        #endif
+        printk("[usktrk] create1 error\n");
     }
     else
           tmp1->peer_ino = ino;   
@@ -1048,9 +1003,7 @@ static void unix_sock_track_fill_action(unix_sock_track_blc *blc, unsigned int a
         
             if ((blc->record_current_ms == 0) && (blc->record_current_sc == 0))
             {
-            	#ifdef CONFIG_MTK_NET_LOGGING 
-                printk("[mtk_net][unix], nod=%u, error happen\n", blc->nod_ino);
-                #endif
+                printk("[usktrk], nod=%u, error happen\n", blc->nod_ino);
 
             }
             else
@@ -1083,9 +1036,7 @@ static void unix_sock_track_fill_action(unix_sock_track_blc *blc, unsigned int a
                 {
                     if (time_ms < blc->record_current_ms)
                     {
-                    	#ifdef CONFIG_MTK_NET_LOGGING 
-                        printk("[mtk_net][unix] time error happen \n");
-                        #endif
+                        printk("[usktrk] time error happen \n");
                         return;
                     }
                     else
@@ -1216,7 +1167,7 @@ static inline unsigned unix_hash_fold(__wsum n)
 	return hash&(UNIX_HASH_SIZE-1);
 }
 
-
+#define unix_peer(sk) (unix_sk(sk)->peer)
 
 static inline int unix_our_peer(struct sock *sk, struct sock *osk)
 {
@@ -1418,9 +1369,7 @@ static void unix_sock_destructor(struct sock *sk)
 	WARN_ON(!sk_unhashed(sk));
 	WARN_ON(sk->sk_socket);
 	if (!sock_flag(sk, SOCK_DEAD)) {
-		#ifdef CONFIG_MTK_NET_LOGGING 
-		printk(KERN_INFO "[mtk_net][unix]Attempt to release alive unix socket: %p\n", sk);
-		#endif
+		printk(KERN_INFO "Attempt to release alive unix socket: %p\n", sk);
 		return;
 	}
 
@@ -1432,7 +1381,7 @@ static void unix_sock_destructor(struct sock *sk)
 	sock_prot_inuse_add(sock_net(sk), sk->sk_prot, -1);
 	local_bh_enable();
 #ifdef UNIX_REFCNT_DEBUG
-	printk(KERN_DEBUG "[mtk_net][unix]UNIX %p is destroyed, %ld are still alive.\n", sk,
+	printk(KERN_DEBUG "UNIX %p is destroyed, %ld are still alive.\n", sk,
 		atomic_long_read(&unix_nr_socks));
 #endif
 }
@@ -1816,6 +1765,7 @@ static int unix_release(struct socket *sock)
     //////////////add code end///////////////////   
 #endif/* CONFIG_UNIX_SOCKET_TRACK_TOOL */
 
+  //printk("[usktrk] socket close[%lu] \n", SOCK_INODE(sock)->i_ino); 
 	if (!sk)
 		return 0;
 #ifdef CONFIG_UNIX_SOCKET_TRACK_TOOL
@@ -3117,23 +3067,15 @@ static int unix_stream_sendmsg(struct kiocb *kiocb, struct socket *sock,
                 {
                    if(sk->sk_socket){
                 
-                         #ifdef CONFIG_MTK_NET_LOGGING 
-                         printk(KERN_INFO " [mtk_net][unix]: sendmsg[%lu:%lu]:peer close\n" ,SOCK_INODE(sk->sk_socket)->i_ino,SOCK_INODE(other->sk_socket)->i_ino);
-				         #endif
+                         printk(KERN_INFO " sockdbg: sendmsg[%lu:%lu]:peer close\n" ,SOCK_INODE(sk->sk_socket)->i_ino,SOCK_INODE(other->sk_socket)->i_ino);
 				   }
 				   else{
-				   	    #ifdef CONFIG_MTK_NET_LOGGING 
-				        printk(KERN_INFO " [mtk_net][unix]: sendmsg[null:%lu]:peer close\n" ,SOCK_INODE(other->sk_socket)->i_ino);
-				        #endif
+				        printk(KERN_INFO " sockdbg: sendmsg[null:%lu]:peer close\n" ,SOCK_INODE(other->sk_socket)->i_ino);
 				   }        
 
 				 }
 				else	
-					{
-						#ifdef CONFIG_MTK_NET_LOGGING 	
-				  printk(KERN_INFO " [mtk_net][unix]: sendmsg:peer close \n" );
-				  #endif
-				}
+				  printk(KERN_INFO " sockdbg: sendmsg:peer close \n" );
 		   		
           
 			goto pipe_err_free;
@@ -3537,20 +3479,15 @@ again:
                 if(sk && sk->sk_socket )
                 {
 				   if(other && other->sk_socket ){
-				   	#ifdef CONFIG_MTK_NET_LOGGING 
 				   	
-                     printk(KERN_INFO " [mtk_net][unix]: recvmsg[%lu:%lu]:exit read due to peer shutdown  \n" ,SOCK_INODE(sk->sk_socket)->i_ino,SOCK_INODE(other->sk_socket)->i_ino);
-				   #endif
+                     printk(KERN_INFO " sockdbg: recvmsg[%lu:%lu]:exit read due to peer shutdown  \n" ,SOCK_INODE(sk->sk_socket)->i_ino,SOCK_INODE(other->sk_socket)->i_ino);
+				   
 				   }else{				   
-				   	#ifdef CONFIG_MTK_NET_LOGGING 				   
-                     printk(KERN_INFO "[mtk_net][unix]: recvmsg[%lu:null]:exit read due to peer shutdown  \n" ,SOCK_INODE(sk->sk_socket)->i_ino);
-                     #endif
+                     printk(KERN_INFO " sockdbg: recvmsg[%lu:null]:exit read due to peer shutdown  \n" ,SOCK_INODE(sk->sk_socket)->i_ino);
 				     }				   
 				 }
 				else{	
-					#ifdef CONFIG_MTK_NET_LOGGING 
-				   printk(KERN_INFO " [mtk_net][unix]: recvmsg: exit read due to peer shutdown \n" );
-				   #endif
+				   printk(KERN_INFO " sockdbg: recvmsg: exit read due to peer shutdown \n" );
 				}
 				goto unlock;
 			}
@@ -3566,21 +3503,15 @@ again:
                 if(sk && sk->sk_socket )
                 {
                      if(other && other->sk_socket ){
-				   	#ifdef CONFIG_MTK_NET_LOGGING 
-                     printk(KERN_INFO " [mtk_net][unix]: recvmsg[%lu:%lu]:exit read due to timeout  \n" ,SOCK_INODE(sk->sk_socket)->i_ino,SOCK_INODE(other->sk_socket)->i_ino);
-				   #endif
+				   	
+                     printk(KERN_INFO " sockdbg: recvmsg[%lu:%lu]:exit read due to timeout  \n" ,SOCK_INODE(sk->sk_socket)->i_ino,SOCK_INODE(other->sk_socket)->i_ino);
+				   
 				   }else{				   
-				   	#ifdef CONFIG_MTK_NET_LOGGING 				   
-                     printk(KERN_INFO " [mtk_net][unix]: recvmsg[%lu:null]:exit read due to timeout  \n" ,SOCK_INODE(sk->sk_socket)->i_ino);
-                     #endif
+                     printk(KERN_INFO " sockdbg: recvmsg[%lu:null]:exit read due to timeout  \n" ,SOCK_INODE(sk->sk_socket)->i_ino);
 				     }			  
 				 }
 				else	
-					{
-						#ifdef CONFIG_MTK_NET_LOGGING 	
-				  printk(KERN_INFO " [mtk_net][unix]: recvmsg:exit read due to timeout \n" );
-				  #endif
-				}
+				  printk(KERN_INFO " sockdbg: recvmsg:exit read due to timeout \n" );
 		   		  
 			 }
 			 
@@ -4188,7 +4119,7 @@ static int __init af_unix_init(void)
 
 	rc = proto_register(&unix_proto, 1);
 	if (rc != 0) {
-		printk(KERN_CRIT "[mtk_net][unix]%s: Cannot create unix_sock SLAB cache!\n",
+		printk(KERN_CRIT "%s: Cannot create unix_sock SLAB cache!\n",
 		       __func__);
 		goto out;
 	}
