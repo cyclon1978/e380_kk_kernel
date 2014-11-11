@@ -63,7 +63,7 @@ struct scsi_disk {
 	unsigned int	max_medium_access_timeouts;
 	unsigned int	medium_access_timed_out;
 	u8		media_present;
-#ifdef MTK_MULTI_PARTITION_MOUNT_ONLY_SUPPORT	
+#ifdef CONFIG_MTK_MULTI_PARTITION_MOUNT_ONLY_SUPPORT	
 	u8		old_media_present;  //add for sdcard hotplug
 #endif	
 	u8		write_prot;

@@ -1269,7 +1269,7 @@ out:
 	 */
 	kfree(sshdr);
 	retval = sdp->changed ? DISK_EVENT_MEDIA_CHANGE : 0;
-#ifdef MTK_MULTI_PARTITION_MOUNT_ONLY_SUPPORT
+#ifdef CONFIG_MTK_MULTI_PARTITION_MOUNT_ONLY_SUPPORT
  	//add for sdcard hotplug start
 	if(1 == retval){
 		if(sdkp->old_media_present != sdkp->media_present){
@@ -2648,7 +2648,7 @@ static void sd_probe_async(void *data, async_cookie_t cookie)
 	sdkp->max_medium_access_timeouts = SD_MAX_MEDIUM_TIMEOUTS;
 
 	sd_revalidate_disk(gd);
-#ifdef MTK_MULTI_PARTITION_MOUNT_ONLY_SUPPORT	
+#ifdef CONFIG_MTK_MULTI_PARTITION_MOUNT_ONLY_SUPPORT	
 	sdkp->old_media_present = sdkp->media_present; //add for sdcard hotplug
 #endif
 
@@ -2659,7 +2659,7 @@ static void sd_probe_async(void *data, async_cookie_t cookie)
 	gd->flags = GENHD_FL_EXT_DEVT;
 	if (sdp->removable) {
 		gd->flags |= GENHD_FL_REMOVABLE;
-#ifdef MTK_MULTI_PARTITION_MOUNT_ONLY_SUPPORT		
+#ifdef CONFIG_MTK_MULTI_PARTITION_MOUNT_ONLY_SUPPORT		
 		gd->events |= DISK_EVENT_MEDIA_CHANGE|DISK_EVENT_MEDIA_DISAPPEAR; //add for sdcard hotplug
 #else
 		gd->events |= DISK_EVENT_MEDIA_CHANGE;

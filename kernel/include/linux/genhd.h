@@ -133,7 +133,7 @@ struct hd_struct {
 enum {
 	DISK_EVENT_MEDIA_CHANGE			= 1 << 0, /* media changed */
 	DISK_EVENT_EJECT_REQUEST		= 1 << 1, /* eject requested */
-#ifdef MTK_MULTI_PARTITION_MOUNT_ONLY_SUPPORT	
+#ifdef CONFIG_MTK_MULTI_PARTITION_MOUNT_ONLY_SUPPORT	
 	DISK_EVENT_MEDIA_DISAPPEAR		= 1 << 2, /* add for sdcard hotplug*/
 #endif	
 };
