@@ -593,7 +593,7 @@ INT32 wmt_dev_tm_temp_query(void)
        if(temp_table[index] >= TEMP_THRESHOLD)
        {
             query_cond = 1;
-            WMT_INFO_FUNC("high temperature (current temp = %d), we must keep querying temp temperature..\n", temp_table[index]);
+          //  WMT_INFO_FUNC("high temperature (current temp = %d), we must keep querying temp temperature..\n", temp_table[index]);
        }            
     }
 

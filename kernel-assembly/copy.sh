@@ -16,5 +16,6 @@ echo $INCREMENT > current.ver
 echo "Using version $INCREMENT ..."
 
 adb push ./testkernel.zip /storage/sdcard0/testkernel_3.$INCREMENT.zip
+mv ./testkernel.zip testkernel_3.$INCREMENT.zip
 
 echo "Done."
