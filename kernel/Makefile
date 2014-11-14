@@ -352,7 +352,7 @@ CHECK		= sparse
 
 # todo: add here -mcpu=cortex-a7 but need to remove -march=armv7-a ??? spams logfile...
 # see other makefiles: # arch-$(CONFIG_ARCH_MT6589)	:=-D__LINUX_ARM_ARCH__=7 $(call cc-option,-mcpu=cortex-a7,-march=armv7-a)
-OPTFLAGS	= -march=armv7-a -mfpu=neon-vfpv4 \
+OPTFLAGS	= -mcpu=cortex-a7 -mfpu=neon-vfpv4 \
 			-ffast-math -fsingle-precision-constant \
 			-fgcse-lm -fgcse-sm -fsched-spec-load -fforce-addr
 
