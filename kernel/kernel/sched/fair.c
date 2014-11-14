@@ -1608,7 +1608,7 @@ int group_leader_is_empty(struct task_struct *p){
 
 	struct task_struct *tg = p->group_leader;
 
-	if (SIGNAL_GROUP_EXIT & p->signal->flags){
+	if (SIGNAL_GROUP_EXIT & p->signal->flags) {
 	//	pr_warn("[%s] (0x%p/0x%p)(#%d/%s) leader: pid(%d) state(%d) exit_state(%d)signal_flags=%x p->signal->flags=%x group_exit_code=%x\n", __func__,
 	//	p, tg, get_nr_threads(p), thread_group_empty(p) ? "empty" : "not empty",
 	//	p->tgid, tg->state, tg->exit_state, tg->state, p->signal->flags, p->signal->group_exit_code);
@@ -3881,11 +3881,6 @@ select_task_rq_fair(struct task_struct *p, int sd_flag, int wake_flags)
 		prefer_local = 1;
 		new_cpu = cpu;
 		mt_sched_printf("wakeup %d %s prefer_local=%d", p->pid, p->comm, prefer_local);
-		// debug only
-		if ( ( 8 == new_cpu ) || ( 8 == cpu )){
-			printk(KERN_EMERG "check_cpus new_cpu=%d, cpu=%d, cpus=%lu, onlineCPU=%lu, max_clid=%d, max_idle_clid=%d\n",
-				new_cpu, cpu, cpus->bits[0], cpu_online_mask->bits[0], max_clid, max_idle_clid);
-		}
 	}
 }
 #else
