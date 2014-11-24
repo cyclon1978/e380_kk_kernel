@@ -226,7 +226,7 @@ void kick_charger_wdt(void)
     if( upmu_is_chr_det() == KAL_TRUE )
     {
     
-        printk("[kick_charger_wdt]ret=%d;count=%d;upmu_is_chr_det=%d\n",ret,count,upmu_is_chr_det());
+        //printk("[kick_charger_wdt]ret=%d;count=%d;upmu_is_chr_det=%d\n",ret,count,upmu_is_chr_det());
     
         if(ret != 1)
         {

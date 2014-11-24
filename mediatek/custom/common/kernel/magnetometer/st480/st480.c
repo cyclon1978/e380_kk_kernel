@@ -395,7 +395,7 @@ static int magnetic_i2c_write_data(struct i2c_client *client, char *buf, int len
         };
 
         if (i2c_transfer(client->adapter, msgs, 1) < 0) {
-        #ifdef SENODIA_DEBUG      
+        #ifdef SENODIA_DEBUG  
 		pr_err("megnetic_i2c_write_data: transfer error\n");
 	#endif
                 return -EIO;
@@ -622,9 +622,10 @@ static void senodia_work_func(void)
 
 #endif
 
-
+#ifdef SENODIA_DEBUG
 	printk("st480, buf[0]=%x, buf[1]=%x,buf[2]=%x,buf[3]=%x\n",buffer[0],buffer[1],buffer[2],buffer[3]);
 	printk("st480, buf[4]=%x, buf[5]=%x,buf[6]=%x,buf[7]=%x\n",buffer[4],buffer[5],buffer[6],buffer[7]);
+#endif	
 
 
 	if(!((buffer[0]>>4) & 0X01))
@@ -840,9 +841,9 @@ _y = (buffer[3]<<8)|buffer[4];
 		}
 #endif
 
-//#ifdef SENODIA_DEBUG
+#ifdef SENODIA_DEBUG
 	printk("mag_x = %d, mag_y = %d, mag_z = %d\n",mag.mag_x,mag.mag_y,mag.mag_z);
-//#endif	
+#endif	
 	}
 
     ret=0;

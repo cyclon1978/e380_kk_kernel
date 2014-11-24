@@ -26,6 +26,7 @@
 #include "mach/mtk_ccci_helper.h"
 #include <mach/mtk_memcfg.h>
 
+#include "mach/voltage_control.h"
 
 //for cts sn
 #define CONFIG_MTK_USB_UNIQUE_SERIAL 
@@ -1110,6 +1111,20 @@ static int __init parse_tag_devinfo_data_fixup(const struct tag *tags)
 
     for (i=0;i<size;i++){
         g_devinfo_data[i] = tags->u.devinfo_data.devinfo_data[i];
+    	printk("[devinfo-data], indx[%d]:0x%x\n", i,g_devinfo_data[i]);
+#if defined(MT_FORCE_1200_MHZ_SOFT)
+	if (i == 10) {
+		// fake a 1.2 GHz processor
+		g_devinfo_data[i] = 0;
+	}
+#endif
+#if defined(MT_OVERCLOCK)
+	if (i == 10) {
+		// TEST FOR OVERCLOCK: fake a 1.3 GHz processor
+		g_devinfo_data[i] = 16;
+		
+	}
+#endif
     }
     /* print chip id for debugging purpose */
     printk("tag_devinfo_data_rid, indx[%d]:0x%x\n", 12,g_devinfo_data[12]);

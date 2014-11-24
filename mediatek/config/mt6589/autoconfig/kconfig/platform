@@ -1958,8 +1958,12 @@ CONFIG_STAGING=y
 # CONFIG_LINE6_USB is not set
 # CONFIG_VT6656 is not set
 # CONFIG_IIO is not set
-CONFIG_ZRAM=y
-CONFIG_ZRAM_DEBUG=y
+
+# no zram required
+#-LEAN: @since 3.16
+CONFIG_ZRAM=n
+CONFIG_ZRAM_DEBUG=n
+
 CONFIG_ZSMALLOC=y
 # CONFIG_FB_SM7XX is not set
 # CONFIG_USB_ENESTORAGE is not set

@@ -14,6 +14,7 @@ typedef signed long long    s64;
 typedef unsigned long long  u64;
 
 #define En_PTP_OD 1
+// TEST FOR OVERCLOCK: #define PTP_Get_Real_Val 0 // will cause bad lagging!
 #define PTP_Get_Real_Val 1
 #define Set_PMIC_Volt 1
 #define En_ISR_log 0

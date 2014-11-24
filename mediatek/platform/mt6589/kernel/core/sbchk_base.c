@@ -348,10 +348,19 @@ void sbchk_base(void)
 /**************************************************************************
  *  GET devinfo info with index
  **************************************************************************/
+
 u32 get_devinfo_with_index(u32 index)
 {
     int size = (sizeof(g_devinfo_data)/sizeof(u32));
     if ((index >= 0) && (index < size)){
+
+#if defined(MT_SHOW_CPU_FLAGS)
+// print deviceinfo on every access because we cant get early dmsg...
+    int i = 0;
+    for (i=0;i<size;i++){
+    	printk("[devinfo-data], indx[%d]:0x%x\n", i,g_devinfo_data[i]);
+    }
+#endif
         return g_devinfo_data[index];
     }else{
         printk("devinfo data index out of range:%d\n", index);    
