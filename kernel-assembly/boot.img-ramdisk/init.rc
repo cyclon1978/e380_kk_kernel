@@ -1335,6 +1335,10 @@ service flash_recovery /system/etc/install-recovery.sh
     class main
     oneshot
 
+service initd /system/bin/logwrapper /system/xbin/busybox run-parts /system/etc/init.d
+    class main
+    oneshot 
+
 service sbchk /sbchk/sec_chk.sh
     user nvram
     group system
