@@ -1,8 +1,10 @@
+MAJOR_VERSION=4
+
 while read line; do
      INCREMENT=$line
 done < ./current.ver
 
-echo filename would be testkernel_3.$INCREMENT.zip
+echo filename would be testkernel_$MAJOR_VERSION.$INCREMENT.zip
 
 read -p "Increment version numer or use current version: $INCREMENT (y for increment)? " 
 if [[ $REPLY =~ ^[Yy]$ ]]
@@ -15,7 +17,8 @@ echo $INCREMENT > current.ver
 
 echo "Using version $INCREMENT ..."
 
-adb push ./testkernel.zip /storage/sdcard0/testkernel_3.$INCREMENT.zip
-mv ./testkernel.zip testkernel_3.$INCREMENT.zip
+adb push ./testkernel.zip /storage/sdcard0/testkernel_$MAJOR_VERSION.$INCREMENT.zip
+rm ./testkernel_$MAJOR_VERSION.$INCREMENT.zip
+mv ./testkernel.zip testkernel_$MAJOR_VERSION.$INCREMENT.zip
 
 echo "Done."
