@@ -415,7 +415,7 @@ static irqreturn_t mpu_violation_irq(int irq, void *dev_id)
     
     
     if (readl(DEVAPC0_DXS_VIO_STA) != 0x2 ||(readl(DEVAPC1_D0_VIO_STA) & ABORT_EMI) == 0) {
-        printk(KERN_INFO "Not EMI MPU violation.\n");
+        pr_debug(KERN_INFO "Not EMI MPU violation.\n");
         return IRQ_NONE;
     }
     

@@ -1209,12 +1209,6 @@ static void ndisc_router_discovery(struct sk_buff *skb)
 				(ra_msg->icmph.icmp6_addrconf_other ?
 					IF_RA_OTHERCONF : 0);
 
-	/*MTK_NET*/
-	if (0 == strncmp(in6_dev->dev->name, "ccmni", 2)){
-		printk(KERN_INFO "[mtk_net][ipv6]skip default route for ccmni!\n");
-		in6_dev->cnf.accept_ra_defrtr = 0;
-	}
-
 	if (!in6_dev->cnf.accept_ra_defrtr)
 		goto skip_defrtr;
 
@@ -1410,18 +1404,14 @@ skip_routeinfo:
 		}
 	}
 
-#ifdef MTK_DHCPV6C_WIFI
+#ifdef CONFIG_MTK_DHCPV6C_WIFI
 	if (in6_dev->if_flags & IF_RA_OTHERCONF){
-		printk(KERN_INFO "[mtk_net][ipv6]receive RA with o bit!\n");
+		printk(KERN_INFO "receive RA with o bit!\n");
 		in6_dev->cnf.ra_info_flag = 1;
 	} 
 	if(in6_dev->if_flags & IF_RA_MANAGED){
-		printk(KERN_INFO "[mtk_net][ipv6]receive RA with m bit!\n");
+		printk(KERN_INFO "receive RA with m bit!\n");
 		in6_dev->cnf.ra_info_flag = 2;
-	}
-	if(in6_dev->cnf.ra_info_flag == 0){
-		printk(KERN_INFO "[mtk_net][ipv6]receive RA neither O nor M bit is set!\n");
-		in6_dev->cnf.ra_info_flag = 4;
 	}
 #endif
 
@@ -1431,11 +1421,11 @@ skip_routeinfo:
 		     p;
 		     p = ndisc_next_useropt(p, ndopts.nd_useropts_end)) {
 			ndisc_ra_useropt(skb, p);
-#ifdef MTK_DHCPV6C_WIFI
+#ifdef CONFIG_MTK_DHCPV6C_WIFI
 			/* only clear ra_info_flag when O bit is set */
 			if (p->nd_opt_type == ND_OPT_RDNSS &&
 					in6_dev->if_flags & IF_RA_OTHERCONF) {
-				printk(KERN_INFO "[mtk_net][ipv6]RDNSS, ignore RA with o bit!\n");
+				printk(KERN_INFO "RDNSS, ignore RA with o bit!\n");
 				in6_dev->cnf.ra_info_flag = 0;
 			} 
 #endif
@@ -2010,7 +2000,7 @@ int ndisc_rcv(struct sk_buff *skb)
 
 	memset(NEIGH_CB(skb), 0, sizeof(struct neighbour_cb));
 
-#ifdef MTK_IPV6_TETHER_NDP_MODE
+#ifdef CONFIG_MTK_IPV6_TETHER_NDP_MODE
 #if MTK_NDP_CHANGE_SRC
 		switch (msg->icmph.icmp6_type) {
 		case NDISC_ROUTER_SOLICITATION:

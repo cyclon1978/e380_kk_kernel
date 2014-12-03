@@ -5,7 +5,7 @@
  *
  * Based on code from Linus
  *
- * Teemu Rantanen's Microsoft Busmouse support and Derrick Cole's
+ * Teemu Rantanen's MS Busmouse support and Derrick Cole's
  *   changes incorporated into 0.97pl4
  *   by Peter Cervasio (pete%q106fm.uucp@wupost.wustl.edu) (08SEP92)
  *   See busmouse.c for particulars.

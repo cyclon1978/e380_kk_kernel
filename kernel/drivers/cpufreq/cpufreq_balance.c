@@ -656,7 +656,7 @@ static ssize_t store_cpu_num_base(struct kobject *a, struct attribute *b,
 	bool raise_freq = false;
 	int ret;
 	struct cpufreq_policy *policy;
-
+	
 	policy = cpufreq_cpu_get(0);
 	ret = sscanf(buf, "%u", &input);
 
@@ -668,10 +668,10 @@ static ssize_t store_cpu_num_base(struct kobject *a, struct attribute *b,
 		schedule_delayed_work_on(0, &hp_work, 0);
 	}
 	mutex_unlock(&hp_mutex);
-
+	
 	if(raise_freq == true)
 		dbs_freq_increase(policy, policy->max);
-
+	
 	return count;
 }
 
@@ -812,7 +812,7 @@ static void hp_work_handler(struct work_struct *work)
 		if (!dbs_tuners_ins.is_cpu_hotplug_disable)
 		{
 			int onlines_cpu_n = num_online_cpus();
-
+			
 			if (g_next_hp_action) // turn on CPU
 			{
 				if (onlines_cpu_n < num_possible_cpus())
@@ -820,7 +820,7 @@ static void hp_work_handler(struct work_struct *work)
 					printk("hp_work_handler: cpu_up(%d) kick off\n", onlines_cpu_n);
 					cpu_up(onlines_cpu_n);
 					printk("hp_work_handler: cpu_up(%d) completion\n", onlines_cpu_n);
-
+		
 					dbs_ignore = 0; // force trigger frequency scaling
 				}
 			}
@@ -831,7 +831,7 @@ static void hp_work_handler(struct work_struct *work)
 					printk("hp_work_handler: cpu_down(%d) kick off\n", (onlines_cpu_n - 1));
 					cpu_down((onlines_cpu_n - 1));
 					printk("hp_work_handler: cpu_down(%d) completion\n", (onlines_cpu_n - 1));
-
+		
 					dbs_ignore = 0; // force trigger frequency scaling
 				}
 			}
@@ -934,7 +934,7 @@ static void dbs_check_cpu(struct cpu_dbs_info_s *this_dbs_info)
 		load_freq = load * freq_avg;
 		if (load_freq > max_load_freq)
 			max_load_freq = load_freq;
-
+			
 		#ifdef DEBUG_LOG
 		printk("dbs_check_cpu: cpu = %d\n", j);
 		printk("dbs_check_cpu: wall_time = %d, idle_time = %d, load = %d\n", wall_time, idle_time, load);
@@ -1057,7 +1057,7 @@ hp_check:
 		g_cpu_up_sum_load += cpus_sum_load;
 		if (g_cpu_up_count == dbs_tuners_ins.cpu_up_avg_times) {
 			g_cpu_up_sum_load /= dbs_tuners_ins.cpu_up_avg_times;
-			if (g_cpu_up_sum_load >
+			if (g_cpu_up_sum_load > 
 				(dbs_tuners_ins.cpu_up_threshold * num_online_cpus())) {
 				#ifdef DEBUG_LOG
 				printk("dbs_check_cpu: g_cpu_up_sum_load = %d\n", g_cpu_up_sum_load);
@@ -1082,7 +1082,7 @@ hp_check:
 		g_cpu_down_sum_load += cpus_sum_load;
 		if (g_cpu_down_count == dbs_tuners_ins.cpu_down_avg_times) {
 			g_cpu_down_sum_load /= dbs_tuners_ins.cpu_down_avg_times;
-			if (g_cpu_down_sum_load <
+			if (g_cpu_down_sum_load < 
 				((dbs_tuners_ins.cpu_up_threshold - dbs_tuners_ins.cpu_down_differential) * (num_online_cpus() - 1))) {
 				if (num_online_cpus() > dbs_tuners_ins.cpu_num_base) {
 				#ifdef DEBUG_LOG
@@ -1106,7 +1106,7 @@ hp_check:
 	mutex_unlock(&hp_mutex);
 	#endif
 	// need to retrieve dbs_freq_increase out of hp_mutex
-	// in case of self-deadlock
+	// in case of self-deadlock 
 	if(raise_freq == true)
 		dbs_freq_increase(policy, policy->max);
 
@@ -1327,7 +1327,7 @@ static int cpufreq_governor_dbs(struct cpufreq_policy *policy,
 				max(min_sampling_rate,
 				    latency * LATENCY_MULTIPLIER);
 			dbs_tuners_ins.io_is_busy = should_io_be_busy();
-
+			
 			#ifdef DEBUG_LOG
 			printk("cpufreq_governor_dbs: min_sampling_rate = %d\n", min_sampling_rate);
 			printk("cpufreq_governor_dbs: dbs_tuners_ins.sampling_rate = %d\n", dbs_tuners_ins.sampling_rate);

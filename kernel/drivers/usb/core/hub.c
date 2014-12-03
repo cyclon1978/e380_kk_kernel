@@ -164,891 +164,6 @@ EXPORT_SYMBOL_GPL(ehci_cf_port_reset_rwsem);
 
 static int usb_reset_and_verify_device(struct usb_device *udev);
 
-#define usb_sndaddr0pipe()	(PIPE_CONTROL << 30)
-#define usb_rcvaddr0pipe()	((PIPE_CONTROL << 30) | USB_DIR_IN)
-
-//#define ORG_SUSPEND_RESUME_TEST
-#ifdef ORG_SUSPEND_RESUME_TEST
-#include <linux/proc_fs.h>
-#include <linux/uaccess.h>
-#endif
-
-#ifdef MTK_ICUSB_SUPPORT
-
-#define DEBUG
-#include <linux/proc_fs.h>
-#include <linux/uaccess.h>
-#include <net/sock.h> 
-#include <net/netlink.h> 
-#include <linux/skbuff.h>
-
-static struct sock *netlink_sock;
-static u_int g_pid;
-static struct usb_hub *gt_rootHub = NULL;
-static struct usb_device *g_sim_dev = NULL;
-static struct IC_USB_CMD ic_cmd;
-unsigned int g_ic_usb_status;
-
-void musbfsh_start_session();
-void musbfsh_start_session_pure(void );
-void musbfsh_stop_session();
-void musbfsh_init_phy_by_voltage(enum PHY_VOLTAGE_TYPE);
-void usb11_phy_set_test(void);
-void usb11_phy_33V_bias_control(int enable);
-void mt65xx_usb11_phy_poweron_volt_30(void);
-enum PHY_VOLTAGE_TYPE get_usb11_phy_voltage(void);
-void mt65xx_usb11_mac_reset_and_phy_stress_set(void);
-void musbfsh_root_disc_procedure(void);
-int is_usb11_enabled(void);
-void mt65xx_usb11_suspend_resume_test(void);
-void mt65xx_usb20_suspend_resume_test(void);
-void create_ic_tmp_entry(void);
-
-
-extern struct my_attr power_resume_time_neogo_attr;
-extern struct my_attr skip_session_req_attr;
-extern struct my_attr skip_enable_session_attr;
-extern struct my_attr skip_mac_init_attr;
-extern struct my_attr resistor_control_attr;
-extern struct my_attr hw_dbg_attr;
-extern struct my_attr skip_port_pm_attr;
-
-static struct my_attr my_attr_test = {
-	.attr.name = "my_attr_test",
-	.attr.mode = 0644,
-	.value = 1
-};
-
-
-static struct attribute *myattr[] = {
-	&my_attr_test,
-	&power_resume_time_neogo_attr,
-	&skip_session_req_attr,
-	&skip_enable_session_attr,
-	&skip_mac_init_attr,
-	&resistor_control_attr,
-	&hw_dbg_attr,
-	&skip_port_pm_attr,
-	NULL
-};
-
-static ssize_t default_show(struct kobject *kobj, struct attribute *attr,
-		char *buf)
-{
-	struct my_attr *a = container_of(attr, struct my_attr, attr);
-	return scnprintf(buf, PAGE_SIZE, "%d\n", a->value);
-}
-
-static ssize_t default_store(struct kobject *kobj, struct attribute *attr,
-		const char *buf, size_t len)
-{
-	struct my_attr *a = container_of(attr, struct my_attr, attr);
-	sscanf(buf, "%d", &a->value);
-	return sizeof(int);
-}
-
-static struct sysfs_ops myops = {
-	.show = default_show,
-	.store = default_store,
-};
-
-static struct kobj_type mytype = {
-	.sysfs_ops = &myops,
-	.default_attrs = myattr,
-};
-
-struct kobject *mykobj;
-void create_icusb_sysfs_attr(void)
-{
-	int err = -1;
-	mykobj = kzalloc(sizeof(*mykobj), GFP_KERNEL);
-	if (mykobj) {
-		MYDBG("");
-		kobject_init(mykobj, &mytype);
-		if (kobject_add(mykobj, NULL, "%s", "icusb_attr")) {
-			err = -1;
-			MYDBG("Sysfs creation failed\n");
-			kobject_put(mykobj);
-			mykobj = NULL;
-		}
-		err = 0;
-	}
-	return err;
-
-}
-
-
-void my_attr_test_procedure(void)
-{
-	if(my_attr_test.value)
-	{
-		MYDBG("my_attr_test.value != 0 \n");
-	}
-	else
-	{
-		MYDBG("my_attr_test.value == 0 \n");
-	}
-}
-
-char *get_root_hub_udev(void)
-{
-	if(gt_rootHub)
-	{
-		MYDBG("");
-		return (char *)(gt_rootHub->hdev);
-	}
-	else
-	{
-		MYDBG("");
-		return NULL;
-	}
-}
-
-char *get_usb_sim_udev(void)
-{
-	return (char *)(g_sim_dev);
-}
-
-void usb11_wait_disconnect_done(int value)
-{
-	if(is_usb11_enabled())
-	{
-		while(1)
-		{
-			unsigned int ic_usb_status = g_ic_usb_status;
-			MYDBG("ic_usb_status : %x\n", ic_usb_status);
-			ic_usb_status &= (USB_PORT1_STS_MSK << USB_PORT1_STS_SHIFT);
-			MYDBG("ic_usb_status : %x\n", ic_usb_status);
-
-			if(ic_usb_status == (USB_PORT1_DISCONNECT_DONE << USB_PORT1_STS_SHIFT))
-			{
-				MYDBG("USB_PORT1_DISCONNECT_DONE\n");
-				break;
-			}
-
-			if(ic_usb_status == (USB_PORT1_DISCONNECTING << USB_PORT1_STS_SHIFT))
-			{
-				MYDBG("USB_PORT1_DISCONNECTING\n");
-			}
-
-			msleep(10);
-		}
-	}
-	else
-	{
-		MYDBG("usb11 is not enabled, skip usb11_wait_disconnect_done()\n");
-	}
-
-}
-
-int check_usb11_sts_disconnect_done(void)
-{
-	unsigned int ic_usb_status = g_ic_usb_status;
-	MYDBG("ic_usb_status : %x\n", ic_usb_status);
-	ic_usb_status &= (USB_PORT1_STS_MSK << USB_PORT1_STS_SHIFT);
-	MYDBG("ic_usb_status : %x\n", ic_usb_status);
-
-	if(ic_usb_status == (USB_PORT1_DISCONNECT_DONE << USB_PORT1_STS_SHIFT))
-	{
-		MYDBG("USB_PORT1_DISCONNECT_DONE got\n");
-		return 1;
-	}
-	else
-	{
-		return 0;
-	}
-
-}
-void set_usb11_sts_connect(void)
-{
-	MYDBG("...................");
-	g_ic_usb_status &= ~(USB_PORT1_STS_MSK << USB_PORT1_STS_SHIFT);
-	g_ic_usb_status |= ((USB_PORT1_CONNECT) << USB_PORT1_STS_SHIFT);
-}
-
-void set_usb11_sts_disconnecting(void)
-{
-	MYDBG("...................");
-	g_ic_usb_status &= ~(USB_PORT1_STS_MSK << USB_PORT1_STS_SHIFT);
-	g_ic_usb_status |= ((USB_PORT1_DISCONNECTING) << USB_PORT1_STS_SHIFT);
-}
-
-void set_usb11_sts_disconnect_done(void)
-{
-	MYDBG("...................");
-	g_ic_usb_status &= ~(USB_PORT1_STS_MSK << USB_PORT1_STS_SHIFT);
-	g_ic_usb_status |= ((USB_PORT1_DISCONNECT_DONE) << USB_PORT1_STS_SHIFT);
-}
-
-void set_usb11_data_of_interface_power_request(short data)
-{
-	MYDBG("...................");
-	g_ic_usb_status |= ((data) << PREFER_VOL_CLASS_SHIFT);
-}
-
-void reset_usb11_phy_power_negotiation_status(void)
-{
-	MYDBG("...................");
-
-	g_ic_usb_status &= ~(PREFER_VOL_STS_MSK << PREFER_VOL_STS_SHIFT);
-	g_ic_usb_status |= ((PREFER_VOL_NOT_INITED) << PREFER_VOL_STS_SHIFT);
-
-}
-
-void set_usb11_phy_power_negotiation_fail(void)
-{
-	MYDBG("...................");
-
-	g_ic_usb_status &= ~(PREFER_VOL_STS_MSK << PREFER_VOL_STS_SHIFT);
-	g_ic_usb_status |= ((PREFER_VOL_PWR_NEG_FAIL) << PREFER_VOL_STS_SHIFT);
-
-}
-
-void set_usb11_phy_power_negotiation_ok(void)
-{
-	MYDBG("...................");
-
-	g_ic_usb_status &= ~(PREFER_VOL_STS_MSK << PREFER_VOL_STS_SHIFT);
-	g_ic_usb_status |= ((PREFER_VOL_PWR_NEG_OK) << PREFER_VOL_STS_SHIFT);
-
-}
-
-
-void usb11_phy_prefer_3v_status_check(void)
-{
-	unsigned int ic_usb_status = g_ic_usb_status;
-	MYDBG("ic_usb_status : %x\n", ic_usb_status);
-	ic_usb_status &= (PREFER_VOL_STS_MSK << PREFER_VOL_STS_SHIFT);
-	MYDBG("ic_usb_status : %x\n", ic_usb_status);
-
-#if 0
-	if(ic_usb_status == (PREFER_VOL_NOT_INITED << PREFER_VOL_STS_SHIFT))
-	{
-		MYDBG("PREFER_VOL_NOT_INITED\n");
-	}
-	if(ic_usb_status == (PREFER_VOL_33_NEGATIVE << PREFER_VOL_STS_SHIFT))
-	{
-		MYDBG("PREFER_VOL_33_NEGATIVE\n");
-	}
-	if(ic_usb_status == (PREFER_VOL_33_POSITIVE << PREFER_VOL_STS_SHIFT))
-	{
-		MYDBG("PREFER_VOL_33_POSITIVE\n");
-	}
-	if(ic_usb_status == (PREFER_VOL_GET_FAIL << PREFER_VOL_STS_SHIFT))
-	{
-		MYDBG("PREFER_VOL_GET_FAIL\n");
-	}
-#endif
-}
-
-
-
-int sprintf1(char * buf, const char *fmt, ...)
-{
-	va_list args;
-	int i;
-
-	va_start(args, fmt);
-	i=vsprintf(buf,fmt,args);
-	va_end(args);
-	return i;
-}
-
-static void udp_reply(int pid,int seq,void *payload) 
-{ 
-	struct sk_buff *skb;
-	struct nlmsghdr *nlh;
-	int size=strlen(payload)+1;
-	int len = NLMSG_SPACE(size);
-	void *data;
-	int ret;
-	 
-	skb = alloc_skb(len, GFP_ATOMIC);
-	if (!skb) 
-		return;
-	nlh= NLMSG_PUT(skb, pid, seq, 0, size);
-	nlh->nlmsg_flags = 0;
-	data=NLMSG_DATA(nlh);
-	memcpy(data, payload, size);
-	NETLINK_CB(skb).pid = 0; /* from kernel */ 
-	NETLINK_CB(skb).dst_group = 0; /* unicast */ 
-	ret=netlink_unicast(netlink_sock, skb, pid, MSG_DONTWAIT);
-	if (ret <0) 
-	{ 
-		MYDBG("send failed\n");
-	}
-	return;	
-	 
-nlmsg_failure: /* Used by NLMSG_PUT */ 
-	if (skb) 
-		kfree_skb(skb);
-} 
-
-/* Receive messages from netlink socket. */
-static void udp_receive(struct sk_buff *skb) 
-{ 
-	MYDBG("");
-	u_int uid, pid, seq, sid;
-	void *data;
-	struct nlmsghdr *nlh;
-	 
-	nlh = (struct nlmsghdr *)skb->data;
-
-	/* global here */
-	g_pid = NETLINK_CREDS(skb)->pid;
-	uid = NETLINK_CREDS(skb)->uid;
-	seq = nlh->nlmsg_seq;
-	data = NLMSG_DATA(nlh);
-	MYDBG("recv skb from user space uid:%d pid:%d seq:%d,sid:%d\n",uid,g_pid,seq,sid);
-	MYDBG("data is :%s\n",(char *)data);
-
-
-	char reply_data[16];
-	sprintf(reply_data, "%d", g_pid);
-	udp_reply(g_pid, 0, reply_data); 
-} 
-
-
-
-void dump_data(char *buf, int len)
-{
-	int i;
-	for(i =0 ; i< len ; i++)
-	{
-		MYDBG("data[%d]: %x\n", i, buf[i]);
-	}
-
-}
-
-
-int usb11_init_phy_by_voltage(enum PHY_VOLTAGE_TYPE phy_volt)
-{
-	musbfsh_init_phy_by_voltage(phy_volt);
-	return 0;
-}
-
-int usb11_session_control(enum SESSION_CONTROL_ACTION action)
-{
-
-	if(action == START_SESSION)
-		musbfsh_start_session();
-	else if(action == STOP_SESSION) 
-	{
-		//musbfsh_stop_session();
-		if(!is_usb11_enabled())		
-		{
-			mt65xx_usb11_mac_reset_and_phy_stress_set();
-		}
-		else
-		{
-			MYDBG("usb11 has been enabled, skip mt65xx_usb11_mac_reset_and_phy_stress_set()\n");
-		}
-	}
-	else
-		MYDBG("unknown action\n");
-
-
-	return 0;
-}
-
-
-static ssize_t musbfsh_ic_usb_cmd_proc_status_read(char *buffer, char **buffer_location, off_t offset, int buffer_length, int *eof, void *data)
-{
-	int ret, len;
-	MYDBG("");
-
-	memcpy(buffer, &g_ic_usb_status, sizeof(g_ic_usb_status));
-
-	len = sizeof(g_ic_usb_status);
-	return len;
-}
-
-static ssize_t musbfsh_ic_usb_cmd_proc_entry(struct file *file, const char *buf, unsigned long len, void *data)
-{
-	int ret = copy_from_user((char *)&ic_cmd, buf, len);
-	struct timeval tv_begin, tv_end;
-	struct usb_device *udev;
-	int result; 
-
-
-	do_gettimeofday(&tv_begin);
-
-	MYDBG("==================>>>, len : %d, ret : %d\n", len, ret);
-
-	if (ret < 0)
-		return -1;
-
-	udev = gt_rootHub->hdev;
-	usb_lock_device(udev);
-
-	result = usb_autoresume_device(udev);
-	if (result < 0) {
-		MYDBG("can't autoresume, result : %d\n", result);
-		usb_autosuspend_device(udev);
-		goto auto_resume_fail;
-	}
-	else
-	{
-		MYDBG("autoresume !!!, result : %d\n", result);
-	}
-
-	MYDBG("type : %x, length : %x, data[0] : %x\n", ic_cmd.type, ic_cmd.length, ic_cmd.data[0]);
-	switch(ic_cmd.type)
-	{
-		case USB11_SESSION_CONTROL:
-			MYDBG("");
-			usb11_session_control(ic_cmd.data[0]);
-			break;
-		case USB11_INIT_PHY_BY_VOLTAGE:
-			MYDBG("");
-			usb11_init_phy_by_voltage(ic_cmd.data[0]);
-			break;
-		case USB11_WAIT_DISCONNECT_DONE:
-			MYDBG("");
-			usb11_wait_disconnect_done(ic_cmd.data[0]);
-			break;
-
-		/*--- special purpose ---*/
-		case 's':
-			MYDBG("create sysfs\n");
-			create_icusb_sysfs_attr();
-			break;
-		case 't':
-			MYDBG("create tmp proc\n");
-			create_ic_tmp_entry();		
-			break;
-		default:
-			MYDBG("maybe u forget to add break\n");
-			usb11_phy_set_test();
-			break;
-	}
-
-auto_resume_fail:
-	usb_autosuspend_device(udev);
-	usb_unlock_device(udev);
-	
-	do_gettimeofday(&tv_end);
-	MYDBG("time spent, sec : %d, usec : %d, <<<===================\n", (tv_end.tv_sec - tv_begin.tv_sec), (tv_end.tv_usec - tv_begin.tv_usec));
-
-	return len;
-}
-
-
-void ic_usb_test_device_ep0(char action)
-{
-	MYDBG("action : %c\n", action);
-
-	int ret;
-	char data_buf[256];
-
-	int result = usb_autoresume_device(g_sim_dev);
-	if (result < 0) {
-		MYDBG("can't autoresume, result : %d\n", result);
-		return -2;
-	}
-	else
-	{
-		MYDBG("autoresume ok, result : %d\n", result);
-	}
-
-	int i = 0;
-#define TEST_CNT 100000
-	switch (action)
-	{
-		case '1':
-			ret = usb_control_msg(g_sim_dev, usb_rcvctrlpipe(g_sim_dev, 0),
-					USB_REQ_GET_DESCRIPTOR, 
-					USB_DIR_IN, 
-					USB_DT_DEVICE << 8, 
-					0,
-					data_buf,
-					64, 
-					USB_CTRL_GET_TIMEOUT);
-			break;
-		case '2':
-			while(i++ < TEST_CNT)
-			{
-				ret = usb_control_msg(g_sim_dev, usb_rcvctrlpipe(g_sim_dev, 0),
-						USB_REQ_GET_DESCRIPTOR, 
-						USB_DIR_IN, 
-						USB_DT_DEVICE << 8, 
-						0,
-						data_buf,
-						64, 
-						USB_CTRL_GET_TIMEOUT);
-				if (ret < 0) {
-					MYDBG("test ep fail, ret : %d\n", ret);
-				}
-				else
-				{
-					MYDBG("test ep0 ok, ret : %d\n", ret);
-					dump_data(data_buf, ret);
-				}
-			}
-			break;
-		default:
-			break;
-				
-	}
-
-
-	if (ret < 0) {
-		MYDBG("test ep fail, ret : %d\n", ret);
-	}
-	else
-	{
-		MYDBG("test ep0 ok, ret : %d\n", ret);
-		dump_data(data_buf, ret);
-	}
-	usb_autosuspend_device(g_sim_dev);
-
-}
-void ic_usb_test_hub_ep0(void)
-{
-	int ret;
-	char data_buf[256];
-	struct usb_device *udev;
-
-	udev = gt_rootHub->hdev;
-	ret = usb_control_msg(udev, usb_rcvctrlpipe(udev, 0),
-			USB_REQ_GET_DESCRIPTOR, 
-			USB_DIR_IN, 
-			USB_DT_DEVICE << 8, 
-			0,
-			data_buf,
-			64, 
-			USB_CTRL_GET_TIMEOUT);
-
-	if (ret < 0) {
-		MYDBG("test ep fail, ret : %d\n", ret);
-	}
-	else
-	{
-		MYDBG("test ep ok, ret : %d\n", ret);
-		dump_data(data_buf, ret);
-	}
-
-}
-static ssize_t musbfsh_ic_tmp_proc_entry(struct file *file, const char *buf, unsigned long len, void *data)
-{
-	char cmd[64];
-
-	int ret = copy_from_user((char *)&cmd, buf, len);
-
-	if (ret < 0)
-		return -1;
-	
-
-	struct usb_device *udev;
-	udev = gt_rootHub->hdev;
-
-	usb_lock_device(udev);
-	int result = usb_autoresume_device(udev);
-	if (result < 0) {
-		MYDBG("can't autoresume, result : %d\n", result);
-		usb_autosuspend_device(udev);
-		return -2;
-	}
-	else
-		MYDBG("autoresume !!!, result : %d\n", result);
-	
-	/* apply action here */
-	if(cmd[0] == '0')
-	{
-		MYDBG("");
-		musbfsh_start_session_pure();
-	}
-	else if(cmd[0] == '1')
-	{
-		MYDBG("");
-		mt65xx_usb11_phy_poweron_volt_30();
-	}
-	else if(cmd[0] == '2')
-	{
-		MYDBG("");
-		ic_usb_test_hub_ep0();
-	}
-	else if(cmd[0] == '3')
-	{
-		MYDBG("");
-		ic_usb_test_device_ep0(cmd[1]);
-	}
-	else if(cmd[0] == '4')
-	{
-		MYDBG("");
-		char payload[1024];
-		udp_reply(g_pid, 0, "HELLO, SS7_IC_USB!!!"); 
-	}
-	else if(cmd[0] == '5')
-	{
-		MYDBG("");
-	}
-	else if(cmd[0] == '6')
-	{
-		MYDBG("");
-		mt65xx_usb11_mac_reset_and_phy_stress_set();
-	}
-	else if(cmd[0] == '7')
-	{
-		MYDBG("");
-		set_usb11_phy_power_negotiation_ok() ;
-
-	}
-	else if(cmd[0] == '8')
-	{
-		MYDBG("");
-		set_usb11_phy_power_negotiation_fail() ;
-	}
-	else if(cmd[0] == '9')
-	{
-		MYDBG("");
-		reset_usb11_phy_power_negotiation_status();
-	}
-	else if(cmd[0] == 'a')
-	{
-		MYDBG("");
-		usb11_phy_prefer_3v_status_check();
-	}
-	else if(cmd[0] == 'b')
-	{
-		MYDBG("");
-		musbfsh_root_disc_procedure();
-	}
-	else if(cmd[0] == 'c')
-	{
-		MYDBG("");
-		set_usb11_sts_disconnecting();
-
-	}
-	else if(cmd[0] == 'd')
-	{
-		MYDBG("");
-		set_usb11_sts_disconnect_done();
-	}
-	else if(cmd[0] == 'e')
-	{
-		MYDBG("");
-		usb11_wait_disconnect_done(0);
-	}
-	else if(cmd[0] == 'f')
-	{
-		MYDBG("g_sim_dev :%x, gt_rootHub->hdev : %x\n", g_sim_dev, gt_rootHub->hdev);
-	}
-	else if(cmd[0] == 'g')
-	{
-		mt65xx_usb11_suspend_resume_test();
-	}
-	else if(cmd[0] == 'h')
-	{
-		mt65xx_usb20_suspend_resume_test();
-	}
-	else if(cmd[0] == 'i')
-	{
-		create_icusb_sysfs_attr();
-	}
-	
-	if(cmd[0] == 'z')
-	{
-		my_attr_test_procedure();
-	}
-
-
-	usb_autosuspend_device(udev);
-	usb_unlock_device(udev);
-
-
-	MYDBG("");
-
-	return len;
-}
-
-void create_ic_usb_cmd_proc_entry(void)
-{
-	struct proc_dir_entry *prEntry;
-
-	MYDBG("");
-
-
-	prEntry = create_proc_entry("IC_USB_CMD_ENTRY", 0660, 0);
-	if (prEntry)
-	{
-		prEntry->write_proc = musbfsh_ic_usb_cmd_proc_entry;
-		prEntry->read_proc = musbfsh_ic_usb_cmd_proc_status_read;
-		MYDBG("add /proc/IC_USB_CMD_ENTRY ok\n");
-	}
-	else
-	{
-		MYDBG("add /proc/IC_USB_CMD_ENTRY fail\n");
-	}
-}
-
-void create_ic_tmp_entry(void)
-{
-	struct proc_dir_entry *prEntry;
-
-	MYDBG("");
-
-	prEntry = create_proc_entry("IC_TMP_ENTRY", 0660, 0);
-	if (prEntry)
-	{
-		prEntry->write_proc = musbfsh_ic_tmp_proc_entry;
-		MYDBG("add /proc/IC_TMP_ENTRY ok\n");
-	}
-	else
-	{
-		MYDBG("add /proc/IC_TMP_ENTRY fail\n");
-	}
-}
-
-#endif
-
-#ifdef ORG_SUSPEND_RESUME_TEST
-static struct usb_hub *gt_rootHub = NULL;
-static struct usb_device *g_sim_dev = NULL;
-void mt65xx_usb11_suspend_resume_test(void);
-void mt65xx_usb20_suspend_resume_test(void);
-void dump_data(char *buf, int len)
-{
-	int i;
-	for(i =0 ; i< len ; i++)
-	{
-		MYDBG("data[%d]: %x\n", i, buf[i]);
-	}
-
-}
-void ic_usb_test_device_ep0(char action)
-{
-	MYDBG("action : %c\n", action);
-
-	int ret;
-	char data_buf[256];
-
-	int result = usb_autoresume_device(g_sim_dev);
-	if (result < 0) {
-		MYDBG("can't autoresume, result : %d\n", result);
-		return -2;
-	}
-	else
-	{
-		MYDBG("autoresume ok, result : %d\n", result);
-	}
-
-	int i = 0;
-#define TEST_CNT 100000
-	switch (action)
-	{
-		case '1':
-			ret = usb_control_msg(g_sim_dev, usb_rcvctrlpipe(g_sim_dev, 0),
-					USB_REQ_GET_DESCRIPTOR, 
-					USB_DIR_IN, 
-					USB_DT_DEVICE << 8, 
-					0,
-					data_buf,
-					64, 
-					USB_CTRL_GET_TIMEOUT);
-			break;
-		case '2':
-			while(i++ < TEST_CNT)
-			{
-				ret = usb_control_msg(g_sim_dev, usb_rcvctrlpipe(g_sim_dev, 0),
-						USB_REQ_GET_DESCRIPTOR, 
-						USB_DIR_IN, 
-						USB_DT_DEVICE << 8, 
-						0,
-						data_buf,
-						64, 
-						USB_CTRL_GET_TIMEOUT);
-				if (ret < 0) {
-					MYDBG("test ep fail, ret : %d\n", ret);
-				}
-				else
-				{
-					MYDBG("test ep0 ok, ret : %d\n", ret);
-					dump_data(data_buf, ret);
-				}
-			}
-			break;
-		default:
-			break;
-				
-	}
-
-
-	if (ret < 0) {
-		MYDBG("test ep fail, ret : %d\n", ret);
-	}
-	else
-	{
-		MYDBG("test ep0 ok, ret : %d\n", ret);
-		dump_data(data_buf, ret);
-	}
-	usb_autosuspend_device(g_sim_dev);
-
-}
-static ssize_t musbfsh_ic_tmp_proc_entry(struct file *file, const char *buf, unsigned long len, void *data)
-{
-	char cmd[64];
-
-	int ret = copy_from_user((char *)&cmd, buf, len);
-
-	if (ret < 0)
-		return -1;
-	
-
-	struct usb_device *udev;
-	udev = gt_rootHub->hdev;
-
-	usb_lock_device(udev);
-	int result = usb_autoresume_device(udev);
-	if (result < 0) {
-		MYDBG("can't autoresume, result : %d\n", result);
-		usb_autosuspend_device(udev);
-		return -2;
-	}
-	else
-		MYDBG("autoresume !!!, result : %d\n", result);
-	
-	if(cmd[0] == 'g')
-	{
-		mt65xx_usb11_suspend_resume_test();
-	}
-	else if(cmd[0] == 'h')
-	{
-		mt65xx_usb20_suspend_resume_test();
-	}
-	else if(cmd[0] == '3')
-	{
-		MYDBG("");
-		ic_usb_test_device_ep0(cmd[1]);
-	}
-
-	usb_autosuspend_device(udev);
-	usb_unlock_device(udev);
-
-
-	MYDBG("");
-
-	return len;
-}
-void create_ic_tmp_entry(void)
-{
-	struct proc_dir_entry *prEntry;
-
-	MYDBG("");
-
-	prEntry = create_proc_entry("IC_TMP_ENTRY", 0660, 0);
-	if (prEntry)
-	{
-		prEntry->write_proc = musbfsh_ic_tmp_proc_entry;
-		MYDBG("add /proc/IC_TMP_ENTRY ok\n");
-	}
-	else
-	{
-		MYDBG("add /proc/IC_TMP_ENTRY fail\n");
-	}
-}
-#endif
-
 static inline char *portspeed(struct usb_hub *hub, int portstatus)
 {
 	if (hub_is_superspeed(hub->hdev))
@@ -2330,29 +1445,6 @@ descriptor_error:
 		return -ENOMEM;
 	}
 
-#ifdef MTK_ICUSB_SUPPORT
-	static int getRootHub = 0;
-	if(!getRootHub)
-	{
-		getRootHub = 1;
-		gt_rootHub = hub;
-		
-		/* netlink sock create */
-		netlink_sock = netlink_kernel_create(&init_net, NETLINK_USERSOCK, 0,udp_receive, NULL, THIS_MODULE);
-	}
-#endif
-	
-#ifdef ORG_SUSPEND_RESUME_TEST
-	static int getRootHub = 0;
-	if(!getRootHub)
-	{
-		getRootHub = 1;
-		gt_rootHub = hub;
-		create_ic_tmp_entry();
-	}
-#endif
-
-
 	kref_init(&hub->kref);
 	INIT_LIST_HEAD(&hub->event_list);
 	hub->intfdev = &intf->dev;
@@ -2653,11 +1745,6 @@ void usb_disconnect(struct usb_device **pdev)
 {
 	struct usb_device	*udev = *pdev;
 	int			i;
-#ifdef MTK_ICUSB_SUPPORT
-	struct timeval tv_begin, tv_end;
-	struct timeval tv_before, tv_after;
-	do_gettimeofday(&tv_begin);
-#endif
 
 	/* mark the device as inactive, so any further urb submissions for
 	 * this device (and any of its children) will fail immediately.
@@ -2680,38 +1767,17 @@ void usb_disconnect(struct usb_device **pdev)
 	 * so that the hardware is now fully quiesced.
 	 */
 	dev_dbg (&udev->dev, "unregistering device\n");
-#ifdef MTK_ICUSB_SUPPORT
-	do_gettimeofday(&tv_before);
-#endif
 	usb_disable_device(udev, 0);
-#ifdef MTK_ICUSB_SUPPORT
-	do_gettimeofday(&tv_after);
-	MYDBG("usb_disable_device(), time spent, sec : %d, usec : %d\n", (tv_after.tv_sec - tv_before.tv_sec), (tv_after.tv_usec - tv_before.tv_usec));
-#endif
 	usb_hcd_synchronize_unlinks(udev);
 
-#ifdef MTK_ICUSB_SUPPORT
-	do_gettimeofday(&tv_before);
-#endif
 	usb_remove_ep_devs(&udev->ep0);
-#ifdef MTK_ICUSB_SUPPORT
-	do_gettimeofday(&tv_after);
-	MYDBG("usb_remove_ep_devs(), time spent, sec : %d, usec : %d\n", (tv_after.tv_sec - tv_before.tv_sec), (tv_after.tv_usec - tv_before.tv_usec));
-#endif
 	usb_unlock_device(udev);
 
 	/* Unregister the device.  The device driver is responsible
 	 * for de-configuring the device and invoking the remove-device
 	 * notifier chain (used by usbfs and possibly others).
 	 */
-#ifdef MTK_ICUSB_SUPPORT
-	do_gettimeofday(&tv_before);
-#endif
 	device_del(&udev->dev);
-#ifdef MTK_ICUSB_SUPPORT
-	do_gettimeofday(&tv_after);
-	MYDBG("device_del(), time spent, sec : %d, usec : %d\n", (tv_after.tv_sec - tv_before.tv_sec), (tv_after.tv_usec - tv_before.tv_usec));
-#endif
 
 	/* Free the device number and delete the parent's children[]
 	 * (or root_hub) pointer.
@@ -2726,14 +1792,6 @@ void usb_disconnect(struct usb_device **pdev)
 	hub_free_dev(udev);
 
 	put_device(&udev->dev);
-	
-#ifdef MTK_ICUSB_SUPPORT
-
-	set_usb11_sts_disconnect_done();
-
-	do_gettimeofday(&tv_end);
-	MYDBG("time spent, sec : %d, usec : %d\n", (tv_end.tv_sec - tv_begin.tv_sec), (tv_end.tv_usec - tv_begin.tv_usec));
-#endif
 }
 
 #ifdef CONFIG_USB_ANNOUNCE_NEW_DEVICES
@@ -2945,7 +2003,6 @@ int usb_new_device(struct usb_device *udev)
 		 * sysfs power/wakeup controls wakeup enabled/disabled
 		 */
 		device_init_wakeup(&udev->dev, 0);
-		MYDBG("udev :%x\n", (unsigned int)udev);
 	}
 
 	/* Tell the runtime-PM framework the device is active */
@@ -3157,9 +2214,7 @@ static int hub_port_wait_reset(struct usb_hub *hub, int port1,
 		msleep(delay);
 
 		/* read and decode port status */
-		MYDBG("");
 		ret = hub_port_status(hub, port1, &portstatus, &portchange);
-		MYDBG("");
 		if (ret < 0)
 			return ret;
 
@@ -3283,35 +2338,25 @@ static int hub_port_reset(struct usb_hub *hub, int port1,
 
 	/* Reset the port */
 	for (i = 0; i < PORT_RESET_TRIES; i++) {
-		MYDBG("");
 		status = set_port_feature(hub->hdev, port1, (warm ?
 					USB_PORT_FEAT_BH_PORT_RESET :
 					USB_PORT_FEAT_RESET));
-		MYDBG("");
 		if (status) {
-			MYDBG("");
 			dev_err(hub->intfdev,
 					"cannot %sreset port %d (err = %d)\n",
 					warm ? "warm " : "", port1, status);
 		} else {
-			MYDBG("");
 			status = hub_port_wait_reset(hub, port1, udev, delay,
 								warm);
 			if (status && status != -ENOTCONN)
-			{
-				MYDBG("");
 				dev_dbg(hub->intfdev,
 						"port_wait_reset: err = %d\n",
 						status);
-			}
 		}
 
-		MYDBG("");
-		/* return on disconnect or reset */
+		/* Check for disconnect or reset */
 		if (status == 0 || status == -ENOTCONN || status == -ENODEV) {
-			MYDBG("");
 			hub_port_finish_reset(hub, port1, udev, &status);
-			MYDBG("");
 
 			if (!hub_is_superspeed(hub->hdev))
 				goto done;
@@ -3337,15 +2382,12 @@ static int hub_port_reset(struct usb_hub *hub, int port1,
 				warm = true;
 			}
 		}
-		MYDBG("");
 
 		dev_dbg (hub->intfdev,
 			"port %d not enabled, trying %sreset again...\n",
 			port1, warm ? "warm " : "");
 		delay = HUB_LONG_RESET_TIME;
 	}
-	MYDBG("");
-
 
 	dev_err (hub->intfdev,
 		"Cannot enable port %i.  Maybe the USB cable is bad?\n",
@@ -3353,12 +2395,7 @@ static int hub_port_reset(struct usb_hub *hub, int port1,
 
 done:
 	if (!hub_is_superspeed(hub->hdev))
-	{
-		MYDBG("");
 		up_read(&ehci_cf_port_reset_rwsem);
-	}
-
-	MYDBG("");
 
 	return status;
 }
@@ -3511,15 +2548,6 @@ int usb_port_suspend(struct usb_device *udev, pm_message_t msg)
 	struct usb_hub	*hub = hdev_to_hub(udev->parent);
 	int		port1 = udev->portnum;
 	int		status;
-
-#ifdef MTK_ICUSB_SUPPORT
-	if(!is_usb11_enabled())
-	{
-		MYDBG("usb11 is not enabled");
-		return 0;
-	}
-	MYDBG("");
-#endif
 
 	/* enable remote wakeup when appropriate; this lets the device
 	 * wake up the upstream hub (including maybe the root hub).
@@ -3743,15 +2771,6 @@ int usb_port_resume(struct usb_device *udev, pm_message_t msg)
 	int		port1 = udev->portnum;
 	int		status;
 	u16		portchange, portstatus;
-
-#ifdef MTK_ICUSB_SUPPORT
-	if(!is_usb11_enabled())
-	{
-		MYDBG("usb11 is not enabled");
-		return 0;
-	}
-	MYDBG("");
-#endif
 
 	/* Skip the initial Clear-Suspend step for a remote wakeup */
 	status = hub_port_status(hub, port1, &portstatus, &portchange);
@@ -4016,6 +3035,8 @@ void usb_ep0_reinit(struct usb_device *udev)
 }
 EXPORT_SYMBOL_GPL(usb_ep0_reinit);
 
+#define usb_sndaddr0pipe()	(PIPE_CONTROL << 30)
+#define usb_rcvaddr0pipe()	((PIPE_CONTROL << 30) | USB_DIR_IN)
 
 static int hub_set_address(struct usb_device *udev, int devnum)
 {
@@ -4070,7 +3091,6 @@ hub_port_init (struct usb_hub *hub, struct usb_device *udev, int port1,
 	const char		*speed;
 	int			devnum = udev->devnum;
 
-	dump_stack(); 
 	/* root hub ports have a slightly longer reset period
 	 * (from USB 2.0 spec, section 7.1.7.5)
 	 */
@@ -4089,9 +3109,7 @@ hub_port_init (struct usb_hub *hub, struct usb_device *udev, int port1,
 
 	/* Reset the device; full speed may morph to high speed */
 	/* FIXME a USB 2.0 device may morph into SuperSpeed on reset. */
-	MYDBG(""); 
 	retval = hub_port_reset(hub, port1, udev, delay, false);
-	MYDBG(""); 
 	if (retval < 0)		/* error or disconnect */
 		goto fail;
 	/* success, speed is known */
@@ -4130,7 +3148,6 @@ hub_port_init (struct usb_hub *hub, struct usb_device *udev, int port1,
 	default:
 		goto fail;
 	}
-	MYDBG("");
 
 	if (udev->speed == USB_SPEED_WIRELESS)
 		speed = "variable speed Wireless";
@@ -4171,7 +3188,6 @@ hub_port_init (struct usb_hub *hub, struct usb_device *udev, int port1,
 	 * value.
 	 */
 	for (i = 0; i < GET_DESCRIPTOR_TRIES; (++i, msleep(100))) {
-		MYDBG("");
 		if (USE_NEW_SCHEME(retry_counter) && !(hcd->driver->flags & HCD_USB3)) {
 			struct usb_device_descriptor *buf;
 			int r = 0;
@@ -4433,7 +3449,6 @@ static void hub_port_connect_change(struct usb_hub *hub, int port1,
 	struct usb_device *udev;
 	int status, i;
 
-	MYDBG("");
 	dev_dbg (hub_dev,
 		"port %d, status %04x, change %04x, %s\n",
 		port1, portstatus, portchange, portspeed(hub, portstatus));
@@ -4550,14 +3565,9 @@ static void hub_port_connect_change(struct usb_hub *hub, int port1,
 		}
 
 		/* reset (non-USB 3.0 devices) and get descriptor */
-		MYDBG("");
 		status = hub_port_init(hub, udev, port1, i);
 		if (status < 0)
-		{
-			MYDBG(""); 
 			goto loop;
-		}
-		MYDBG(""); 
 
 		usb_detect_quirks(udev);
 		if (udev->quirks & USB_QUIRK_DELAY_INIT)
@@ -4625,14 +3635,6 @@ static void hub_port_connect_change(struct usb_hub *hub, int port1,
 				hdev->children[port1-1] = NULL;
 				spin_unlock_irq(&device_state_lock);
 			}
-#ifdef MTK_ICUSB_SUPPORT
-			g_sim_dev = udev;
-			MYDBG("get new device !!!, BUILD TIME : %s, g_sim_dev : %x\n", __TIME__, g_sim_dev);
-#endif
-#ifdef ORG_SUSPEND_RESUME_TEST
-			g_sim_dev = udev;
-			MYDBG("get new device !!!, BUILD TIME : %s, g_sim_dev : %x\n", __TIME__, g_sim_dev);
-#endif
 		}
 
 		if (status)
@@ -4781,7 +3783,6 @@ static void hub_events(void)
 			dev_dbg (hub_dev, "resetting for error %d\n",
 				hub->error);
 
-			MYDBG("");
 			ret = usb_reset_device(hdev);
 			if (ret) {
 				dev_dbg (hub_dev,
@@ -5152,7 +4153,6 @@ static int usb_reset_and_verify_device(struct usb_device *udev)
 	int 				i, ret = 0;
 	int				port1 = udev->portnum;
 
-	MYDBG("");
 	if (udev->state == USB_STATE_NOTATTACHED ||
 			udev->state == USB_STATE_SUSPENDED) {
 		dev_dbg(&udev->dev, "device reset not allowed in state %d\n",
@@ -5282,7 +4282,6 @@ re_enumerate:
  */
 int usb_reset_device(struct usb_device *udev)
 {
-	MYDBG("");
 	int ret;
 	int i;
 	struct usb_host_config *config = udev->actconfig;

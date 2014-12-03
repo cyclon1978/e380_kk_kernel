@@ -1077,7 +1077,6 @@ static long do_fb_ioctl(struct file *file, struct fb_info *info, unsigned int cm
 	struct fb_event event;
 	void __user *argp = (void __user *)arg;
 	long ret = 0;
-	long package[2];
 
 	switch (cmd) {
 	case FBIOGET_VSCREENINFO:

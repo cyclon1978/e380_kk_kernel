@@ -128,7 +128,7 @@ kal_uint32 bq24158_read_interface (kal_uint8 RegNum, kal_uint8 *val, kal_uint8 M
     kal_uint8 bq24158_reg = 0;
     int ret = 0;
 
-    printk("--------------------------------------------------\n");
+    // printk("--------------------------------------------------\n");
 
     ret = bq24158_read_byte(RegNum, &bq24158_reg);
 	if (Enable_BATDRV_LOG == 1) {
@@ -147,16 +147,16 @@ kal_uint32 bq24158_config_interface (kal_uint8 RegNum, kal_uint8 val, kal_uint8 
     kal_uint8 bq24158_reg = 0;
     int ret = 0;
 
-    printk("--------------------------------------------------\n");
+    // printk("--------------------------------------------------\n");
 
     ret = bq24158_read_byte(RegNum, &bq24158_reg);
-    printk("[bq24158_config_interface] Reg[%x]=0x%x\n", RegNum, bq24158_reg);
+    //printk("[bq24158_config_interface] Reg[%x]=0x%x\n", RegNum, bq24158_reg);
     
     bq24158_reg &= ~(MASK << SHIFT);
     bq24158_reg |= (val << SHIFT);
 
     ret = bq24158_write_byte(RegNum, bq24158_reg);
-    printk("[bq24158_config_interface] write Reg[%x]=0x%x\n", RegNum, bq24158_reg);
+    //printk("[bq24158_config_interface] write Reg[%x]=0x%x\n", RegNum, bq24158_reg);
 
     // Check
     //bq24158_read_byte(RegNum, &bq24158_reg);

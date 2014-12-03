@@ -54,13 +54,13 @@ static long monitor_hang_ioctl(struct file *file, unsigned int cmd, unsigned lon
  *****************************************************************************/
 static int monitor_hang_open(struct inode *inode, struct file *filp)
 {
-	xlog_printk(ANDROID_LOG_DEBUG, AEK_LOG_TAG, "%s\n", __func__);	
+	//xlog_printk(ANDROID_LOG_DEBUG, AEK_LOG_TAG, "%s\n", __func__);	
 	return 0;
 }
 
 static int monitor_hang_release(struct inode *inode, struct file *filp)
 {
-	xlog_printk(ANDROID_LOG_DEBUG, AEK_LOG_TAG, "%s\n", __func__);	
+	//xlog_printk(ANDROID_LOG_DEBUG, AEK_LOG_TAG, "%s\n", __func__);	
 	return 0;
 }
 
@@ -120,7 +120,7 @@ static long monitor_hang_ioctl(struct file *file, unsigned int cmd, unsigned lon
 			aee_kernel_wdt_kick_Powkey_api("Powerkey ioctl",(int)arg);
 		}
 		
-		xlog_printk(ANDROID_LOG_DEBUG, AEK_LOG_TAG, "AEEIOCTL_WDT_Kick_Powerkey ( 0x%x)\n", (int)arg);
+		//xlog_printk(ANDROID_LOG_DEBUG, AEK_LOG_TAG, "AEEIOCTL_WDT_Kick_Powerkey ( 0x%x)\n", (int)arg);
 		#endif
 		
 		return ret;
@@ -427,7 +427,7 @@ void aee_kernel_wdt_kick_Powkey_api(const char *module,  int msg)
 	spin_lock(&pwk_hang_lock);	
 	wdt_kick_status|= msg ;
 	spin_unlock(&pwk_hang_lock);
-	printk("powerkey_kick:%s:%x,%x\r", module,msg,wdt_kick_status);
+	//printk("powerkey_kick:%s:%x,%x\r", module,msg,wdt_kick_status);
 	#endif
 	
 }
