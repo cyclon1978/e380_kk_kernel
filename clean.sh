@@ -1,4 +1,4 @@
-export PATH=$PATH:$(pwd)/../../tools/android-ndk-r10c/toolchains/arm-linux-androideabi-4.8/prebuilt/linux-x86_64/bin
+export PATH=$PATH:$(pwd)/../../../../tools/android-ndk-r10c/toolchains/arm-linux-androideabi-4.9/prebuilt/linux-x86_64/bin
 
 export ARCH=arm
 export CROSS_COMPILE=arm-linux-androideabi-
