@@ -644,6 +644,8 @@ void add_disk(struct gendisk *disk)
 	if (get_capacity(disk)) {
 		unsigned long size = get_capacity(disk) >> 9;
 		size = 1UL << (ilog2(size) / 2);
+		// avoid setting value lower than stock default (128k -> 128/4 = 32 pages)
+		size = max(size, 32);
 		bdi->ra_pages = min(bdi->ra_pages, size);
 	}
 #endif
