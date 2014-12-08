@@ -1,4 +1,4 @@
-TOOLCHAIN=/home/alangmann/pvt/tools/android-ndk-r10c/toolchains/arm-linux-androideabi-4.6/prebuilt/linux-x86_64/bin
+TOOLCHAIN=~/pvt/tools/android-ndk-r10c/toolchains/arm-linux-androideabi-4.6/prebuilt/linux-x86_64/bin
 export PATH=$TOOLCHAIN:$PATH
 export ARCH=arm
 export CROSS_COMPILE=arm-eabi-
@@ -21,7 +21,7 @@ cp ../out/Download/flash/kernel_simcom89_we_kk.bin ./boot.img-kernel.img
 #find ./system/lib/modules/ -type f -name '*.ko' | xargs -n 1 $TOOLCHAIN/arm-eabi-strip --strip-unneeded
 # fix permissions
 chmod 755 ./boot.img-ramdisk/ -R
-/home/alangmann/pvt/tools/mtk-tools/repack-MTK.pl -boot boot.img-kernel.img boot.img-ramdisk boot.img
+~/pvt/tools/mtk-tools/repack-MTK.pl -boot boot.img-kernel.img boot.img-ramdisk boot.img
 cp ./testkernel_template.zip ./testkernel.zip
 zip -u -r ./testkernel.zip ./boot.img
 
