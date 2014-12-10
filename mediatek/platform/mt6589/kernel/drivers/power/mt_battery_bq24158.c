@@ -3891,6 +3891,8 @@ void BAT_thread_bq24158(void)
 #if (DISABLE_ALL_LOGS < 1)
                 	printk("[BATTERY:bq24158] Battery not real full ENOUGH (BLX) because of voltage calculated percentage and enable charging (%d) SOC: %d \n", bq24158_status, BMT_status.SOC); 
 #endif
+			// patch: anyway... we stop charging to avoid "charge loops", we do not need to exactly reach blx configured maximum - test for bug with non-usb charger
+                	return;
 		}
 	} else {
 #if (DISABLE_ALL_LOGS < 1)
