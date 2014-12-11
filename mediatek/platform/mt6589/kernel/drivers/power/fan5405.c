@@ -8,7 +8,9 @@
 #include <linux/input.h>
 #include <linux/workqueue.h>
 #include <linux/kobject.h>
-#include <linux/earlysuspend.h>
+#ifdef CONFIG_POWERSUSPEND
+#include <linux/powersuspend.h>
+#endif
 #include <linux/platform_device.h>
 #include <asm/atomic.h>
 

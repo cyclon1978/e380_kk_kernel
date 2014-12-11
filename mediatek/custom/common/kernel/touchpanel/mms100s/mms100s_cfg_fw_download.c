@@ -4,7 +4,7 @@
 #include <linux/firmware.h>
 #include <linux/delay.h>
 #include <linux/gpio.h>
-#include <linux/earlysuspend.h>
+#include <linux/powersuspend.h>
 #include <linux/i2c.h>
 #include <linux/irq.h>
 #include <linux/interrupt.h>

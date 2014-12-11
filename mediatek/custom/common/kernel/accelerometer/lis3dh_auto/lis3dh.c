@@ -23,7 +23,7 @@
 #include <linux/input.h>
 #include <linux/workqueue.h>
 #include <linux/kobject.h>
-#include <linux/earlysuspend.h>
+#include <linux/powersuspend.h>
 #include <linux/platform_device.h>
 #include <asm/atomic.h>
 
@@ -1649,7 +1649,7 @@ static void lis3dh_late_resume(struct early_suspend *h)
 	atomic_set(&obj->suspend, 0);    
 }
 /*----------------------------------------------------------------------------*/
-#endif /*CONFIG_HAS_EARLYSUSPEND*/
+#endif /*CONFIG_POWERSUSPEND*/
 /*----------------------------------------------------------------------------*/
 static int lis3dh_i2c_detect(struct i2c_client *client, struct i2c_board_info *info) 
 {    

@@ -54,9 +54,9 @@ extern void cyttsp4_mtk_gpio_interrupt_disable();
 #include <linux/workqueue.h>
 #include <linux/kthread.h>
 /* BEGIN PN:SPBB-1257 ,Added by l00184147, 2013/2/21*/
-//add earlysuspend head file
-#ifdef CONFIG_HAS_EARLYSUSPEND
-#include <linux/earlysuspend.h>
+//add powersuspend.head file
+#ifdef CONFIG_POWERSUSPEND
+#include <linux/powersuspend.h>
 #endif
 /* END PN:SPBB-1257 ,Added by l00184147, 2013/2/21*/
 
@@ -168,7 +168,7 @@ struct cyttsp4_core_data {
 	struct timer_list watchdog_timer;
 /* BEGIN PN:SPBB-1257 ,Added by l00184147, 2013/2/21*/	
 //add the early_suspend structure
-#ifdef CONFIG_HAS_EARLYSUSPEND
+#ifdef CONFIG_POWERSUSPEND
 	struct early_suspend es;
 #endif
 /* END PN:SPBB-1257 ,Added by l00184147, 2013/2/21*/
@@ -2832,7 +2832,7 @@ static int cyttsp4_core_resume(struct device *dev)
 //	SET_RUNTIME_PM_OPS(cyttsp4_core_suspend, cyttsp4_core_resume, NULL)
 //};
 
-#ifdef CONFIG_HAS_EARLYSUSPEND
+#ifdef CONFIG_POWERSUSPEND
 /******************************************************************************
 Function:cyttsp4_core_early_suspend
 Description:called by Power management to make the touch sleep earlier
@@ -3702,7 +3702,7 @@ static int cyttsp4_core_probe(struct cyttsp4_core *core)
 		goto error_startup;
 	}
 /* BEGIN PN:SPBB-1257 ,Added by l00184147, 2013/2/21*/	
-#ifdef CONFIG_HAS_EARLYSUSPEND
+#ifdef CONFIG_POWERSUSPEND
 	cyttsp4_core_setup_early_suspend(cd);
 #endif
 /* END PN:SPBB-1257 ,Added by l00184147, 2013/2/21*/
@@ -3744,7 +3744,7 @@ static int cyttsp4_core_release(struct cyttsp4_core *core)
 
 	dev_dbg(dev, "%s\n", __func__);
 /* BEGIN PN:SPBB-1257 ,Added by l00184147, 2013/2/21*/
-#ifdef CONFIG_HAS_EARLYSUSPEND
+#ifdef CONFIG_POWERSUSPEND
 	unregister_early_suspend(&cd->es);
 #endif
 /* END PN:SPBB-1257 ,Added by l00184147, 2013/2/21*/

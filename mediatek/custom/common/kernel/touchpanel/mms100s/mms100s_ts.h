@@ -147,7 +147,7 @@ struct mms_ts_info {
 
 	char 				*fw_name;
 	struct completion 		init_done;
-	struct early_suspend		early_suspend;
+	struct power_suspend		early_suspend;
 
 	struct mutex 			lock;
 	bool				enabled;

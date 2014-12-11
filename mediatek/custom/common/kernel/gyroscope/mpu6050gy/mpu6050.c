@@ -21,7 +21,7 @@
 #include <linux/input.h>
 #include <linux/workqueue.h>
 #include <linux/kobject.h>
-#include <linux/earlysuspend.h>
+#include <linux/powersuspend.h>
 #include <linux/platform_device.h>
 
 #include <cust_gyro.h>
@@ -122,7 +122,7 @@ struct mpu6050_i2c_data
     struct data_filter      fir;
 #endif 
     /*early suspend*/
-#if defined(CONFIG_HAS_EARLYSUSPEND)
+#if defined(CONFIG_POWERSUSPEND)
     struct early_suspend    early_drv;
 #endif     
 #if INV_GYRO_AUTO_CALI==1
@@ -140,7 +140,7 @@ static struct i2c_driver mpu6050_i2c_driver = {
     .probe              = mpu6050_i2c_probe,
     .remove             = mpu6050_i2c_remove,
     .detect             = mpu6050_i2c_detect,
-#if !defined(CONFIG_HAS_EARLYSUSPEND)    
+#if !defined(CONFIG_POWERSUSPEND)    
     .suspend            = mpu6050_suspend,
     .resume             = mpu6050_resume,
 #endif
@@ -1556,7 +1556,7 @@ static struct miscdevice mpu6050_device = {
     .fops = &mpu6050_fops,
 };
 /*----------------------------------------------------------------------------*/
-#ifndef CONFIG_HAS_EARLYSUSPEND
+#ifndef CONFIG_POWERSUSPEND
 /*----------------------------------------------------------------------------*/
 static int mpu6050_suspend(struct i2c_client *client, pm_message_t msg) 
 {
@@ -1654,7 +1654,7 @@ static void mpu6050_late_resume(struct early_suspend *h)
     atomic_set(&obj->suspend, 0);    
 }
 /*----------------------------------------------------------------------------*/
-#endif /*CONFIG_HAS_EARLYSUSPEND*/
+#endif /*CONFIG_POWERSUSPEND*/
 /*----------------------------------------------------------------------------*/
 static int mpu6050_i2c_detect(struct i2c_client *client, struct i2c_board_info *info) 
 {    
@@ -1744,7 +1744,7 @@ static int mpu6050_i2c_probe(struct i2c_client *client, const struct i2c_device_
     }
 
 
-#ifdef CONFIG_HAS_EARLYSUSPEND
+#ifdef CONFIG_POWERSUSPEND
     obj->early_drv.level    = EARLY_SUSPEND_LEVEL_STOP_DRAWING - 2,
     obj->early_drv.suspend  = mpu6050_early_suspend,
     obj->early_drv.resume   = mpu6050_late_resume,    

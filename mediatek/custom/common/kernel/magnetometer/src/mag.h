@@ -12,7 +12,7 @@
 #include <linux/slab.h>
 #include <linux/module.h>
 #include <linux/hwmsensor.h>
-#include <linux/earlysuspend.h> 
+#include <linux/powersuspend.h> 
 
 
 #define MAG_TAG					"<MAGNETIC> "
@@ -110,7 +110,7 @@ struct mag_context {
 	struct timer_list   timer;  /* polling timer */
 	atomic_t            trace;
 
-	struct early_suspend    early_drv;
+	struct power_suspend    early_drv;
 	struct mag_data_path mag_dev_data;
 	struct mag_control_path mag_ctl;
 	struct wake_lock        read_data_wake_lock;

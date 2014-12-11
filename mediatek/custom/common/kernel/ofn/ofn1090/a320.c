@@ -28,7 +28,7 @@
 #include <linux/time.h>
 #include <linux/types.h>
 #include <linux/i2c.h>
-#include <linux/earlysuspend.h>
+#include <linux/powersuspend.h>
 #include <linux/hwmon-sysfs.h>
 #include <linux/delay.h>
 #include <mach/irqs.h>
@@ -82,7 +82,7 @@ static ssize_t a320_show_trace(struct device *dev,
                                struct device_attribute *attr, char *buf);
 static ssize_t a320_store_trace(struct device* dev, 
                                 struct device_attribute *attr, const char *buf, size_t count);
-#if !defined(CONFIG_HAS_EARLYSUSPEND)                                 
+#if !defined(CONFIG_POWERSUSPEND)                                 
 static int a320_i2c_suspend(struct i2c_client *client, pm_message_t msg);
 static int a320_i2c_resume(struct i2c_client *client);
 #endif
@@ -171,7 +171,7 @@ struct a320_priv
     u_long   pending;   /*bit mask, to indicate if event is pending in some direction*/        
        
     /*early suspend*/
-#if defined(CONFIG_HAS_EARLYSUSPEND)    
+#if defined(CONFIG_POWERSUSPEND)    
     struct early_suspend early_drv;
 #endif     
 };
@@ -196,7 +196,7 @@ static struct i2c_driver a320_i2c_driver = {
     .probe      = a320_i2c_probe,
     .remove     = a320_i2c_remove,
 //    .detect     = a320_i2c_detect,
-#if !defined(CONFIG_HAS_EARLYSUSPEND)    	
+#if !defined(CONFIG_POWERSUSPEND)    	
 	.suspend    = a320_i2c_suspend,
 	.resume     = a320_i2c_resume,
 #endif
@@ -1085,7 +1085,7 @@ static int a320_reset_and_init(struct i2c_client* client)
 /*----------------------------------------------------------------------------*/
 /* timer keep polling Jog Ball status                                         */
 /*----------------------------------------------------------------------------*/
-#if !defined(CONFIG_HAS_EARLYSUSPEND)
+#if !defined(CONFIG_POWERSUSPEND)
 /*----------------------------------------------------------------------------*/
 static int a320_i2c_suspend(struct i2c_client *client, pm_message_t msg) 
 {
@@ -1245,7 +1245,7 @@ static int a320_i2c_probe(struct i2c_client *client, const struct i2c_device_id 
         goto err_create_attr;
     }
     
-#if defined(CONFIG_HAS_EARLYSUSPEND)
+#if defined(CONFIG_POWERSUSPEND)
     obj->early_drv.level = EARLY_SUSPEND_LEVEL_BLANK_SCREEN + 1;
     obj->early_drv.suspend = a320_early_suspend;
     obj->early_drv.resume = a320_late_resume;

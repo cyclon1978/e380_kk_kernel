@@ -23,7 +23,7 @@
 #include <linux/input.h>
 #include <linux/workqueue.h>
 #include <linux/kobject.h>
-#include <linux/earlysuspend.h>
+#include <linux/powersuspend.h>
 #include <linux/platform_device.h>
 #include <asm/atomic.h>
 
@@ -160,7 +160,7 @@ struct stk2203_priv {
     ulong       pending_intr;     /*pending interrupt*/
 
     /*early suspend*/
-#if defined(CONFIG_HAS_EARLYSUSPEND)
+#if defined(CONFIG_POWERSUSPEND)
     struct early_suspend    early_drv;
 #endif     
 };
@@ -1806,7 +1806,7 @@ static int stk2203_i2c_probe(struct i2c_client *client, const struct i2c_device_
 	}
 
 
-#if defined(CONFIG_HAS_EARLYSUSPEND)
+#if defined(CONFIG_POWERSUSPEND)
 	obj->early_drv.level    = EARLY_SUSPEND_LEVEL_STOP_DRAWING - 2,
 	obj->early_drv.suspend  = stk2203_early_suspend,
 	obj->early_drv.resume   = stk2203_late_resume,    

@@ -23,7 +23,7 @@
 #include <linux/input.h>
 #include <linux/workqueue.h>
 #include <linux/kobject.h>
-#include <linux/earlysuspend.h>
+#include <linux/powersuspend.h>
 #include <linux/platform_device.h>
 #include <asm/atomic.h>
 
@@ -121,7 +121,7 @@ struct adxl345_i2c_data {
     struct data_filter      fir;
 #endif 
     /*early suspend*/
-#if defined(CONFIG_HAS_EARLYSUSPEND)
+#if defined(CONFIG_POWERSUSPEND)
     struct early_suspend    early_drv;
 #endif     
 };
@@ -134,7 +134,7 @@ static struct i2c_driver adxl345_i2c_driver = {
 	.probe      		= adxl345_i2c_probe,
 	.remove    			= adxl345_i2c_remove,
 //	.detect				= adxl345_i2c_detect,
-//#if !defined(CONFIG_HAS_EARLYSUSPEND)    
+//#if !defined(CONFIG_POWERSUSPEND)    
     .suspend            = adxl345_suspend,
     .resume             = adxl345_resume,
 //#endif
@@ -1607,7 +1607,7 @@ static struct miscdevice adxl345_device = {
 	.fops = &adxl345_fops,
 };
 /*----------------------------------------------------------------------------*/
-//#ifndef CONFIG_HAS_EARLYSUSPEND
+//#ifndef CONFIG_POWERSUSPEND
 /*----------------------------------------------------------------------------*/
 static int adxl345_suspend(struct i2c_client *client, pm_message_t msg) 
 {
@@ -1704,7 +1704,7 @@ static void adxl345_late_resume(struct early_suspend *h)
 	atomic_set(&obj->suspend, 0);    
 }
 /*----------------------------------------------------------------------------*/
-//#endif /*CONFIG_HAS_EARLYSUSPEND*/
+//#endif /*CONFIG_POWERSUSPEND*/
 /*----------------------------------------------------------------------------*/
 
 /*
@@ -1795,7 +1795,7 @@ static int adxl345_i2c_probe(struct i2c_client *client, const struct i2c_device_
 		goto exit_kfree;
 	}
 
-#ifdef CONFIG_HAS_EARLYSUSPEND
+#ifdef CONFIG_POWERSUSPEND
 	obj->early_drv.level    = EARLY_SUSPEND_LEVEL_STOP_DRAWING - 2,
 	obj->early_drv.suspend  = adxl345_early_suspend,
 	obj->early_drv.resume   = adxl345_late_resume,    

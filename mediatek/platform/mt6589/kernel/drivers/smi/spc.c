@@ -8,7 +8,9 @@
 #include <linux/wait.h>
 #include <linux/spinlock.h>
 #include <linux/delay.h>
-#include <linux/earlysuspend.h>
+#ifdef CONFIG_POWERSUSPEND
+#include <linux/powersuspend.h>
+#endif
 #include <linux/mm.h>
 #include <linux/slab.h>
 #include <linux/sched.h>   

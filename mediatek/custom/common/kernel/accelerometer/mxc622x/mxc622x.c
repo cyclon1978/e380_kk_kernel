@@ -23,7 +23,7 @@
 #include <linux/input.h>
 #include <linux/workqueue.h>
 #include <linux/kobject.h>
-#include <linux/earlysuspend.h>
+#include <linux/powersuspend.h>
 #include <linux/platform_device.h>
 #include <asm/atomic.h>
 	 
@@ -122,7 +122,7 @@
 		 struct data_filter 	 fir;
 #endif 
 		 /*early suspend*/
-#if defined(CONFIG_HAS_EARLYSUSPEND)
+#if defined(CONFIG_POWERSUSPEND)
 		 struct early_suspend	 early_drv;
 #endif     
 	 };
@@ -135,7 +135,7 @@
 		 .probe 			 = mxc622x_i2c_probe,
 		 .remove			 = mxc622x_i2c_remove,
 //		 .detect			 = mxc622x_i2c_detect,
-#if !defined(CONFIG_HAS_EARLYSUSPEND)    
+#if !defined(CONFIG_POWERSUSPEND)    
 		 .suspend			 = mxc622x_suspend,
 		 .resume			 = mxc622x_resume,
 #endif
@@ -1899,7 +1899,7 @@ static ssize_t store_layout_value(struct device_driver *ddri, char *buf, size_t 
 		 .fops = &mxc622x_fops,
 	 };
 	 /*----------------------------------------------------------------------------*/
-#ifndef CONFIG_HAS_EARLYSUSPEND
+#ifndef CONFIG_POWERSUSPEND
 	 /*----------------------------------------------------------------------------*/
 	 static int mxc622x_suspend(struct i2c_client *client, pm_message_t msg) 
 	 {
@@ -1994,7 +1994,7 @@ static ssize_t store_layout_value(struct device_driver *ddri, char *buf, size_t 
 		 atomic_set(&obj->suspend, 0);	  
 	 }
 	 /*----------------------------------------------------------------------------*/
-#endif /*CONFIG_HAS_EARLYSUSPEND*/
+#endif /*CONFIG_POWERSUSPEND*/
 
 	 /*----------------------------------------------------------------------------*/
 	 static int mxc622x_i2c_probe(struct i2c_client *client, const struct i2c_device_id *id)
@@ -2076,7 +2076,7 @@ static ssize_t store_layout_value(struct device_driver *ddri, char *buf, size_t 
 			 goto exit_kfree;
 		 }
 	 
-#ifdef CONFIG_HAS_EARLYSUSPEND
+#ifdef CONFIG_POWERSUSPEND
 		 obj->early_drv.level	 = EARLY_SUSPEND_LEVEL_DISABLE_FB - 1,
 		 obj->early_drv.suspend  = mxc622x_early_suspend,
 		 obj->early_drv.resume	 = mxc622x_late_resume,	  

@@ -460,7 +460,7 @@ static void cyttsp4_mt_close(struct input_dev *input)
   pm_runtime_put(dev);
 }
 
-#ifdef CONFIG_HAS_EARLYSUSPEND
+#ifdef CONFIG_POWERSUSPEND
 static void cyttsp4_mt_early_suspend(struct early_suspend *h)
 {
   struct cyttsp4_mt_data *md =
@@ -640,7 +640,7 @@ int cyttsp4_mt_release(struct cyttsp4_device *ttsp)
 
 	dev_dbg(dev, "%s\n", __func__);
 
-#ifdef CONFIG_HAS_EARLYSUSPEND
+#ifdef CONFIG_POWERSUSPEND
 	/*
 	 * This check is to prevent pm_runtime usage_count drop below zero
 	 * because of removing the module while in suspended state
@@ -738,7 +738,7 @@ static int cyttsp4_mt_probe(struct cyttsp4_device *ttsp)
 			cyttsp4_setup_input_attention, 0);
 	}
 
-#ifdef CONFIG_HAS_EARLYSUSPEND
+#ifdef CONFIG_POWERSUSPEND
   cyttsp4_setup_early_suspend(md);
 #endif
   dev_dbg(dev, "%s: OK\n", __func__);

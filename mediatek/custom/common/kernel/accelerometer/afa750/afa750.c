@@ -22,7 +22,7 @@
 #include <linux/input.h>
 #include <linux/workqueue.h>
 #include <linux/kobject.h>
-#include <linux/earlysuspend.h>
+#include <linux/powersuspend.h>
 #include <linux/platform_device.h>
 #include <asm/atomic.h>
 
@@ -147,7 +147,7 @@ struct AFA750_i2c_data {
     s16                     data[AFA750_AXES_NUM+1];
 
     /*early suspend*/
-#if defined(CONFIG_HAS_EARLYSUSPEND)
+#if defined(CONFIG_POWERSUSPEND)
     struct early_suspend    early_drv;
 #endif
 };
@@ -160,7 +160,7 @@ static struct i2c_driver AFA750_i2c_driver = {
     .probe              = AFA750_i2c_probe,
     .remove                = AFA750_i2c_remove,
 //    .detect                = AFA750_i2c_detect,
-#if !defined(CONFIG_HAS_EARLYSUSPEND)
+#if !defined(CONFIG_POWERSUSPEND)
     .suspend            = AFA750_suspend,
     .resume             = AFA750_resume,
 #endif
@@ -926,7 +926,7 @@ static struct miscdevice AFA750_device = {
     .fops = &AFA750_fops,
 };
 /*----------------------------------------------------------------------------*/
-#ifndef CONFIG_HAS_EARLYSUSPEND
+#ifndef CONFIG_POWERSUSPEND
 /*----------------------------------------------------------------------------*/
 static int AFA750_suspend(struct i2c_client *client, pm_message_t msg)
 {
@@ -1022,7 +1022,7 @@ static void AFA750_late_resume(struct early_suspend *h)
     atomic_set(&obj->suspend, 0);
 }
 /*----------------------------------------------------------------------------*/
-#endif /*CONFIG_HAS_EARLYSUSPEND*/
+#endif /*CONFIG_POWERSUSPEND*/
 /*----------------------------------------------------------------------------*/
 static int AFA750_i2c_detect(struct i2c_client *client, int kind, struct i2c_board_info *info)
 {
@@ -1096,7 +1096,7 @@ static int AFA750_i2c_probe(struct i2c_client *client, const struct i2c_device_i
         goto exit_kfree;
     }
 
-#ifdef CONFIG_HAS_EARLYSUSPEND
+#ifdef CONFIG_POWERSUSPEND
     obj->early_drv.level    = EARLY_SUSPEND_LEVEL_STOP_DRAWING - 2,
     obj->early_drv.suspend  = AFA750_early_suspend,
     obj->early_drv.resume   = AFA750_late_resume,

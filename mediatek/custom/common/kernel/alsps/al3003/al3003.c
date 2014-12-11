@@ -23,7 +23,7 @@
 #include <linux/input.h>
 #include <linux/workqueue.h>
 #include <linux/kobject.h>
-#include <linux/earlysuspend.h>
+#include <linux/powersuspend.h>
 #include <linux/platform_device.h>
 #include <asm/atomic.h>
 
@@ -176,7 +176,7 @@ struct al3003_priv {
     ulong       pending_intr;   /*pending interrupt*/
     //ulong        first_read;   // record first read ps and als
     /*early suspend*/
-#if defined(CONFIG_HAS_EARLYSUSPEND)
+#if defined(CONFIG_POWERSUSPEND)
     struct early_suspend    early_drv;
 #endif     
 };
@@ -2036,7 +2036,7 @@ static int al3003_i2c_probe(struct i2c_client *client, const struct i2c_device_i
 	obj->first_read_als_timer.data		= 0;
 */
 
-#if defined(CONFIG_HAS_EARLYSUSPEND)
+#if defined(CONFIG_POWERSUSPEND)
 	obj->early_drv.level    = EARLY_SUSPEND_LEVEL_STOP_DRAWING - 2,
 	obj->early_drv.suspend  = al3003_early_suspend,
 	obj->early_drv.resume   = al3003_late_resume,    

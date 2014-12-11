@@ -27,7 +27,7 @@
 #include <linux/workqueue.h>
 #include <linux/kobject.h>
 #include <linux/platform_device.h>
-#include <linux/earlysuspend.h>
+#include <linux/powersuspend.h>
 
 #include <linux/hwmsensor.h>
 #include <linux/hwmsen_dev.h>
@@ -174,7 +174,7 @@ struct lsm303m_i2c_data {
     struct data_filter      fir;
 #endif 
     /*early suspend*/
-#if defined(CONFIG_HAS_EARLYSUSPEND)
+#if defined(CONFIG_POWERSUSPEND)
     struct early_suspend    early_drv;
 #endif     
 };
@@ -187,7 +187,7 @@ static struct i2c_driver lsm303m_i2c_driver = {
 	.probe      		= lsm303m_i2c_probe,
 	.remove    			= lsm303m_i2c_remove,
 //	.detect				= lsm303m_i2c_detect,
-//#if !defined(CONFIG_HAS_EARLYSUSPEND)    
+//#if !defined(CONFIG_POWERSUSPEND)    
     .suspend            = lsm303m_suspend,
     .resume             = lsm303m_resume,
 //#endif
@@ -1672,7 +1672,7 @@ static struct miscdevice lsm303m_device = {
 
 
 /*----------------------------------------------------------------------------*/
-//#ifndef CONFIG_HAS_EARLYSUSPEND
+//#ifndef CONFIG_POWERSUSPEND
 /*----------------------------------------------------------------------------*/
 static int lsm303m_suspend(struct i2c_client *client, pm_message_t msg) 
 {
@@ -1858,7 +1858,7 @@ static int lsm303m_i2c_probe(struct i2c_client *client, const struct i2c_device_
 			goto exit_kfree;
 		}
 		
-#if CONFIG_HAS_EARLYSUSPEND
+#if CONFIG_POWERSUSPEND
 		data->early_drv.level	 = EARLY_SUSPEND_LEVEL_DISABLE_FB - 1,
 		data->early_drv.suspend  = lsm303m_early_suspend,
 		data->early_drv.resume	 = lsm303m_late_resume,	  

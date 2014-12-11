@@ -23,7 +23,7 @@
 #include <linux/input.h>
 #include <linux/workqueue.h>
 #include <linux/kobject.h>
-#include <linux/earlysuspend.h>
+#include <linux/powersuspend.h>
 #include <linux/platform_device.h>
 
 #include <cust_gyro.h>
@@ -130,7 +130,7 @@ struct mpu3000_i2c_data {
     struct data_filter      fir;
 #endif 
     /*early suspend*/
-#if defined(CONFIG_HAS_EARLYSUSPEND)
+#if defined(CONFIG_POWERSUSPEND)
     struct early_suspend    early_drv;
 #endif     
 };
@@ -143,7 +143,7 @@ static struct i2c_driver mpu3000_i2c_driver = {
 	.probe      		= mpu3000_i2c_probe,
 	.remove    			= mpu3000_i2c_remove,
 //	.detect				= mpu3000_i2c_detect,
-#if !defined(CONFIG_HAS_EARLYSUSPEND)    
+#if !defined(CONFIG_POWERSUSPEND)    
     .suspend            = mpu3000_suspend,
     .resume             = mpu3000_resume,
 #endif
@@ -1358,7 +1358,7 @@ static struct miscdevice mpu3000_device = {
 	.fops = &mpu3000_fops,
 };
 /*----------------------------------------------------------------------------*/
-#ifndef CONFIG_HAS_EARLYSUSPEND
+#ifndef CONFIG_POWERSUSPEND
 /*----------------------------------------------------------------------------*/
 static int mpu3000_suspend(struct i2c_client *client, pm_message_t msg) 
 {
@@ -1465,7 +1465,7 @@ static void mpu3000_late_resume(struct early_suspend *h)
 	atomic_set(&obj->suspend, 0);    
 }
 /*----------------------------------------------------------------------------*/
-#endif /*CONFIG_HAS_EARLYSUSPEND*/
+#endif /*CONFIG_POWERSUSPEND*/
 /*----------------------------------------------------------------------------*/
 /*static int mpu3000_i2c_detect(struct i2c_client *client, int kind, struct i2c_board_info *info) 
 {    
@@ -1551,7 +1551,7 @@ static int mpu3000_i2c_probe(struct i2c_client *client, const struct i2c_device_
 	}
 	
 
-#ifdef CONFIG_HAS_EARLYSUSPEND
+#ifdef CONFIG_POWERSUSPEND
 	obj->early_drv.level    = EARLY_SUSPEND_LEVEL_STOP_DRAWING - 2,
 	obj->early_drv.suspend  = mpu3000_early_suspend,
 	obj->early_drv.resume   = mpu3000_late_resume,    

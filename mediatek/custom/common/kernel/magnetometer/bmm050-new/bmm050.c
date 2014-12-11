@@ -20,7 +20,7 @@
 #include <linux/workqueue.h>
 #include <linux/kobject.h>
 #include <linux/platform_device.h>
-#include <linux/earlysuspend.h>
+#include <linux/powersuspend.h>
 #include <linux/time.h>
 #include <linux/hrtimer.h>
 
@@ -1591,7 +1591,7 @@ struct bmm050_i2c_data {
 	u8 rept_xy;
 	u8 rept_z;
 	
-#if defined(CONFIG_HAS_EARLYSUSPEND)    
+#if defined(CONFIG_POWERSUSPEND)    
 	struct early_suspend    early_drv;
 #endif 
 };
@@ -2652,7 +2652,7 @@ static void bmm050_restore_hw_cfg(struct i2c_client *client)
 }
 
 /*----------------------------------------------------------------------------*/
-#ifndef	CONFIG_HAS_EARLYSUSPEND
+#ifndef	CONFIG_POWERSUSPEND
 /*----------------------------------------------------------------------------*/
 static int bmm050_suspend(struct i2c_client *client, pm_message_t msg) 
 {
@@ -2708,7 +2708,7 @@ static void bmm050_late_resume(struct early_suspend *h)
 	bmm050_power(obj->hw, 1);
 	bmm050_SetPowerMode(obj->client, TRUE);
 }
-#endif /*CONFIG_HAS_EARLYSUSPEND*/
+#endif /*CONFIG_POWERSUSPEND*/
 /*----------------------------------------------------------------------------*/
 #define BMM_MAX_RETRY_WAKEUP (5)
 #define BMM_I2C_WRITE_DELAY_TIME (1)
@@ -3058,7 +3058,7 @@ static int bmm050_i2c_probe(struct i2c_client *client, const struct i2c_device_i
 		goto exit_kfree;
 	}
 	
-#if CONFIG_HAS_EARLYSUSPEND
+#if CONFIG_POWERSUSPEND
 	data->early_drv.level    = EARLY_SUSPEND_LEVEL_STOP_DRAWING - 2,
 	data->early_drv.suspend  = bmm050_early_suspend,
 	data->early_drv.resume   = bmm050_late_resume,    
@@ -3088,7 +3088,7 @@ static int bmm050_i2c_remove(struct i2c_client *client)
 		MSE_ERR( "bmm050_delete_attr fail");
 	}
 	
-#ifdef CONFIG_HAS_EARLYSUSPEND
+#ifdef CONFIG_POWERSUSPEND
 	unregister_early_suspend(&obj->early_drv);
 #endif
 	bmm050api_set_functional_state(BMC050_SUSPEND_MODE);
@@ -3107,7 +3107,7 @@ static struct i2c_driver bmm050_i2c_driver = {
 	.probe      = bmm050_i2c_probe,
 	.remove     = bmm050_i2c_remove,
 //	.detect     = bmm050_i2c_detect,
-#if !defined(CONFIG_HAS_EARLYSUSPEND)
+#if !defined(CONFIG_POWERSUSPEND)
 	.suspend    = bmm050_suspend,
 	.resume     = bmm050_resume,
 #endif 

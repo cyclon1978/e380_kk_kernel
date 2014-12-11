@@ -17,8 +17,8 @@
 #include <linux/kernel.h>
 #include <linux/delay.h>
 #include <linux/byteorder/generic.h>
-#ifdef CONFIG_HAS_EARLYSUSPEND
-#include <linux/earlysuspend.h>
+#ifdef CONFIG_POWERSUSPEND
+#include <linux/powersuspend.h>
 #endif 
 #include <linux/interrupt.h>
 #include <linux/time.h>

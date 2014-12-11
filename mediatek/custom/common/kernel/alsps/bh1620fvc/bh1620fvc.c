@@ -23,7 +23,7 @@
 #include <linux/input.h>
 #include <linux/workqueue.h>
 #include <linux/kobject.h>
-#include <linux/earlysuspend.h>
+#include <linux/powersuspend.h>
 #include <linux/platform_device.h>
 #include <asm/atomic.h>
 
@@ -187,7 +187,7 @@ struct bh1620fvc_priv {
     ulong       pending_intr;     /*pending interrupt*/
 
     /*early suspend*/
-#if defined(CONFIG_HAS_EARLYSUSPEND)
+#if defined(CONFIG_POWERSUSPEND)
     struct early_suspend    early_drv;
 #endif     
 };
@@ -1901,7 +1901,7 @@ static int bh1620fvc_i2c_probe(struct i2c_client *client, const struct i2c_devic
 	}
 
 
-#if defined(CONFIG_HAS_EARLYSUSPEND)
+#if defined(CONFIG_POWERSUSPEND)
 	obj->early_drv.level    = EARLY_SUSPEND_LEVEL_STOP_DRAWING - 2,
 	obj->early_drv.suspend  = bh1620fvc_early_suspend,
 	obj->early_drv.resume   = bh1620fvc_late_resume,    

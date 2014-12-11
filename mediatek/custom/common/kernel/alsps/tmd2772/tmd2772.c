@@ -23,7 +23,7 @@
 #include <linux/input.h>
 #include <linux/workqueue.h>
 #include <linux/kobject.h>
-#include <linux/earlysuspend.h>
+#include <linux/powersuspend.h>
 #include <linux/platform_device.h>
 #include <asm/atomic.h>
 //#include <mach/mt_gpio.h>
@@ -144,7 +144,7 @@ struct tmd2772_priv {
     ulong       pending_intr;   /*pending interrupt*/
 
     /*early suspend*/
-#if defined(CONFIG_HAS_EARLYSUSPEND)
+#if defined(CONFIG_POWERSUSPEND)
     struct early_suspend    early_drv;
 #endif     
 };
@@ -2487,7 +2487,7 @@ static int tmd2772_i2c_probe(struct i2c_client *client, const struct i2c_device_
 	}
 
 
-#if defined(CONFIG_HAS_EARLYSUSPEND)
+#if defined(CONFIG_POWERSUSPEND)
 	obj->early_drv.level    = EARLY_SUSPEND_LEVEL_STOP_DRAWING - 2,
 	obj->early_drv.suspend  = tmd2772_early_suspend,
 	obj->early_drv.resume   = tmd2772_late_resume,    

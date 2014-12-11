@@ -12,7 +12,7 @@
 #include <linux/slab.h>
 #include <linux/module.h>
 #include <linux/hwmsensor.h>
-#include <linux/earlysuspend.h> 
+#include <linux/powersuspend.h> 
 
 
 #define ACC_TAG					"<ACCELEROMETER> "
@@ -89,7 +89,7 @@ struct acc_context {
 	struct timer_list   timer;  /* polling timer */
 	atomic_t            trace;
 
-	struct early_suspend    early_drv;
+	struct power_suspend    early_drv;
 	struct wake_lock        read_data_wake_lock;
 	atomic_t                early_suspend;
 	//struct acc_drv_obj    drv_obj;

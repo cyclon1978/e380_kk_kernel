@@ -46,7 +46,7 @@
 #include <linux/workqueue.h>
 #include <linux/kobject.h>
 #include <linux/platform_device.h>
-#include <linux/earlysuspend.h>
+#include <linux/powersuspend.h>
 
 #include <linux/hwmsensor.h>
 #include <linux/hwmsen_dev.h>
@@ -138,7 +138,7 @@ struct _mcmag_i2c_data
     atomic_t    tLayout;
     atomic_t    tTrace;
     
-    #if defined(CONFIG_HAS_EARLYSUSPEND)    
+    #if defined(CONFIG_POWERSUSPEND)    
         struct early_suspend    tDrv_EarlySuspend;
     #endif
 };
@@ -227,7 +227,7 @@ static struct i2c_driver    s_tMcmag_i2c_driver = {
                                                           .detect = mcmag_i2c_detect,
                                                       #endif
 
-                                                      #if !defined(CONFIG_HAS_EARLYSUSPEND)
+                                                      #if !defined(CONFIG_POWERSUSPEND)
                                                           .suspend = mcmag_suspend,
                                                           .resume  = mcmag_resume,
                                                       #endif 
@@ -1489,7 +1489,7 @@ int mcmag_orientation_operate(void       *pSelf      ,
  *** POWER SAVING (MTK Reference Code)
  *****************************************/
 /*----------------------------------------------------------------------------*/
-#ifndef	CONFIG_HAS_EARLYSUSPEND
+#ifndef	CONFIG_POWERSUSPEND
 /*----------------------------------------------------------------------------*/
 static int mcmag_suspend(struct i2c_client *ptClient, pm_message_t msg) 
 {
@@ -1544,7 +1544,7 @@ static void mcmag_late_resume(struct early_suspend *h)
     MCMAG_Start();
 }
 /*----------------------------------------------------------------------------*/
-#endif /*CONFIG_HAS_EARLYSUSPEND*/
+#endif /*CONFIG_POWERSUSPEND*/
 /*----------------------------------------------------------------------------*/
 
 /*****************************************
@@ -1636,7 +1636,7 @@ static int    mcmag_i2c_probe(struct i2c_client *ptClient, const struct i2c_devi
 //        goto exit_kfree;
     }
    
-    #if CONFIG_HAS_EARLYSUSPEND
+    #if CONFIG_POWERSUSPEND
         data->tDrv_EarlySuspend.level   = (EARLY_SUSPEND_LEVEL_DISABLE_FB - 1),
         data->tDrv_EarlySuspend.suspend = mcmag_early_suspend,
         data->tDrv_EarlySuspend.resume  = mcmag_late_resume,    

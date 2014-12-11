@@ -12,7 +12,7 @@
 
 #include <linux/module.h>
 #include <linux/input.h>
-#include <linux/earlysuspend.h>
+#include <linux/powersuspend.h>
 #include <linux/platform_device.h>
 #include <linux/device.h>
 #include <linux/jiffies.h>

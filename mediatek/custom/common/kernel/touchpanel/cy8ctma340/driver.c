@@ -9,8 +9,8 @@
 #include <linux/delay.h>
 #include <linux/time.h>
  
-#ifdef CONFIG_HAS_EARLYSUSPEND
-#include <linux/earlysuspend.h>
+#ifdef CONFIG_POWERSUSPEND
+#include <linux/powersuspend.h>
 #endif 
  
 extern struct tpd_device *tpd;
@@ -22,7 +22,7 @@ static DECLARE_WAIT_QUEUE_HEAD(waiter);
  
 struct early_suspend early_suspend;
  
-#ifdef CONFIG_HAS_EARLYSUSPEND
+#ifdef CONFIG_POWERSUSPEND
 static void tpd_early_suspend(struct early_suspend *handler);
 static void tpd_late_resume(struct early_suspend *handler);
 #endif 
@@ -425,7 +425,7 @@ struct touch_info {
 	   TPD_DEBUG("tpd_initialize error\n");
 	 }
  
-#ifdef CONFIG_HAS_EARLYSUSPEND
+#ifdef CONFIG_POWERSUSPEND
 		  if (!(retval < TPD_OK)) 
 		  {
 			  early_suspend.level = EARLY_SUSPEND_LEVEL_BLANK_SCREEN + 1;
@@ -569,9 +569,9 @@ struct touch_info {
  {
    int error;
  
-  #ifdef CONFIG_HAS_EARLYSUSPEND
+  #ifdef CONFIG_POWERSUSPEND
 	 unregister_early_suspend(&early_suspend);
-  #endif /* CONFIG_HAS_EARLYSUSPEND */
+  #endif /* CONFIG_POWERSUSPEND */
    
 	 TPD_DEBUG("TPD removed\n");
  
@@ -612,7 +612,7 @@ struct touch_info {
 	 return retval;
  }
  
-#ifdef CONFIG_HAS_EARLYSUSPEND
+#ifdef CONFIG_POWERSUSPEND
  static void tpd_early_suspend(struct early_suspend *handler)
  {
 	 tpd_suspend(i2c_client, PMSG_SUSPEND);

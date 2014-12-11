@@ -25,7 +25,7 @@
 #include <linux/input.h>
 #include <linux/workqueue.h>
 #include <linux/kobject.h>
-#include <linux/earlysuspend.h>
+#include <linux/powersuspend.h>
 #include <linux/platform_device.h>
 #include <asm/atomic.h>
 
@@ -47,7 +47,7 @@
 //#include <Mt6575.h>
 //bob.chen add begin 
 //add for fix resume issue
-#include <linux/earlysuspend.h> 
+#include <linux/powersuspend.h> 
 #include <linux/wakelock.h>
 //add for fix resume issue end
 //bob.chen add end 
@@ -227,7 +227,7 @@ struct epl6881_priv
     u32         als_value[C_CUST_ALS_LEVEL];
 
 	/*early suspend*/
-#if defined(CONFIG_HAS_EARLYSUSPEND)
+#if defined(CONFIG_POWERSUSPEND)
     struct early_suspend    early_drv;
 #endif
 };
@@ -1782,7 +1782,7 @@ static int epl6881_i2c_probe(struct i2c_client *client, const struct i2c_device_
 
 
 
-#if defined(CONFIG_HAS_EARLYSUSPEND)
+#if defined(CONFIG_POWERSUSPEND)
 	obj->early_drv.level    = EARLY_SUSPEND_LEVEL_DISABLE_FB - 1,
 	obj->early_drv.suspend  = epl6881_early_suspend,
 	obj->early_drv.resume   = epl6881_late_resume,    

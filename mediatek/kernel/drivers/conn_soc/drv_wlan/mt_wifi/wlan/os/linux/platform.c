@@ -114,7 +114,7 @@
 
 #ifndef CONFIG_X86
 #if defined(CONFIG_HAS_EARLY_SUSPEND)
-    #include <linux/earlysuspend.h>
+    #include <linux/powersuspend.h>
 #endif
 #endif
 
@@ -396,7 +396,7 @@ void wlanUnregisterNotifier(void)
 //EXPORT_SYMBOL(wlanUnregisterNotifier);
 
 #ifndef CONFIG_X86
-#if defined(CONFIG_HAS_EARLYSUSPEND)
+#if defined(CONFIG_POWERSUSPEND)
 
 
 /*----------------------------------------------------------------------------*/

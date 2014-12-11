@@ -12,8 +12,8 @@
 #include <linux/kernel.h>
 #include <linux/delay.h>
 #include <linux/byteorder/generic.h>
-#ifdef CONFIG_HAS_EARLYSUSPEND
-#include <linux/earlysuspend.h>
+#ifdef CONFIG_POWERSUSPEND
+#include <linux/powersuspend.h>
 #endif 
 #include <linux/interrupt.h>
 #include <linux/time.h>
@@ -220,7 +220,7 @@ static struct i2c_driver melfas_tpd_i2c_driver =
     .detect = melfas_tpd_i2c_detect,                           
     .driver.name = "mtk-tpd", 
     .id_table = melfas_tpd_id,                             
-#ifndef CONFIG_HAS_EARLYSUSPEND
+#ifndef CONFIG_POWERSUSPEND
     .suspend = melfas_ts_suspend, 
     .resume = melfas_ts_resume,
 #endif
@@ -1097,7 +1097,7 @@ static void melfas_ts_release_all_finger(void)
 	input_sync(tpd->dev);
 }
 
-#ifdef CONFIG_HAS_EARLYSUSPEND
+#ifdef CONFIG_POWERSUSPEND
 static void melfas_tpd_early_suspend(struct early_suspend *h)
 {
 //    TPD_DMESG("[melfas_tpd] %s\n", __func__);
@@ -1150,7 +1150,7 @@ static struct tpd_driver_t melfas_tpd_device_driver =
 {
     .tpd_device_name = "melfas_mms134",
     .tpd_local_init = melfas_tpd_local_init,
-#ifdef CONFIG_HAS_EARLYSUSPEND    
+#ifdef CONFIG_POWERSUSPEND    
     .suspend = melfas_tpd_early_suspend,
     .resume = melfas_tpd_late_resume,
 #endif

@@ -922,7 +922,7 @@ mtk_cfg80211_ais_default_mgmt_stypes[NUM_NL80211_IFTYPES] = {
 ********************************************************************************
 */
 
-#if defined(CONFIG_HAS_EARLYSUSPEND)
+#if defined(CONFIG_POWERSUSPEND)
 extern int glRegisterEarlySuspend(
     struct early_suspend        *prDesc,
     early_suspend_callback      wlanSuspend,
@@ -2676,7 +2676,7 @@ fgIsUnderEarlierSuspend = false;
     }
 }
 
-#if defined(CONFIG_HAS_EARLYSUSPEND)
+#if defined(CONFIG_POWERSUSPEND)
 static struct early_suspend mt6620_early_suspend_desc = {
     .level = EARLY_SUSPEND_LEVEL_BLANK_SCREEN,
 };
@@ -2692,7 +2692,7 @@ static void wlan_late_resume(struct early_suspend *h)
     DBGLOG(INIT, INFO, ("*********wlan_late_resume************\n"));
     wlanLateResume();
 }
-#endif //defined(CONFIG_HAS_EARLYSUSPEND)
+#endif //defined(CONFIG_POWERSUSPEND)
 #endif //! CONFIG_X86
 
 extern void wlanRegisterNotifier(void);
@@ -3098,7 +3098,7 @@ bailout:
             DBGLOG(INIT, ERROR, ("wlanProbe: Cannot register the net_device context to the kernel\n"));
             break;
         }
-#if defined(CONFIG_HAS_EARLYSUSPEND)
+#if defined(CONFIG_POWERSUSPEND)
         DBGLOG(INIT, TRACE, ("glRegisterEarlySuspend...\n"));
         glRegisterEarlySuspend(&mt6620_early_suspend_desc, wlan_early_suspend, wlan_late_resume);
         wlanRegisterNotifier();
@@ -3360,7 +3360,7 @@ wlanRemove(
     wlanNetDestroy(prDev->ieee80211_ptr);
     prDev = NULL;
 
-#if defined(CONFIG_HAS_EARLYSUSPEND)
+#if defined(CONFIG_POWERSUSPEND)
     DBGLOG(INIT, INFO, ("glUnregisterEarlySuspend...\n"));
     glUnregisterEarlySuspend(&mt6620_early_suspend_desc);
 #endif

@@ -26,7 +26,7 @@
 #include <linux/workqueue.h>
 #include <linux/kobject.h>
 #include <linux/platform_device.h>
-#include <linux/earlysuspend.h>
+#include <linux/powersuspend.h>
 
 #include <linux/hwmsensor.h>
 #include <linux/hwmsen_dev.h>
@@ -143,7 +143,7 @@ struct af7133_i2c_data {
     struct hwmsen_convert   cvt;
     atomic_t layout;   
     atomic_t trace;
-#if defined(CONFIG_HAS_EARLYSUSPEND)    
+#if defined(CONFIG_POWERSUSPEND)    
     struct early_suspend    early_drv;
 #endif 
 };
@@ -158,7 +158,7 @@ static struct i2c_driver af7133_i2c_driver = {
 	.probe      = af7133_i2c_probe,
 	.remove     = af7133_i2c_remove,
 //	.detect     = af7133_i2c_detect,
-//#if !defined(CONFIG_HAS_EARLYSUSPEND)
+//#if !defined(CONFIG_POWERSUSPEND)
 	.suspend    = af7133_suspend,
 	.resume     = af7133_resume,
 //#endif 
@@ -1034,7 +1034,7 @@ int af7133_orientation_operate(void* self, uint32_t command, void* buff_in, int 
 }
 
 /*----------------------------------------------------------------------------*/
-//#ifndef	CONFIG_HAS_EARLYSUSPEND
+//#ifndef	CONFIG_POWERSUSPEND
 /*----------------------------------------------------------------------------*/
 static int af7133_suspend(struct i2c_client *client, pm_message_t msg) 
 {
@@ -1096,7 +1096,7 @@ static void af7133_late_resume(struct early_suspend *h)
 	af7133_power(obj->hw, 1);
 }
 /*----------------------------------------------------------------------------*/
-//#endif /*CONFIG_HAS_EARLYSUSPEND*/
+//#endif /*CONFIG_POWERSUSPEND*/
 
 /*----------------------------------------------------------------------------*/
 static int af7133_i2c_probe(struct i2c_client *client, const struct i2c_device_id *id)
@@ -1176,7 +1176,7 @@ static int af7133_i2c_probe(struct i2c_client *client, const struct i2c_device_i
 		goto exit_kfree;
 	}
 
-#if CONFIG_HAS_EARLYSUSPEND
+#if CONFIG_POWERSUSPEND
 	data->early_drv.level    = EARLY_SUSPEND_LEVEL_DISABLE_FB - 1,
 	data->early_drv.suspend  = af7133_early_suspend,
 	data->early_drv.resume   = af7133_late_resume,    

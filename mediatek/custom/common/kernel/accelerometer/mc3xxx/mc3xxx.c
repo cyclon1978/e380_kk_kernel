@@ -44,7 +44,7 @@
 #include <linux/input.h>
 #include <linux/workqueue.h>
 #include <linux/kobject.h>
-#include <linux/earlysuspend.h>
+#include <linux/powersuspend.h>
 #include <linux/platform_device.h>
 #include <asm/atomic.h>
 
@@ -196,7 +196,7 @@ struct mc3xxx_i2c_data
     #endif 
 
     //================================================
-    #if defined(CONFIG_HAS_EARLYSUSPEND)
+    #if defined(CONFIG_POWERSUSPEND)
         struct early_suspend    early_drv;
     #endif     
 };
@@ -3474,7 +3474,7 @@ static int mc3xxx_i2c_probe(struct i2c_client *client, const struct i2c_device_i
 	}
 #endif
 
-#ifdef CONFIG_HAS_EARLYSUSPEND
+#ifdef CONFIG_POWERSUSPEND
 	obj->early_drv.level    = EARLY_SUSPEND_LEVEL_DISABLE_FB - 1,
 	obj->early_drv.suspend  = mc3xxx_early_suspend,
 	obj->early_drv.resume   = mc3xxx_late_resume,    

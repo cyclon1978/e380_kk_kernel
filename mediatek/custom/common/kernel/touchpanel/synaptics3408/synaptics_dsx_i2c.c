@@ -151,7 +151,7 @@ static int synaptics_rmi4_free_fingers(struct synaptics_rmi4_data *rmi4_data);
 static int synaptics_rmi4_reinit_device(struct synaptics_rmi4_data *rmi4_data);
 static int synaptics_rmi4_reset_device(struct synaptics_rmi4_data *rmi4_data);
 
-#ifdef CONFIG_HAS_EARLYSUSPEND
+#ifdef CONFIG_POWERSUSPEND
 static ssize_t synaptics_rmi4_full_pm_cycle_show(struct device *dev,
 		struct device_attribute *attr, char *buf);
 
@@ -395,7 +395,7 @@ struct synaptics_rmi4_exp_fn_data {
 static struct synaptics_rmi4_exp_fn_data exp_data;
 
 static struct device_attribute attrs[] = {
-#ifdef CONFIG_HAS_EARLYSUSPEND
+#ifdef CONFIG_POWERSUSPEND
 	__ATTR(full_pm_cycle, (S_IRUGO | S_IWUGO),
 			synaptics_rmi4_full_pm_cycle_show,
 			synaptics_rmi4_full_pm_cycle_store),
@@ -420,7 +420,7 @@ static struct device_attribute attrs[] = {
 			synaptics_rmi4_suspend_store),
 };
 
-#ifdef CONFIG_HAS_EARLYSUSPEND
+#ifdef CONFIG_POWERSUSPEND
 static ssize_t synaptics_rmi4_full_pm_cycle_show(struct device *dev,
 		struct device_attribute *attr, char *buf)
 {
@@ -2702,7 +2702,7 @@ static int __devinit synaptics_rmi4_probe(struct i2c_client *client,
 		goto err_set_input_dev;
 	}
 
-#ifdef CONFIG_HAS_EARLYSUSPEND
+#ifdef CONFIG_POWERSUSPEND
 	rmi4_data->early_suspend.level = EARLY_SUSPEND_LEVEL_BLANK_SCREEN + 1;
 	rmi4_data->early_suspend.suspend = synaptics_rmi4_early_suspend;
 	rmi4_data->early_suspend.resume = synaptics_rmi4_late_resume;
@@ -2765,7 +2765,7 @@ err_sysfs:
 	synaptics_rmi4_irq_enable(rmi4_data, false);
 
 err_enable_irq:
-#ifdef CONFIG_HAS_EARLYSUSPEND
+#ifdef CONFIG_POWERSUSPEND
 	unregister_early_suspend(&rmi4_data->early_suspend);
 #endif
 
@@ -2805,7 +2805,7 @@ static int __devexit synaptics_rmi4_remove(struct i2c_client *client)
 
 	synaptics_rmi4_irq_enable(rmi4_data, false);
 
-#ifdef CONFIG_HAS_EARLYSUSPEND
+#ifdef CONFIG_POWERSUSPEND
 	unregister_early_suspend(&rmi4_data->early_suspend);
 #endif
 
@@ -2908,7 +2908,7 @@ static void synaptics_rmi4_sensor_wake(struct synaptics_rmi4_data *rmi4_data)
 	return;
 }
 
-#ifdef CONFIG_HAS_EARLYSUSPEND
+#ifdef CONFIG_POWERSUSPEND
  /**
  * synaptics_rmi4_early_suspend()
  *

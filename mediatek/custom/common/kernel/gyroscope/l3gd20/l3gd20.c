@@ -23,7 +23,7 @@
 #include <linux/input.h>
 #include <linux/workqueue.h>
 #include <linux/kobject.h>
-#include <linux/earlysuspend.h>
+#include <linux/powersuspend.h>
 #include <linux/platform_device.h>
 
 #include <cust_gyro.h>
@@ -183,7 +183,7 @@ struct l3gd20_i2c_data {
     struct data_filter      fir;
 #endif 
     /*early suspend*/
-#if defined(CONFIG_HAS_EARLYSUSPEND)
+#if defined(CONFIG_POWERSUSPEND)
     struct early_suspend    early_drv;
 #endif     
 };
@@ -196,7 +196,7 @@ static struct i2c_driver l3gd20_i2c_driver = {
 	.probe      		= l3gd20_i2c_probe,
 	.remove    			= l3gd20_i2c_remove,
 	.detect				= l3gd20_i2c_detect,
-#if !defined(CONFIG_HAS_EARLYSUSPEND)    
+#if !defined(CONFIG_POWERSUSPEND)    
     .suspend            = l3gd20_suspend,
     .resume             = l3gd20_resume,
 #endif
@@ -1189,7 +1189,7 @@ static struct miscdevice l3gd20_device = {
 	.fops = &l3gd20_fops,
 };
 /*----------------------------------------------------------------------------*/
-#ifndef CONFIG_HAS_EARLYSUSPEND
+#ifndef CONFIG_POWERSUSPEND
 /*----------------------------------------------------------------------------*/
 static int l3gd20_suspend(struct i2c_client *client, pm_message_t msg) 
 {
@@ -1290,7 +1290,7 @@ static void l3gd20_late_resume(struct early_suspend *h)
 	atomic_set(&obj->suspend, 0);    
 }
 /*----------------------------------------------------------------------------*/
-#endif /*CONFIG_HAS_EARLYSUSPEND*/
+#endif /*CONFIG_POWERSUSPEND*/
 /*----------------------------------------------------------------------------*/
 static int l3gd20_i2c_detect(struct i2c_client *client, int kind, struct i2c_board_info *info) 
 {    
@@ -1367,7 +1367,7 @@ static int l3gd20_i2c_probe(struct i2c_client *client, const struct i2c_device_i
 	}
 	
 
-#ifdef CONFIG_HAS_EARLYSUSPEND
+#ifdef CONFIG_POWERSUSPEND
 	obj->early_drv.level    = EARLY_SUSPEND_LEVEL_STOP_DRAWING - 2,
 	obj->early_drv.suspend  = l3gd20_early_suspend,
 	obj->early_drv.resume   = l3gd20_late_resume,    

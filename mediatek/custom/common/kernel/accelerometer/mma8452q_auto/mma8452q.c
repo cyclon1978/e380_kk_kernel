@@ -23,7 +23,7 @@
 #include <linux/input.h>
 #include <linux/workqueue.h>
 #include <linux/kobject.h>
-#include <linux/earlysuspend.h>
+#include <linux/powersuspend.h>
 #include <linux/platform_device.h>
 #include <asm/atomic.h>
 
@@ -150,7 +150,7 @@ static struct i2c_driver mma8452q_i2c_driver = {
 	.probe      		= mma8452q_i2c_probe,
 	.remove    			= mma8452q_i2c_remove,
 	.detect				= mma8452q_i2c_detect,
-#if !defined(CONFIG_HAS_EARLYSUSPEND)    
+#if !defined(CONFIG_POWERSUSPEND)    
     .suspend            = mma8452q_suspend,
     .resume             = mma8452q_resume,
 #endif
@@ -1953,7 +1953,7 @@ static void mma8452q_late_resume(struct early_suspend *h)
     mutex_unlock(&mma8452q_op_mutex);
 }
 /*----------------------------------------------------------------------------*/
-#endif /*CONFIG_HAS_EARLYSUSPEND*/
+#endif /*CONFIG_POWERSUSPEND*/
 /*----------------------------------------------------------------------------*/
 static int mma8452q_i2c_detect(struct i2c_client *client, struct i2c_board_info *info) 
 {    

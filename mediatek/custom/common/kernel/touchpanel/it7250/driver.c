@@ -328,7 +328,7 @@ static int touch_event_handler(void *unused) {
     return 0;
 }
 
-#ifdef CONFIG_HAS_EARLYSUSPEND
+#ifdef CONFIG_POWERSUSPEND
 
 /* platform device functions */
 void tpd_suspend(struct early_suspend *h) {

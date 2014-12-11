@@ -24,7 +24,7 @@
 #include <linux/workqueue.h>
 #include <linux/kobject.h>
 #include <linux/platform_device.h>
-#include <linux/earlysuspend.h>
+#include <linux/powersuspend.h>
 
 #include <linux/hwmsensor.h>
 #include <linux/hwmsen_dev.h>

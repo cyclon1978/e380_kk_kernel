@@ -23,7 +23,7 @@
 #include <linux/input.h>
 #include <linux/workqueue.h>
 #include <linux/kobject.h>
-#include <linux/earlysuspend.h>
+#include <linux/powersuspend.h>
 #include <linux/platform_device.h>
 #include <asm/atomic.h>
 #include <linux/module.h>
@@ -181,7 +181,7 @@ struct bma255_i2c_data {
     struct data_filter      fir;
 #endif 
     /*early suspend*/
-#if defined(CONFIG_HAS_EARLYSUSPEND)
+#if defined(CONFIG_POWERSUSPEND)
     struct early_suspend    early_drv;
 #endif     
 };
@@ -192,7 +192,7 @@ static struct i2c_driver bma255_i2c_driver = {
     },
 	.probe      		= bma255_i2c_probe,
 	.remove    			= bma255_i2c_remove,
-#if !defined(CONFIG_HAS_EARLYSUSPEND)    
+#if !defined(CONFIG_POWERSUSPEND)    
     .suspend            = bma255_suspend,
     .resume             = bma255_resume,
 #endif
@@ -1953,7 +1953,7 @@ static struct miscdevice bma255_device = {
 	.fops = &bma255_fops,
 };
 /*----------------------------------------------------------------------------*/
-#ifndef CONFIG_HAS_EARLYSUSPEND
+#ifndef CONFIG_POWERSUSPEND
 /*----------------------------------------------------------------------------*/
 static int bma255_suspend(struct i2c_client *client, pm_message_t msg) 
 {
@@ -2052,7 +2052,7 @@ static void bma255_late_resume(struct early_suspend *h)
 	atomic_set(&obj->suspend, 0);    
 }
 /*----------------------------------------------------------------------------*/
-#endif /*CONFIG_HAS_EARLYSUSPEND*/
+#endif /*CONFIG_POWERSUSPEND*/
 /*----------------------------------------------------------------------------*/
 static int bma255_i2c_probe(struct i2c_client *client, const struct i2c_device_id *id)
 {
@@ -2134,7 +2134,7 @@ static int bma255_i2c_probe(struct i2c_client *client, const struct i2c_device_i
 		goto exit_kfree;
 	}
 
-#ifdef CONFIG_HAS_EARLYSUSPEND
+#ifdef CONFIG_POWERSUSPEND
 	obj->early_drv.level    = EARLY_SUSPEND_LEVEL_DISABLE_FB - 1,
 	obj->early_drv.suspend  = bma255_early_suspend,
 	obj->early_drv.resume   = bma255_late_resume,    

@@ -556,7 +556,7 @@ void tpd_tasklet(unsigned long unused) {
     return;
 }
 
-//#ifdef CONFIG_HAS_EARLYSUSPEND
+//#ifdef CONFIG_POWERSUSPEND
 void tpd_driver_suspend(struct early_suspend *h) {
     disable_irq_nosync(MT65XX_TOUCH_IRQ_LINE);
     disable_irq_nosync(MT65XX_TOUCH_BATCH_LINE);

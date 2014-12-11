@@ -24,7 +24,7 @@
 #include <linux/workqueue.h>
 #include <linux/kobject.h>
 #include <linux/platform_device.h>
-#include <linux/earlysuspend.h>
+#include <linux/powersuspend.h>
 
 #include <linux/hwmsensor.h>
 #include <linux/hwmsen_dev.h>
@@ -140,7 +140,7 @@ struct hscdtd006_i2c_data {
     struct hwmsen_convert   cvt;
     atomic_t layout;   
     atomic_t trace;
-#if defined(CONFIG_HAS_EARLYSUSPEND)    
+#if defined(CONFIG_POWERSUSPEND)    
     struct early_suspend    early_drv;
 #endif 
 };
@@ -153,7 +153,7 @@ static struct i2c_driver hscdtd006_i2c_driver = {
 	.probe      = hscdtd006_i2c_probe,
 	.remove     = hscdtd006_i2c_remove,
 //	.detect     = hscdtd006_i2c_detect,
-//#if !defined(CONFIG_HAS_EARLYSUSPEND)
+//#if !defined(CONFIG_POWERSUSPEND)
 	.suspend    = hscdtd006_suspend,
 	.resume     = hscdtd006_resume,
 //#endif 
@@ -1383,7 +1383,7 @@ int hscdtd006_orientation_operate(void* self, uint32_t command, void* buff_in, i
 }
 
 /*----------------------------------------------------------------------------*/
-//#ifndef	CONFIG_HAS_EARLYSUSPEND
+//#ifndef	CONFIG_POWERSUSPEND
 /*----------------------------------------------------------------------------*/
 static int hscdtd006_suspend(struct i2c_client *client, pm_message_t msg) 
 {
@@ -1461,7 +1461,7 @@ static void hscdtd006_late_resume(struct early_suspend *h)
 	}    
 }
 /*----------------------------------------------------------------------------*/
-//#endif /*CONFIG_HAS_EARLYSUSPEND*/
+//#endif /*CONFIG_POWERSUSPEND*/
 /*----------------------------------------------------------------------------*/
 /*
 static int hscdtd006_i2c_detect(struct i2c_client *client, int kind, struct i2c_board_info *info) 
@@ -1541,7 +1541,7 @@ static int hscdtd006_i2c_probe(struct i2c_client *client, const struct i2c_devic
 		goto exit_kfree;
 	}
 	
-#if CONFIG_HAS_EARLYSUSPEND
+#if CONFIG_POWERSUSPEND
 	data->early_drv.level    = EARLY_SUSPEND_LEVEL_STOP_DRAWING - 2,
 	data->early_drv.suspend  = hscdtd006_early_suspend,
 	data->early_drv.resume   = hscdtd006_late_resume,    

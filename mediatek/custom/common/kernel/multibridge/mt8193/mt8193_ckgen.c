@@ -10,7 +10,7 @@
 #include <linux/spinlock.h>
 #include <linux/interrupt.h>
 #include <linux/platform_device.h>
-#include <linux/earlysuspend.h>
+#include <linux/powersuspend.h>
 #include <linux/cdev.h>
 #include <asm/uaccess.h>
 #include <mach/mt_gpio.h>
@@ -133,7 +133,7 @@ extern void msleep(unsigned int msecs);
 
 bool g_earlysuspend = FALSE;
 
-#if defined(CONFIG_HAS_EARLYSUSPEND)
+#if defined(CONFIG_POWERSUSPEND)
 static void mt8193_ckgen_early_suspend(struct early_suspend *h)
 {
     printk("[CKGEN] mt8193_ckgen_early_suspend() enter\n");
@@ -435,7 +435,7 @@ static int __init mt8193_ckgen_init(void)
     printk("[CKGEN] mt8193_ckgen_init() enter\n");
     ret = platform_driver_register(&mt8193_ckgen_driver);
 
-#if defined(CONFIG_HAS_EARLYSUSPEND)
+#if defined(CONFIG_POWERSUSPEND)
     register_early_suspend(&mt8193_ckgen_early_suspend_desc);
 #endif
     

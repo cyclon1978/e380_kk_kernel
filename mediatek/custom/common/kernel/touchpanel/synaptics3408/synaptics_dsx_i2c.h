@@ -25,8 +25,8 @@
 #define SYNAPTICS_DSX_DRIVER_VERSION 0x2000
 
 #include <linux/version.h>
-#ifdef CONFIG_HAS_EARLYSUSPEND
-#include <linux/earlysuspend.h>
+#ifdef CONFIG_POWERSUSPEND
+#include <linux/powersuspend.h>
 #endif
 
 #if (LINUX_VERSION_CODE > KERNEL_VERSION(2, 6, 38))
@@ -213,7 +213,7 @@ struct synaptics_rmi4_data {
 	struct regulator *regulator;
 	struct mutex rmi4_reset_mutex;
 	struct mutex rmi4_io_ctrl_mutex;
-#ifdef CONFIG_HAS_EARLYSUSPEND
+#ifdef CONFIG_POWERSUSPEND
 	struct early_suspend early_suspend;
 #endif
 	unsigned char current_page;

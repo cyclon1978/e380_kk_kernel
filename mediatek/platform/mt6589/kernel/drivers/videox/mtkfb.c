@@ -7,7 +7,7 @@
 #include <linux/device.h>
 #include <linux/platform_device.h>
 #include <linux/dma-mapping.h>
-#include <linux/earlysuspend.h>
+#include <linux/powersuspend.h>
 #include <linux/kthread.h>
 #include <linux/rtpm_prio.h>
 #include <linux/vmalloc.h>
@@ -4058,8 +4058,8 @@ void mtkfb_clear_lcm(void)
 }
 
 
-#ifdef CONFIG_HAS_EARLYSUSPEND
-static void mtkfb_early_suspend(struct early_suspend *h)
+#ifdef CONFIG_POWERSUSPEND
+static void mtkfb_early_suspend(struct power_suspend *h)
 {
 //    struct mtkfb_device  *fbdev = (struct mtkfb_device *)mtkfb_fbi->par;
 //    UINT32 fbVirAddr = (UINT32)fbdev->fb_va_base + mtkfb_fbi->var.yoffset * mtkfb_fbi->fix.line_length;
@@ -4167,8 +4167,8 @@ static int mtkfb_resume(struct device *pdev)
     return 0;
 }
 
-#ifdef CONFIG_HAS_EARLYSUSPEND
-static void mtkfb_late_resume(struct early_suspend *h)
+#ifdef CONFIG_POWERSUSPEND
+static void mtkfb_late_resume(struct power_suspend *h)
 {
 //    struct mtkfb_device  *fbdev = (struct mtkfb_device *)mtkfb_fbi->par;
 
@@ -4318,10 +4318,10 @@ static struct platform_driver mtkfb_driver =
     },
 };
 
-#ifdef CONFIG_HAS_EARLYSUSPEND
-static struct early_suspend mtkfb_early_suspend_handler =
+#ifdef CONFIG_POWERSUSPEND
+static struct power_suspend mtkfb_early_suspend_handler =
 {
-	.level = EARLY_SUSPEND_LEVEL_DISABLE_FB,
+	//.level = EARLY_SUSPEND_LEVEL_DISABLE_FB,
 	.suspend = mtkfb_early_suspend,
 	.resume = mtkfb_late_resume,
 };
@@ -4356,8 +4356,8 @@ int __init mtkfb_init(void)
         goto exit;
     }
 
-#ifdef CONFIG_HAS_EARLYSUSPEND
-   	register_early_suspend(&mtkfb_early_suspend_handler);
+#ifdef CONFIG_POWERSUSPEND
+   	register_power_suspend(&mtkfb_early_suspend_handler);
 #endif
 
     DBG_Init();
@@ -4374,8 +4374,8 @@ static void __exit mtkfb_cleanup(void)
 
     platform_driver_unregister(&mtkfb_driver);
 
-#ifdef CONFIG_HAS_EARLYSUSPEND
-	unregister_early_suspend(&mtkfb_early_suspend_handler);
+#ifdef CONFIG_POWERSUSPEND
+	unregister_power_suspend(&mtkfb_early_suspend_handler);
 #endif
 
     kthread_stop(screen_update_task);

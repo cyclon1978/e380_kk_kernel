@@ -23,7 +23,7 @@
 #include <linux/input.h>
 #include <linux/workqueue.h>
 #include <linux/kobject.h>
-#include <linux/earlysuspend.h>
+#include <linux/powersuspend.h>
 #include <linux/platform_device.h>
 #include <asm/atomic.h>
 
@@ -124,7 +124,7 @@ struct mma7450l_i2c_data {
     struct data_filter      fir;
 #endif 
     /*early suspend*/
-#if defined(CONFIG_HAS_EARLYSUSPEND)
+#if defined(CONFIG_POWERSUSPEND)
     struct early_suspend    early_drv;
 #endif     
 };
@@ -137,7 +137,7 @@ static struct i2c_driver mma7450l_i2c_driver = {
 	.probe      		= mma7450l_i2c_probe,
 	.remove    			= mma7450l_i2c_remove,
 	.detect				= mma7450l_i2c_detect,
-#if !defined(CONFIG_HAS_EARLYSUSPEND)    
+#if !defined(CONFIG_POWERSUSPEND)    
     .suspend            = mma7450l_suspend,
     .resume             = mma7450l_resume,
 #endif
@@ -1939,7 +1939,7 @@ static struct miscdevice mma7450l_device = {
 	.fops = &mma7450l_fops,
 };
 /*----------------------------------------------------------------------------*/
-#ifndef CONFIG_HAS_EARLYSUSPEND
+#ifndef CONFIG_POWERSUSPEND
 /*----------------------------------------------------------------------------*/
 static int mma7450l_suspend(struct i2c_client *client, pm_message_t msg) 
 {
@@ -2042,7 +2042,7 @@ static void mma7450l_late_resume(struct early_suspend *h)
 	atomic_set(&obj->suspend, 0);    
 }
 /*----------------------------------------------------------------------------*/
-#endif /*CONFIG_HAS_EARLYSUSPEND*/
+#endif /*CONFIG_POWERSUSPEND*/
 /*----------------------------------------------------------------------------*/
 static int mma7450l_i2c_detect(struct i2c_client *client, int kind, struct i2c_board_info *info) 
 {    
@@ -2129,7 +2129,7 @@ static int mma7450l_i2c_probe(struct i2c_client *client, const struct i2c_device
 		goto exit_kfree;
 	}
 
-#ifdef CONFIG_HAS_EARLYSUSPEND
+#ifdef CONFIG_POWERSUSPEND
 	obj->early_drv.level    = EARLY_SUSPEND_LEVEL_DISABLE_FB - 1,
 	obj->early_drv.suspend  = mma7450l_early_suspend,
 	obj->early_drv.resume   = mma7450l_late_resume,    

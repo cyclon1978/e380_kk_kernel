@@ -23,7 +23,7 @@
 #include <linux/input.h>
 #include <linux/workqueue.h>
 #include <linux/kobject.h>
-#include <linux/earlysuspend.h>
+#include <linux/powersuspend.h>
 #include <linux/platform_device.h>
 #include <asm/atomic.h>
 
@@ -123,7 +123,7 @@ struct kxtj2_1009_i2c_data {
     struct data_filter      fir;
 #endif 
     /*early suspend*/
-#if defined(CONFIG_HAS_EARLYSUSPEND) && defined(USE_EARLY_SUSPEND)
+#if defined(CONFIG_POWERSUSPEND) && defined(USE_EARLY_SUSPEND)
     struct early_suspend    early_drv;
 #endif     
 };
@@ -136,7 +136,7 @@ static struct i2c_driver kxtj2_1009_i2c_driver = {
 	.probe      		= kxtj2_1009_i2c_probe,
 	.remove    			= kxtj2_1009_i2c_remove,
 	.detect				= kxtj2_1009_i2c_detect,
-#if !defined(CONFIG_HAS_EARLYSUSPEND) || !defined(USE_EARLY_SUSPEND)
+#if !defined(CONFIG_POWERSUSPEND) || !defined(USE_EARLY_SUSPEND)
     .suspend            = kxtj2_1009_suspend,
     .resume             = kxtj2_1009_resume,
 #endif
@@ -1786,7 +1786,7 @@ static struct miscdevice kxtj2_1009_device = {
 	.fops = &kxtj2_1009_fops,
 };
 /*----------------------------------------------------------------------------*/
-#if !defined(CONFIG_HAS_EARLYSUSPEND) || !defined(USE_EARLY_SUSPEND)
+#if !defined(CONFIG_POWERSUSPEND) || !defined(USE_EARLY_SUSPEND)
 /*----------------------------------------------------------------------------*/
 static int kxtj2_1009_suspend(struct i2c_client *client, pm_message_t msg) 
 {
@@ -1841,7 +1841,7 @@ static int kxtj2_1009_resume(struct i2c_client *client)
 	return 0;
 }
 /*----------------------------------------------------------------------------*/
-#else //!defined(CONFIG_HAS_EARLYSUSPEND) || !defined(USE_EARLY_SUSPEND)
+#else //!defined(CONFIG_POWERSUSPEND) || !defined(USE_EARLY_SUSPEND)
 /*----------------------------------------------------------------------------*/
 static void kxtj2_1009_early_suspend(struct early_suspend *h) 
 {
@@ -1891,7 +1891,7 @@ static void kxtj2_1009_late_resume(struct early_suspend *h)
 	mutex_unlock(&kxtj2_1009_mutex);
 }
 /*----------------------------------------------------------------------------*/
-#endif //!defined(CONFIG_HAS_EARLYSUSPEND) || !defined(USE_EARLY_SUSPEND)
+#endif //!defined(CONFIG_POWERSUSPEND) || !defined(USE_EARLY_SUSPEND)
 /*----------------------------------------------------------------------------*/
 static int kxtj2_1009_i2c_detect(struct i2c_client *client/*, int kind*/, struct i2c_board_info *info) 
 {    
@@ -1978,7 +1978,7 @@ static int kxtj2_1009_i2c_probe(struct i2c_client *client, const struct i2c_devi
 		goto exit_kfree;
 	}
 
-#if defined(CONFIG_HAS_EARLYSUSPEND) && defined(USE_EARLY_SUSPEND)
+#if defined(CONFIG_POWERSUSPEND) && defined(USE_EARLY_SUSPEND)
 	obj->early_drv.level    = EARLY_SUSPEND_LEVEL_DISABLE_FB - 1,
 	obj->early_drv.suspend  = kxtj2_1009_early_suspend,
 	obj->early_drv.resume   = kxtj2_1009_late_resume,    

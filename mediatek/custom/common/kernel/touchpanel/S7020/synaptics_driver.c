@@ -144,7 +144,7 @@ static struct i2c_driver tpd_i2c_driver = {
 };
 
 #if 0
-#ifdef CONFIG_HAS_EARLYSUSPEND
+#ifdef CONFIG_POWERSUSPEND
 static ssize_t synaptics_rmi4_full_pm_cycle_show(struct device *dev,
                 struct device_attribute *attr, char *buf);
 
@@ -180,7 +180,7 @@ static ssize_t synaptics_rmi4_0dbutton_store(struct device *dev,
 /*
 struct kobject *attr_kobj;
 
-#ifdef CONFIG_HAS_EARLYSUSPEND
+#ifdef CONFIG_POWERSUSPEND
 static struct kobj_attribute synaptics_pm_cycle_attr = {
     .attr = {
         .name = "full_pm_cycle",
@@ -239,7 +239,7 @@ static struct kobj_attribute synaptics_0dbutton_attr = {
 };
 
 static struct attribute *syna_attrs[] = {
-#ifdef CONFIG_HAS_EARLYSUSPEND
+#ifdef CONFIG_POWERSUSPEND
     &synaptics_pm_cycle_attr.attr,
 #endif
 
@@ -264,7 +264,7 @@ struct kobject *properties_kobj_driver;
 
 static struct device_attribute attrs[] = {
 /*
-#ifdef CONFIG_HAS_EARLYSUSPEND
+#ifdef CONFIG_POWERSUSPEND
         __ATTR(full_pm_cycle, (S_IRUGO | S_IWUGO),
                         synaptics_rmi4_full_pm_cycle_show,
                         synaptics_rmi4_full_pm_cycle_store),
@@ -299,7 +299,7 @@ static struct list_head exp_fn_list;
 static struct synaptics_rmi4_f51_handle *f51;
 #endif
 #if 0
-#ifdef CONFIG_HAS_EARLYSUSPEND
+#ifdef CONFIG_POWERSUSPEND
 static ssize_t synaptics_rmi4_full_pm_cycle_show(struct device *dev,
                 struct device_attribute *attr, char *buf)
 {

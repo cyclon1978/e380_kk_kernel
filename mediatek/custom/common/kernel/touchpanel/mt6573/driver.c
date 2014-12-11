@@ -471,7 +471,7 @@ void tpd_tasklet(unsigned long unused) {
     return;
 }
 
-//#ifdef CONFIG_HAS_EARLYSUSPEND
+//#ifdef CONFIG_POWERSUSPEND
 /* platform device functions */
 void tpd_suspend(struct early_suspend *h) {
 

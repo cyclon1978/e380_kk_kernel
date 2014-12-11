@@ -23,7 +23,7 @@
 #include <linux/input.h>
 #include <linux/workqueue.h>
 #include <linux/kobject.h>
-#include <linux/earlysuspend.h>
+#include <linux/powersuspend.h>
 #include <linux/platform_device.h>
 #include <asm/atomic.h>
 
@@ -40,7 +40,7 @@
 #include <mach/mt_gpio.h>
 #include <mach/mt_pm_ldo.h>
 
-#include <linux/earlysuspend.h>
+#include <linux/powersuspend.h>
 #include <linux/wakelock.h>
 #include <linux/sched.h>
 /******************************************************************************
@@ -197,7 +197,7 @@ struct epl2182_priv
 	atomic_t	ps_thd_val_high;	 /*the cmd value can't be read, stored in ram*/
 	atomic_t	ps_thd_val_low; 	/*the cmd value can't be read, stored in ram*/
     /*early suspend*/
-#if defined(CONFIG_HAS_EARLYSUSPEND)
+#if defined(CONFIG_POWERSUSPEND)
     struct early_suspend    early_drv;
 #endif
 };
@@ -1812,7 +1812,7 @@ static int epl2182_i2c_probe(struct i2c_client *client, const struct i2c_device_
 
 
 
-#if defined(CONFIG_HAS_EARLYSUSPEND)
+#if defined(CONFIG_POWERSUSPEND)
     obj->early_drv.level    = EARLY_SUSPEND_LEVEL_STOP_DRAWING - 2,
     obj->early_drv.suspend  = epl2182_early_suspend,
     obj->early_drv.resume   = epl2182_late_resume,
