@@ -1401,7 +1401,7 @@ static int tpd_local_init(void)
     return 0; 
  }
 
- static void tpd_resume( struct early_suspend *h )
+ static void tpd_resume( struct power_suspend *h )
  {
   //int retval = TPD_OK;
   //char data;
@@ -1487,7 +1487,7 @@ static int tpd_local_init(void)
 	 //return retval;
  }
 
- static void tpd_suspend( struct early_suspend *h )
+ static void tpd_suspend( struct power_suspend *h )
  {
 	// int retval = TPD_OK;
 	 static char data = 0x3;
