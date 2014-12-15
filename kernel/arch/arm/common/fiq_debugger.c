@@ -382,12 +382,12 @@ static void dump_irqs(struct fiq_debugger_state *state)
 {
 	int n;
 
-	debug_printf(state, "irqnr       total  since-last   status   state  name\n");
+	debug_printf(state, "irqnr       total  since-last   status  name\n");
 	for (n = 0; n < NR_IRQS; n++) {
 		struct irqaction *act = irq_desc[n].action;
 		if (!act && !kstat_irqs(n))
 			continue;
-		debug_printf(state, "%5d: %10u %11u %8x%8x  %s\n", n,
+		debug_printf(state, "%5d: %10u %11u %8x  %s\n", n,
 			kstat_irqs(n),
 			kstat_irqs(n) - state->last_irqs[n],
 			irq_desc[n].status_use_accessors,
