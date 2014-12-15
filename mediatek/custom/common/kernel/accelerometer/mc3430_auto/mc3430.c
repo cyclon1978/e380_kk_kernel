@@ -58,7 +58,7 @@
 #include <linux/input.h>
 #include <linux/workqueue.h>
 #include <linux/kobject.h>
-#include <linux/earlysuspend.h>
+#include <linux/powersuspend.h>
 #include <linux/platform_device.h>
 #include <asm/atomic.h>
 
@@ -183,9 +183,9 @@ struct mc3210_i2c_data {
     atomic_t                fir_en;
     struct data_filter      fir;
 #endif 
-    /*early suspend*/
-#if defined(CONFIG_HAS_EARLYSUSPEND)
-    struct early_suspend    early_drv;
+    /*power suspend*/
+#if defined(CONFIG_POWERSUSPEND)
+    struct power_suspend    early_drv;
 #endif     
 };
 /*----------------------------------------------------------------------------*/
@@ -197,7 +197,7 @@ static struct i2c_driver mc3210_i2c_driver = {
 	.probe      		= mc3210_i2c_probe,
 	.remove    			= mc3210_i2c_remove,
 //	.detect				= mc3210_i2c_detect,
-#if !defined(CONFIG_HAS_EARLYSUSPEND)    
+#if !defined(CONFIG_POWERSUSPEND)    
     .suspend            = mc3210_suspend,
     .resume             = mc3210_resume,
 #endif
@@ -1838,7 +1838,7 @@ static struct miscdevice mc3210_device = {
 	.fops = &mc3210_fops,
 };
 /*----------------------------------------------------------------------------*/
-//#ifndef CONFIG_HAS_EARLYSUSPEND
+//#ifndef CONFIG_POWERSUSPEND
 /*----------------------------------------------------------------------------*/
 static int mc3210_suspend(struct i2c_client *client, pm_message_t msg) 
 {
@@ -1889,9 +1889,9 @@ static int mc3210_resume(struct i2c_client *client)
 	return 0;
 }
 /*----------------------------------------------------------------------------*/
-//#else /*CONFIG_HAS_EARLY_SUSPEND is defined*/
+//#else /*CONFIG_POWER_SUSPEND is defined*/
 /*----------------------------------------------------------------------------*/
-static void mc3210_early_suspend(struct early_suspend *h) 
+static void mc3210_early_suspend(struct power_suspend *h) 
 {
 	struct mc3210_i2c_data *obj = container_of(h, struct mc3210_i2c_data, early_drv);   
 	int err;
@@ -1914,7 +1914,7 @@ static void mc3210_early_suspend(struct early_suspend *h)
 	MC3210_power(obj->hw, 0);
 }
 /*----------------------------------------------------------------------------*/
-static void mc3210_late_resume(struct early_suspend *h)
+static void mc3210_late_resume(struct power_suspend *h)
 {
 	struct mc3210_i2c_data *obj = container_of(h, struct mc3210_i2c_data, early_drv);         
 	int err;
@@ -1935,7 +1935,7 @@ static void mc3210_late_resume(struct early_suspend *h)
 	atomic_set(&obj->suspend, 0);    
 }
 /*----------------------------------------------------------------------------*/
-//#endif /*CONFIG_HAS_EARLYSUSPEND*/
+//#endif /*CONFIG_POWERSUSPEND*/
 /*----------------------------------------------------------------------------*/
 /*
 static int mc3210_i2c_detect(struct i2c_client *client, int kind, struct i2c_board_info *info) 
@@ -2035,11 +2035,11 @@ static int mc3210_i2c_probe(struct i2c_client *client, const struct i2c_device_i
 		goto exit_kfree;
 	}
 
-#ifdef CONFIG_HAS_EARLYSUSPEND
-	obj->early_drv.level    = EARLY_SUSPEND_LEVEL_DISABLE_FB - 1,
+#ifdef CONFIG_POWERSUSPEND
+	//obj->early_drv.level    = EARLY_SUSPEND_LEVEL_DISABLE_FB - 1,
 	obj->early_drv.suspend  = mc3210_early_suspend,
 	obj->early_drv.resume   = mc3210_late_resume,    
-	register_early_suspend(&obj->early_drv);
+	register_power_suspend(&obj->early_drv);
 #endif 
 
 	mc3210_init_flag = 0;/* Add for auto detect feature */

@@ -144,8 +144,8 @@ static void __exit tpd_device_exit(void);
 static int         tpd_probe(struct platform_device *pdev);
 static int tpd_remove(struct platform_device *pdev);
 
-extern void        tpd_suspend(struct early_suspend *h);
-extern void        tpd_resume(struct early_suspend *h);
+extern void        tpd_suspend(struct power_suspend *h);
+extern void        tpd_resume(struct power_suspend *h);
 extern void tpd_button_init(void);
 
 #define TPD_INFO_PROC//Punk@add
@@ -165,7 +165,7 @@ static struct platform_driver tpd_driver = {
     .remove     = tpd_remove,
     .shutdown   = NULL,
     .probe      = tpd_probe,
-    #ifndef CONFIG_HAS_EARLYSUSPEND
+    #ifndef CONFIG_POWERSUSPEND
     .suspend    = NULL,
     .resume     = NULL,
     #endif
@@ -174,11 +174,11 @@ static struct platform_driver tpd_driver = {
     },
 };
 
-/*20091105, Kelvin, re-locate touch screen driver to earlysuspend*/
-#ifdef CONFIG_HAS_EARLYSUSPEND
-static struct early_suspend MTK_TS_early_suspend_handler = 
+/*20091105, Kelvin, re-locate touch screen driver to powersuspend*/
+#ifdef CONFIG_POWERSUSPEND
+static struct power_suspend MTK_TS_early_suspend_handler = 
 {
-    .level = EARLY_SUSPEND_LEVEL_STOP_DRAWING-1,    
+    //.level = EARLY_SUSPEND_LEVEL_STOP_DRAWING-1,    
     .suspend = NULL,
     .resume  = NULL,
 };
@@ -419,10 +419,10 @@ static int tpd_probe(struct platform_device *pdev) {
 	  	TPD_DMESG("Generic touch panel driver\n");
 	  }
 	  	
-    #ifdef CONFIG_HAS_EARLYSUSPEND
+    #ifdef CONFIG_POWERSUSPEND
     MTK_TS_early_suspend_handler.suspend = g_tpd_drv->suspend;
     MTK_TS_early_suspend_handler.resume = g_tpd_drv->resume;
-    register_early_suspend(&MTK_TS_early_suspend_handler);
+    register_power_suspend(&MTK_TS_early_suspend_handler);
     #endif
     #endif
 
@@ -486,10 +486,10 @@ static int tpd_probe(struct platform_device *pdev) {
 	  	return 0;
 	  	} 
 	  }	
-    #ifdef CONFIG_HAS_EARLYSUSPEND
+    #ifdef CONFIG_POWERSUSPEND
     MTK_TS_early_suspend_handler.suspend = g_tpd_drv->suspend;
     MTK_TS_early_suspend_handler.resume = g_tpd_drv->resume;
-    register_early_suspend(&MTK_TS_early_suspend_handler);
+    register_power_suspend(&MTK_TS_early_suspend_handler);
     #endif		  
 #endif	  
 //#ifdef TPD_TYPE_CAPACITIVE
@@ -582,8 +582,8 @@ static int tpd_probe(struct platform_device *pdev) {
 static int tpd_remove(struct platform_device *pdev)
 {
 	   input_unregister_device(tpd->dev);
-    #ifdef CONFIG_HAS_EARLYSUSPEND
-    unregister_early_suspend(&MTK_TS_early_suspend_handler);
+    #ifdef CONFIG_POWERSUSPEND
+    unregister_power_suspend(&MTK_TS_early_suspend_handler);
     #endif
     return 0;
 }
@@ -603,8 +603,8 @@ static void __exit tpd_device_exit(void) {
     TPD_DMESG("MediaTek touch panel driver exit\n");
     //input_unregister_device(tpd->dev);
     platform_driver_unregister(&tpd_driver);
-    #ifdef CONFIG_HAS_EARLYSUSPEND
-    unregister_early_suspend(&MTK_TS_early_suspend_handler);
+    #ifdef CONFIG_POWERSUSPEND
+    unregister_power_suspend(&MTK_TS_early_suspend_handler);
     #endif
 }
 

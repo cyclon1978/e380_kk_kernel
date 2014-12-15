@@ -7,7 +7,7 @@
 #include <linux/device.h>
 #include <linux/platform_device.h>
 #include <linux/dma-mapping.h>
-#include <linux/earlysuspend.h>
+#include <linux/powersuspend.h>
 #include <linux/kthread.h>
 #include <linux/rtpm_prio.h>
 #include <linux/vmalloc.h>
@@ -192,9 +192,9 @@ extern void hdmi_setorientation(int orientation);
 extern void	MTK_HDMI_Set_Security_Output(int enable);
 #endif
 
-#ifdef CONFIG_HAS_EARLYSUSPEND
-static void mtkfb_late_resume(struct early_suspend *h);
-static void mtkfb_early_suspend(struct early_suspend *h);
+#ifdef CONFIG_POWERSUSPEND
+static void mtkfb_late_resume(struct power_suspend *h);
+static void mtkfb_early_suspend(struct power_suspend *h);
 #endif
 // ---------------------------------------------------------------------------
 //  Timer Routines
@@ -1635,7 +1635,7 @@ static int mtkfb_ioctl(struct file *file, struct fb_info *info, unsigned int cmd
 	}
 	case MTKFB_POWEROFF:
    	{
-#ifdef CONFIG_HAS_EARLYSUSPEND
+#ifdef CONFIG_POWERSUSPEND
 		if(is_early_suspended) return r;
         mtkfb_early_suspend(0);
 #endif
@@ -1644,7 +1644,7 @@ static int mtkfb_ioctl(struct file *file, struct fb_info *info, unsigned int cmd
 
 	case MTKFB_POWERON:
    	{
-#ifdef CONFIG_HAS_EARLYSUSPEND
+#ifdef CONFIG_POWERSUSPEND
 		if(!is_early_suspended) return r;
 		mtkfb_late_resume(0);
 		if (!lcd_fps)
@@ -3010,8 +3010,8 @@ void mtkfb_clear_lcm(void)
 }
 
 
-#ifdef CONFIG_HAS_EARLYSUSPEND
-static void mtkfb_early_suspend(struct early_suspend *h)
+#ifdef CONFIG_POWERSUSPEND
+static void mtkfb_early_suspend(struct power_suspend *h)
 {
     int i=0;
     MSG_FUNC_ENTER();
@@ -3098,8 +3098,8 @@ static int mtkfb_resume(struct device *pdev)
     return 0;
 }
 
-#ifdef CONFIG_HAS_EARLYSUSPEND
-static void mtkfb_late_resume(struct early_suspend *h)
+#ifdef CONFIG_POWERSUSPEND
+static void mtkfb_late_resume(struct power_suspend *h)
 {
     MSG_FUNC_ENTER();
 
@@ -3244,8 +3244,8 @@ static struct platform_driver mtkfb_driver =
     },
 };
 
-#ifdef CONFIG_HAS_EARLYSUSPEND
-static struct early_suspend mtkfb_early_suspend_handler =
+#ifdef CONFIG_POWERSUSPEND
+static struct power_suspend mtkfb_early_suspend_handler =
 {
 	.level = EARLY_SUSPEND_LEVEL_DISABLE_FB,
 	.suspend = mtkfb_early_suspend,
@@ -3282,8 +3282,8 @@ int __init mtkfb_init(void)
         goto exit;
     }
 
-#ifdef CONFIG_HAS_EARLYSUSPEND
-   	register_early_suspend(&mtkfb_early_suspend_handler);
+#ifdef CONFIG_POWERSUSPEND
+   	register_power_suspend(&mtkfb_early_suspend_handler);
 #endif
 
     DBG_Init();
@@ -3302,8 +3302,8 @@ static void __exit mtkfb_cleanup(void)
 
     platform_driver_unregister(&mtkfb_driver);
 
-#ifdef CONFIG_HAS_EARLYSUSPEND
-	unregister_early_suspend(&mtkfb_early_suspend_handler);
+#ifdef CONFIG_POWERSUSPEND
+	unregister_power_suspend(&mtkfb_early_suspend_handler);
 #endif
 
     kthread_stop(screen_update_task);

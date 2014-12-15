@@ -16,3 +16,7 @@ CONFIG_BLX=y
 
 # enable dynamic read ahead
 CONFIG_DYNAMIC_READ_AHEAD=y
+
+# enable powersuspend
+CONFIG_POWERSUSPEND=y
+CONFIG_EARLYSUSPEND=n

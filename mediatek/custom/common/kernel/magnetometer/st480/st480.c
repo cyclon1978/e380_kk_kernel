@@ -29,7 +29,7 @@ MTK Platform
 #include <linux/workqueue.h>
 #include <linux/kobject.h>
 #include <linux/platform_device.h>
-#include <linux/earlysuspend.h>
+#include <linux/powersuspend.h>
 #include <linux/time.h>
 #include <linux/hrtimer.h>
 
@@ -155,8 +155,8 @@ struct senodia_data {
 	atomic_t layout;   
 	atomic_t trace;
 	struct hwmsen_convert   cvt;
-#if defined(CONFIG_HAS_EARLYSUSPEND)  
-	struct early_suspend senodia_early_suspend;
+#if defined(CONFIG_POWERSUSPEND)  
+	struct power_suspend senodia_early_suspend;
 #endif
 };
 
@@ -196,7 +196,7 @@ static struct i2c_driver st480_i2c_driver = {
 	.probe      = st480_i2c_probe,
 	.remove     = st480_i2c_remove,
 	.detect     = st480_i2c_detect,
-#if !defined(CONFIG_HAS_EARLYSUSPEND)
+#if !defined(CONFIG_POWERSUSPEND)
 	.suspend    = st480_suspend,
 	.resume     = st480_resume,
 #endif 
@@ -1272,7 +1272,7 @@ int st480_orientation_operate(void* self, uint32_t command, void* buff_in, int s
 }
 
 /*----------------------------------------------------------------------------*/
-#ifndef	CONFIG_HAS_EARLYSUSPEND
+#ifndef	CONFIG_POWERSUSPEND
 /*----------------------------------------------------------------------------*/
 static int st480_suspend(struct i2c_client *client, pm_message_t mesg)
 {
@@ -1301,9 +1301,9 @@ static int st480_resume(struct i2c_client *client)
 	return 0;
 }
 /*----------------------------------------------------------------------------*/
-#else /*CONFIG_HAS_EARLY_SUSPEND is defined*/
+#else /*CONFIG_POWERSUSPEND is defined*/
 /*----------------------------------------------------------------------------*/
-static void senodia_early_suspend(struct early_suspend *handler)
+static void senodia_early_suspend(struct power_suspend *handler)
 {
 	struct senodia_data *obj = container_of(handler, struct senodia_data, senodia_early_suspend);   
 	SENODIAFUNC("senodia_early_suspend");
@@ -1320,7 +1320,7 @@ static void senodia_early_suspend(struct early_suspend *handler)
 	}
 }
 /*----------------------------------------------------------------------------*/
-static void senodia_early_resume(struct early_suspend *handler)
+static void senodia_early_resume(struct power_suspend *handler)
 {
 	struct senodia_data *obj = container_of(handler, struct senodia_data, senodia_early_suspend);         
 	SENODIAFUNC("senodia_early_resume");
@@ -1333,7 +1333,7 @@ static void senodia_early_resume(struct early_suspend *handler)
 	senodia_SetPowerMode(obj->client, true);
 }
 /*----------------------------------------------------------------------------*/
-#endif /*CONFIG_HAS_EARLYSUSPEND*/
+#endif /*CONFIG_POWERSUSPEND*/
 /*----------------------------------------------------------------------------*/
 static int st480_i2c_detect(struct i2c_client *client, int kind, struct i2c_board_info *info) 
 {    
@@ -1473,11 +1473,11 @@ static int st480_i2c_probe(struct i2c_client *client, const struct i2c_device_id
 
 	printk("---------------------> probe 5\n");
 
-#ifdef CONFIG_HAS_EARLYSUSPEND
-	senodia->senodia_early_suspend.level    = EARLY_SUSPEND_LEVEL_DISABLE_FB - 1,	
+#ifdef CONFIG_POWERSUSPEND
+	//senodia->senodia_early_suspend.level    = EARLY_SUSPEND_LEVEL_DISABLE_FB - 1,	
 	senodia->senodia_early_suspend.suspend = senodia_early_suspend;
 	senodia->senodia_early_suspend.resume = senodia_early_resume;
-	register_early_suspend(&senodia->senodia_early_suspend);
+	register_power_suspend(&senodia->senodia_early_suspend);
 #endif
 
 

@@ -4,7 +4,9 @@
 #include <linux/spinlock.h>
 #include <linux/proc_fs.h>
 #include <linux/platform_device.h>
-#include <linux/earlysuspend.h>
+#ifdef CONFIG_POWERSUSPEND
+#include <linux/powersuspend.h>
+#endif
 #include <linux/sched.h>
 #include <linux/kthread.h>
 #include <linux/err.h>
@@ -1632,15 +1634,15 @@ static int spm_mcdi_probe(struct platform_device *pdev)
     return 0;
 }
 
-static void spm_mcdi_early_suspend(struct early_suspend *h) 
+static void spm_mcdi_power_suspend(struct power_suspend *h) 
 {
     #if MCDI_KICK_PCM
-    clc_notice("spm_mcdi_early_suspend start.\n");
+    clc_notice("spm_mcdi_power_suspend start.\n");
     spm_leave_MCDI();    
     #endif
 }
 
-static void spm_mcdi_late_resume(struct early_suspend *h) 
+static void spm_mcdi_late_resume(struct power_suspend *h) 
 {
     #if MCDI_KICK_PCM
     clc_notice("spm_mcdi_late_resume start.\n");
@@ -1659,11 +1661,11 @@ static struct platform_driver mtk_spm_mcdi_driver = {
     },
 };
 
-static struct early_suspend mtk_spm_mcdi_early_suspend_driver =
+static struct power_suspend mtk_spm_mcdi_power_suspend_driver =
 {
-    .level = EARLY_SUSPEND_LEVEL_DISABLE_FB + 251,
-    .suspend = spm_mcdi_early_suspend,
-    .resume  = spm_mcdi_late_resume,
+   //.level = EARLY_SUSPEND_LEVEL_DISABLE_FB + 251,
+   .suspend = spm_mcdi_power_suspend,
+   .resume  = spm_mcdi_late_resume,
 };
 
 void spm_mcdi_LDVT_sodi(void)
@@ -1925,11 +1927,11 @@ static int __init spm_mcdi_init(void)
 
     clc_notice("spm mcdi driver callback register OK..\n");
 
-    register_early_suspend(&mtk_spm_mcdi_early_suspend_driver);
+   register_power_suspend(&mtk_spm_mcdi_power_suspend_driver);
 
-    clc_notice("spm mcdi driver early suspend callback register OK..\n");
-    
-    return 0;
+   clc_notice("spm mcdi driver power suspend callback register OK..\n");
+   
+   return 0;
 }
 
 static void __exit spm_mcdi_exit(void)

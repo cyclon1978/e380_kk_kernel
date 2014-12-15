@@ -21,16 +21,9 @@
 #endif
 
 #ifdef CONFIG_DYNAMIC_FSYNC
-extern bool early_suspend_active;
+extern bool power_suspend_active;
 extern bool dyn_fsync_active;
 #endif
-
-
-#define FEATURE_PRINT_FSYNC_PID
-#ifdef USER_BUILD_KERNEL
-#undef FEATURE_PRINT_FSYNC_PID
-#endif
-#include <linux/xlog.h>
 
 #define VALID_FLAGS (SYNC_FILE_RANGE_WAIT_BEFORE|SYNC_FILE_RANGE_WRITE| \
 			SYNC_FILE_RANGE_WAIT_AFTER)
@@ -53,187 +46,12 @@ struct fsync_work {
  */
 
 
-#ifdef FEATURE_PRINT_FSYNC_PID
-#define SYNC_PRT_TIME_PERIOD	2000000000
-#define ID_CNT 20
-static unsigned char f_idx=0;
-static unsigned char fs_idx=0;
-static unsigned char fs1_idx=0;
-static unsigned long long fsync_last_t=0;
-static unsigned long long fs_sync_last_t=0;
-static unsigned long long fs1_sync_last_t=0;
-static DEFINE_MUTEX(fsync_mutex);
-static DEFINE_MUTEX(fs_sync_mutex);
-static DEFINE_MUTEX(fs1_sync_mutex);
-struct
-{
-	pid_t pid;
-	unsigned int cnt; 
-}fsync[ID_CNT], fs_sync[ID_CNT], fs1_sync[ID_CNT];
-static char xlog_buf[ID_CNT*10+50]={0};
-static char xlog_buf2[ID_CNT*10+50]={0};
-static char xlog_buf3[ID_CNT*10+50]={0};
-
-
-
-static void fs_sync_mmcblk0_log(void)
-{
-	pid_t curr_pid;
-	unsigned int i;
-	unsigned long long time1=0;
-	bool ptr_flag=false;
-
-
-	time1 = sched_clock();
-	mutex_lock(&fs_sync_mutex);
-	if(fs_sync_last_t == 0)
-	{
-			fs_sync_last_t = time1;
-	}
-	if (time1 - fs_sync_last_t >= (unsigned long long)SYNC_PRT_TIME_PERIOD)
-	{
-		sprintf(xlog_buf2, "MMCBLK0_FS_Sync [(PID):cnt] -- ");		
-		for(i=0;i<ID_CNT;i++)
-		{
-			if(fs_sync[i].pid==0)
-				break;
-			else
-			{
-				sprintf(xlog_buf2+31+i*9, "(%4d):%d ", fs_sync[i].pid, fs_sync[i].cnt);	//31=strlen("MMCBLK1_FS_Sync [(PID):cnt] -- "), 9=strlen("(%4d):%d ")
-				ptr_flag = true;
-			}
-		}	
-		if(ptr_flag)
-		{		
-			xlog_printk(ANDROID_LOG_DEBUG, "BLOCK_TAG", "MMCBLK0_FS_Sync statistic in timeline %lld\n", fs_sync_last_t); 
-			xlog_printk(ANDROID_LOG_DEBUG, "BLOCK_TAG", "%s\n", xlog_buf2);			
-		}		
-		for (i=0;i<ID_CNT;i++)	//clear
-		{
-			fs_sync[i].pid=0;
-			fs_sync[i].cnt=0;
-		}
-		fs_sync_last_t = time1;
-	}
-	curr_pid = task_pid_nr(current);
-	do{
-		if(fs_sync[0].pid ==0)
-		{
-			fs_sync[0].pid= curr_pid;
-			fs_sync[0].cnt ++;
-			fs_idx=0;
-			break;
-		}
-
-		if(curr_pid == fs_sync[fs_idx].pid)
-		{
-			fs_sync[fs_idx].cnt++;
-			break;
-		}
-
-		for(i=0;i<ID_CNT;i++)
-		{
-			if(curr_pid == fs_sync[i].pid)		//found
-			{
-				fs_sync[i].cnt++;
-				fs_idx = i;
-				break;
-			}
-			if((fs_sync[i].pid ==0) || (i==ID_CNT-1) )		//found empty space or (full and NOT found)
-			{
-				fs_sync[i].pid = curr_pid;
-				fs_sync[i].cnt=1;
-				fs_idx=i;			
-				break;
-			}
-		}
-	}while(0);
-	mutex_unlock(&fs_sync_mutex);
-}
-
-static void fs_sync_mmcblk1_log(void)
-{
-	pid_t curr_pid;
-	unsigned int i;
-	unsigned long long time1=0;
-	bool ptr_flag=false;
-
-	time1 = sched_clock();
-	mutex_lock(&fs1_sync_mutex);
-	if(fs1_sync_last_t == 0)
-	{
-			fs1_sync_last_t = time1;
-	}
-	if (time1 - fs1_sync_last_t >= (unsigned long long)SYNC_PRT_TIME_PERIOD)
-	{
-		sprintf(xlog_buf3, "MMCBLK1_FS_Sync [(PID):cnt] -- ");		
-		for(i=0;i<ID_CNT;i++)
-		{
-			if(fs1_sync[i].pid==0)
-				break;
-			else
-			{
-				sprintf(xlog_buf3+31+i*9, "(%4d):%d ", fs1_sync[i].pid, fs1_sync[i].cnt);	//31=strlen("MMCBLK1_FS_Sync [(PID):cnt] -- "), 9=strlen("(%4d):%d ")
-				ptr_flag = true;
-			}
-		}	
-		if(ptr_flag)
-		{		
-			xlog_printk(ANDROID_LOG_DEBUG, "BLOCK_TAG", "MMCBLK1_FS_Sync statistic in timeline %lld\n", fs1_sync_last_t); 
-			xlog_printk(ANDROID_LOG_DEBUG, "BLOCK_TAG", "%s\n", xlog_buf3);			
-		}		
-		for (i=0;i<ID_CNT;i++)	//clear
-		{
-			fs1_sync[i].pid=0;
-			fs1_sync[i].cnt=0;
-		}
-		fs1_sync_last_t = time1;
-	}
-	curr_pid = task_pid_nr(current);
-	do{
-		if(fs1_sync[0].pid ==0)
-		{
-			fs1_sync[0].pid= curr_pid;
-			fs1_sync[0].cnt ++;
-			fs1_idx=0;
-			break;
-		}
-
-		if(curr_pid == fs1_sync[fs1_idx].pid)
-		{
-			fs1_sync[fs1_idx].cnt++;
-			break;
-		}
-
-		for(i=0;i<ID_CNT;i++)
-		{
-			if(curr_pid == fs1_sync[i].pid)		//found
-			{
-				fs1_sync[i].cnt++;
-				fs1_idx = i;
-				break;
-			}
-			if((fs1_sync[i].pid ==0) || (i==ID_CNT-1) )		//found empty space or (full and NOT found)
-			{
-				fs1_sync[i].pid = curr_pid;
-				fs1_sync[i].cnt=1;
-				fs1_idx=i;			
-				break;
-			}
-		}
-	}while(0);
-	mutex_unlock(&fs1_sync_mutex);
-}
-#endif	
 
 
 
 static int __sync_filesystem(struct super_block *sb, int wait)
 {
 
-#ifdef FEATURE_PRINT_FSYNC_PID
-	char b[BDEVNAME_SIZE];
-#endif 
 	/*
 	 * This should be safe, as we require bdi backing to actually
 	 * write out data in the first place
@@ -252,15 +70,6 @@ static int __sync_filesystem(struct super_block *sb, int wait)
 	if (sb->s_op->sync_fs)
 		sb->s_op->sync_fs(sb, wait);
 
-#ifdef FEATURE_PRINT_FSYNC_PID
-if(sb->s_bdev != NULL)
-{
-	if((!memcmp(bdevname(sb->s_bdev, b),"mmcblk0",7)))
-		fs_sync_mmcblk0_log();
-	else if((!memcmp(bdevname(sb->s_bdev, b),"mmcblk1",7)))
-		fs_sync_mmcblk1_log();
-}
-#endif
 
 	return __sync_blockdev(sb->s_bdev, wait);
 }
@@ -302,6 +111,7 @@ static void sync_one_sb(struct super_block *sb, void *arg)
  * Sync all the data for all the filesystems (called by sys_sync() and
  * emergency sync)
  */
+
 #ifndef CONFIG_DYNAMIC_FSYNC
 static
 #endif
@@ -317,13 +127,67 @@ EXPORT_SYMBOL_GPL(sync_filesystems);
  * sync everything.  Start out by waking pdflush, because that writes back
  * all queues in parallel.
  */
-SYSCALL_DEFINE0(sync)
+static void do_sync(void)
 {
 	wakeup_flusher_threads(0, WB_REASON_SYNC);
 	sync_filesystems(0);
 	sync_filesystems(1);
 	if (unlikely(laptop_mode))
 		laptop_sync_completion();
+	return;
+}
+
+static DEFINE_MUTEX(sync_mutex);	/* One do_sync() at a time. */
+static unsigned long sync_seq;		/* Many sync()s from one do_sync(). */
+					/*  Overflow harmless, extra wait. */
+
+/*
+ * Only allow one task to do sync() at a time, and further allow
+ * concurrent sync() calls to be satisfied by a single do_sync()
+ * invocation.
+ */
+SYSCALL_DEFINE0(sync)
+{
+	unsigned long snap;
+	unsigned long snap_done;
+
+	snap = ACCESS_ONCE(sync_seq);
+	smp_mb();  /* Prevent above from bleeding into critical section. */
+	mutex_lock(&sync_mutex);
+	snap_done = sync_seq;
+
+	/*
+	 * If the value in snap is odd, we need to wait for the current
+	 * do_sync() to complete, then wait for the next one, in other
+	 * words, we need the value of snap_done to be three larger than
+	 * the value of snap.  On the other hand, if the value in snap is
+	 * even, we only have to wait for the next request to complete,
+	 * in other words, we need the value of snap_done to be only two
+	 * greater than the value of snap.  The "(snap + 3) & 0x1" computes
+	 * this for us (thank you, Linus!).
+	 */
+	if (ULONG_CMP_GE(snap_done, (snap + 3) & ~0x1)) {
+		/*
+		 * A full do_sync() executed between our two fetches from
+		 * sync_seq, so our work is done!
+		 */
+		smp_mb(); /* Order test with caller's subsequent code. */
+		mutex_unlock(&sync_mutex);
+		return 0;
+	}
+
+	/* Record the start of do_sync(). */
+	ACCESS_ONCE(sync_seq)++;
+	WARN_ON_ONCE((sync_seq & 0x1) != 1);
+	smp_mb(); /* Keep prior increment out of do_sync(). */
+
+	do_sync();
+
+	/* Record the end of do_sync(). */
+	smp_mb(); /* Keep subsequent increment out of do_sync(). */
+	ACCESS_ONCE(sync_seq)++;
+	WARN_ON_ONCE((sync_seq & 0x1) != 0);
+	mutex_unlock(&sync_mutex);
 	return 0;
 }
 
@@ -386,87 +250,15 @@ SYSCALL_DEFINE1(syncfs, int, fd)
  */
 int vfs_fsync_range(struct file *file, loff_t start, loff_t end, int datasync)
 {
-#ifdef FEATURE_PRINT_FSYNC_PID
-	pid_t curr_pid;
-	unsigned int i;
-	unsigned long long time1=0;
-	bool ptr_flag=false;
-#endif	
+
 
 #ifdef CONFIG_DYNAMIC_FSYNC
-	if (likely(dyn_fsync_active && !early_suspend_active))
+	if (likely(dyn_fsync_active && !power_suspend_active))
 		return 0;
 	else {
 #endif
 	if (!file->f_op || !file->f_op->fsync)
 		return -EINVAL;
-#ifdef FEATURE_PRINT_FSYNC_PID
-	time1 = sched_clock();
-mutex_lock(&fsync_mutex);
-	if(fsync_last_t == 0)
-	{
-			fsync_last_t = time1;
-	}
-	if (time1 - fsync_last_t >= (unsigned long long)SYNC_PRT_TIME_PERIOD)
-	{
-		sprintf(xlog_buf, "Fsync [(PID):cnt] -- ");		
-		for(i=0;i<ID_CNT;i++)
-		{
-			if(fsync[i].pid==0)
-				break;
-			else
-			{
-				sprintf(xlog_buf+21+i*9, "(%4d):%d ", fsync[i].pid, fsync[i].cnt);	//21=strlen("Fsync [(PID):cnt] -- "), 9=strlen("(%4d):%d ")
-				ptr_flag = true;
-			}
-		}	
-		if(ptr_flag)
-		{		
-			xlog_printk(ANDROID_LOG_DEBUG, "BLOCK_TAG", "Fsync statistic in timeline %lld\n", fsync_last_t); 
-			xlog_printk(ANDROID_LOG_DEBUG, "BLOCK_TAG", "%s\n", xlog_buf);			
-		}		
-		for (i=0;i<ID_CNT;i++)	//clear
-		{
-			fsync[i].pid=0;
-			fsync[i].cnt=0;
-		}
-		fsync_last_t = time1;
-	}
-	curr_pid = task_pid_nr(current);	
-	do{
-		if(fsync[0].pid ==0)
-		{
-			fsync[0].pid= curr_pid;
-			fsync[0].cnt ++;
-			f_idx=0;
-			break;
-		}
-
-		if(curr_pid == fsync[f_idx].pid)
-		{
-			fsync[f_idx].cnt++;
-			break;
-		}
-
-		for(i=0;i<ID_CNT;i++)
-		{
-			if(curr_pid == fsync[i].pid)		//found
-			{
-				fsync[i].cnt++;
-				f_idx = i;
-				break;
-			}
-			if((fsync[i].pid ==0) || (i==ID_CNT-1) )		//found empty space or (full and NOT found)
-			{
-				fsync[i].pid = curr_pid;
-				fsync[i].cnt=1;
-				f_idx=i;			
-				break;
-			}
-		}
-	}while(0);
-mutex_unlock(&fsync_mutex);
-#endif	
 
 	return file->f_op->fsync(file, start, end, datasync);
 #ifdef CONFIG_DYNAMIC_FSYNC
@@ -600,7 +392,7 @@ no_async:
 SYSCALL_DEFINE1(fsync, unsigned int, fd)
 {
 #ifdef CONFIG_DYNAMIC_FSYNC
-	if (likely(dyn_fsync_active && !early_suspend_active))
+	if (likely(dyn_fsync_active && !power_suspend_active))
 		return 0;
 	else
 #endif
@@ -609,8 +401,8 @@ SYSCALL_DEFINE1(fsync, unsigned int, fd)
 
 SYSCALL_DEFINE1(fdatasync, unsigned int, fd)
 {
-#if 0
-	if (likely(dyn_fsync_active && !early_suspend_active))
+#ifdef CONFIG_DYNAMIC_FSYNC
+	if (likely(dyn_fsync_active && !power_suspend_active))
 		return 0;
 	else
 #endif
@@ -685,11 +477,10 @@ SYSCALL_DEFINE(sync_file_range)(int fd, loff_t offset, loff_t nbytes,
 				unsigned int flags)
 {
 #ifdef CONFIG_DYNAMIC_FSYNC
-	if (likely(dyn_fsync_active && !early_suspend_active))
+	if (likely(dyn_fsync_active && !power_suspend_active))
 		return 0;
 	else {
 #endif
-
 	int ret;
 	struct file *file;
 	struct address_space *mapping;
@@ -789,7 +580,7 @@ SYSCALL_DEFINE(sync_file_range2)(int fd, unsigned int flags,
 				 loff_t offset, loff_t nbytes)
 {
 #ifdef CONFIG_DYNAMIC_FSYNC
-	if (likely(dyn_fsync_active && !early_suspend_active))
+	if (likely(dyn_fsync_active && !power_suspend_active))
 		return 0;
 	else
 #endif

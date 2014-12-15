@@ -14,7 +14,9 @@
 #include <linux/proc_fs.h>
 #include <linux/miscdevice.h>
 #include <linux/platform_device.h>
-#include <linux/earlysuspend.h>
+#ifdef CONFIG_POWERSUSPEND
+#include <linux/powersuspend.h>
+#endif
 #include <linux/spinlock.h>
 #include <linux/kthread.h>
 #include <linux/hrtimer.h>
@@ -44,10 +46,10 @@ do {                                                                    \
     }                                                                   \
 } while(0)
 
-#ifdef CONFIG_HAS_EARLYSUSPEND
-static struct early_suspend mt_gpufreq_early_suspend_handler =
+#ifdef CONFIG_POWERSUSPEND
+static struct power_suspend mt_gpufreq_power_suspend_handler =
 {
-    .level = EARLY_SUSPEND_LEVEL_DISABLE_FB + 200,
+    //.level = EARLY_SUSPEND_LEVEL_DISABLE_FB + 200,
     .suspend = NULL,
     .resume  = NULL,
 };
@@ -1355,9 +1357,9 @@ static int mt_gpufreq_target(int idx)
 }
 
 /*********************************
-* early suspend callback function
+* power suspend callback function
 **********************************/
-void mt_gpufreq_early_suspend(struct early_suspend *h)
+void mt_gpufreq_power_suspend(struct power_suspend *h)
 {
     mt_gpufreq_state_set(0);
 }
@@ -1365,7 +1367,7 @@ void mt_gpufreq_early_suspend(struct early_suspend *h)
 /*******************************
 * late resume callback function
 ********************************/
-void mt_gpufreq_late_resume(struct early_suspend *h)
+void mt_gpufreq_late_resume(struct power_suspend *h)
 {
     mt_gpufreq_state_set(1);
 }
@@ -1941,10 +1943,10 @@ int mt_gpufreq_register(struct mt_gpufreq_info *freqs, int num)
     
         mt_gpufreq_registered = true;
     	
-        #ifdef CONFIG_HAS_EARLYSUSPEND
-        mt_gpufreq_early_suspend_handler.suspend = mt_gpufreq_early_suspend;
-        mt_gpufreq_early_suspend_handler.resume = mt_gpufreq_late_resume;
-        register_early_suspend(&mt_gpufreq_early_suspend_handler);
+        #ifdef CONFIG_POWERSUSPEND
+        mt_gpufreq_power_suspend_handler.suspend = mt_gpufreq_power_suspend;
+        mt_gpufreq_power_suspend_handler.resume = mt_gpufreq_late_resume;
+        register_power_suspend(&mt_gpufreq_power_suspend_handler);
         #endif
     
         /**********************
@@ -1995,10 +1997,10 @@ int mt_gpufreq_non_register(void)
 {
     if(mt_gpufreq_already_non_registered == false)
     {
-        #ifdef CONFIG_HAS_EARLYSUSPEND
-        mt_gpufreq_early_suspend_handler.suspend = mt_gpufreq_early_suspend;
-        mt_gpufreq_early_suspend_handler.resume = mt_gpufreq_late_resume;
-        register_early_suspend(&mt_gpufreq_early_suspend_handler);
+        #ifdef CONFIG_POWERSUSPEND
+        mt_gpufreq_power_suspend_handler.suspend = mt_gpufreq_power_suspend;
+        mt_gpufreq_power_suspend_handler.resume = mt_gpufreq_late_resume;
+        register_power_suspend(&mt_gpufreq_power_suspend_handler);
         #endif
 		
         mt_gpufreq_already_non_registered = true;
