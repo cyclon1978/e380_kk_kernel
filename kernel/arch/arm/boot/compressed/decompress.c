@@ -32,12 +32,19 @@ extern void error(char *);
 #  define Tracecv(c,x)
 #endif
 
+/* Not needed, but used in some headers pulled in by decompressors */
+extern char * strstr(const char * s1, const char *s2);
+
 #ifdef CONFIG_KERNEL_GZIP
 #include "../../../../lib/decompress_inflate.c"
 #endif
 
 #ifdef CONFIG_KERNEL_LZO
 #include "../../../../lib/decompress_unlzo.c"
+#endif
+
+#ifdef CONFIG_KERNEL_LZ4
+#include "../../../../lib/decompress_unlz4.c"
 #endif
 
 #ifdef CONFIG_KERNEL_LZMA
