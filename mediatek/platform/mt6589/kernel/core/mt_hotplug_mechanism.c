@@ -43,7 +43,7 @@
 /*********************************
 * glabal variable
 **********************************/
-static int g_enable = 1;
+static int g_enable = 0; // disable -> INTELLI_PLUG enabled
 
 #ifdef CONFIG_POWERSUSPEND
 static int g_enable_cpu_rush_boost = 0;
