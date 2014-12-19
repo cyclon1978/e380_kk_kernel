@@ -1,12 +1,19 @@
+#define RELEASE_MODE_SPECIAL 0
+
+#if RELEASE_MODE_SPECIAL == 1
+  #define MT_FORCE_1200_MHZ 1 // force 1200 MHz variant -> kills temperature checks!
+  #define MTK_VOLTAGE_LEVEL_LOWERED 0 // no voltage lowering with this faulty cpu
+#else
+  #define MT_FORCE_1200_MHZ 0
+  #define MTK_VOLTAGE_LEVEL_LOWERED 1 // use voltage lowering
+#endif
+
 // #define MT_OVERCLOCK 1 // see mt_devs.c
 // #define MT_SHOW_CPU_FLAGS 1 // see sbchk_base.c
-// #define MT_FORCE_1200_MHZ 1 // force 1200 MHz variant -> kills temperature checks!
-// #define MT_FORCE_1200_MHZ_SOFT 1 // forces cpu recognition correction for faulty cpus
+// #define MT_FORCE_1200_MHZ_SOFT 1 // forces cpu recognition correction for faulty cpus -> deprecated, remove (not working)
 
 #define MT_VC_VOLTAGE_0_5D 0x5D // 1.28125v ONLY USED FOR mt_ptp VMAX, do not change...
 #define MT_VC_VOLTAGE_0_58 0x58 // 1.25V VPROC SHOULD NOT BE USED ON 1.2 GHz chip (g_cpufreq_get_ptp_level == 0 on normal temp)
-
-#define MTK_VOLTAGE_LEVEL_LOWERED 1
 
 #if MTK_VOLTAGE_LEVEL_LOWERED == 1
 
