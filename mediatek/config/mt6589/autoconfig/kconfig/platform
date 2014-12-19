@@ -155,9 +155,12 @@ CONFIG_SLUB=y
 CONFIG_TRACEPOINTS=y
 CONFIG_OPROFILE=n
 CONFIG_HAVE_OPROFILE=y
-CONFIG_KPROBES=y
+
+# Kprobes allows you to trap at almost any kernel address and execute a callback function. register_kprobe() establishes a probepoint and specifies the callback. Kprobes is useful for kernel debugging, non-intrusive instrumentation and testing. If in doubt, say "N".
+CONFIG_KPROBES=n
+CONFIG_KRETPROBES=n
+
 CONFIG_JUMP_LABEL=y
-CONFIG_KRETPROBES=y
 CONFIG_HAVE_KPROBES=y
 CONFIG_HAVE_KRETPROBES=y
 CONFIG_USE_GENERIC_SMP_HELPERS=y
@@ -431,6 +434,7 @@ CONFIG_CPU_FREQ_GOV_HOTPLUG=y
 CONFIG_VFP=y
 CONFIG_VFPv3=y
 CONFIG_NEON=y
+CONFIG_KERNEL_MODE_NEON=y
 
 #
 # Userspace binary formats
