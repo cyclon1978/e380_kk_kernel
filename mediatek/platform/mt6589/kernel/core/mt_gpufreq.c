@@ -161,7 +161,7 @@ static void mt_gpufreq_set(unsigned int freq_old, unsigned int freq_new, unsigne
 *****************************************************************************/
 void mt_gpufreq_keep_frequency_non_OD_init(unsigned int freq_limit, unsigned int volt_limit)
 {
-    xlog_printk(ANDROID_LOG_INFO, "Power/GPU_DVFS", "mt_gpufreq_keep_frequency_non_OD_init, freq_limit = %d, volt_limit = %d\n", freq_limit, volt_limit);
+    //xlog_printk(ANDROID_LOG_INFO, "Power/GPU_DVFS", "mt_gpufreq_keep_frequency_non_OD_init, freq_limit = %d, volt_limit = %d\n", freq_limit, volt_limit);
 	
     if ((freq_limit == GPU_KEEP_FREQ_NON_OD_BYPASS) && (volt_limit == GPU_KEEP_VOLT_NON_OD_BYPASS))
     {
@@ -241,7 +241,7 @@ void mt_gpufreq_keep_frequency_non_OD_set(bool enable)
 EXPORT_SYMBOL(mt_gpufreq_keep_frequency_non_OD_set);
 
 /*****************************************************************
-* Check GPU current frequency and enable pll in initial and late resume.
+* Check GPU current frequency and enable pll in initial and power resume.
 *****************************************************************/
 static void mt_gpufreq_check_freq_and_set_pll(void)
 {
@@ -1365,9 +1365,9 @@ void mt_gpufreq_power_suspend(struct power_suspend *h)
 }
 
 /*******************************
-* late resume callback function
+* power resume callback function
 ********************************/
-void mt_gpufreq_late_resume(struct power_suspend *h)
+void mt_gpufreq_power_resume(struct power_suspend *h)
 {
     mt_gpufreq_state_set(1);
 }
@@ -1945,7 +1945,7 @@ int mt_gpufreq_register(struct mt_gpufreq_info *freqs, int num)
     	
         #ifdef CONFIG_POWERSUSPEND
         mt_gpufreq_power_suspend_handler.suspend = mt_gpufreq_power_suspend;
-        mt_gpufreq_power_suspend_handler.resume = mt_gpufreq_late_resume;
+        mt_gpufreq_power_suspend_handler.resume = mt_gpufreq_power_resume;
         register_power_suspend(&mt_gpufreq_power_suspend_handler);
         #endif
     
@@ -1999,7 +1999,7 @@ int mt_gpufreq_non_register(void)
     {
         #ifdef CONFIG_POWERSUSPEND
         mt_gpufreq_power_suspend_handler.suspend = mt_gpufreq_power_suspend;
-        mt_gpufreq_power_suspend_handler.resume = mt_gpufreq_late_resume;
+        mt_gpufreq_power_suspend_handler.resume = mt_gpufreq_power_resume;
         register_power_suspend(&mt_gpufreq_power_suspend_handler);
         #endif
 		
