@@ -36,6 +36,8 @@
 #include "mach/upmu_common.h"
 #include "mach/sync_write.h"
 
+#include "mach/voltage_control.h"
+
 /***************************
 * debug message
 ****************************/
@@ -70,7 +72,7 @@ static struct mt_gpufreq_power_info mt_gpufreqs_golden_power[] = {
 ***************************/
 static int g_gpufreq_dvfs_disable_count = 0;
 
-static unsigned int g_cur_freq = 286000;
+static unsigned int g_cur_freq = GPU_CUR_FREQ;
 static unsigned int g_cur_volt = 0;
 static unsigned int g_cur_load = 0;
  

@@ -1,3 +1,18 @@
+// GPU PART
+
+#define GPU_OVERCLOCK 1
+
+#if GPU_OVERCLOCK == 1
+  // far away from MT6589T maximum... 312Mhz
+  #define GPU_CUR_FREQ 312000
+  #define GPU_CUR_FREQ_CLOCK 312000000
+#else
+  #define GPU_CUR_FREQ       286000
+  #define GPU_CUR_FREQ_CLOCK 286000000
+#endif
+
+// CPU/VOLTAGE PART
+
 #define RELEASE_MODE_SPECIAL 0
 
 #if RELEASE_MODE_SPECIAL == 1
