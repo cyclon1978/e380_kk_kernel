@@ -18,3 +18,6 @@ CONFIG_DYNAMIC_READ_AHEAD=y
 # enable powersuspend
 CONFIG_POWERSUSPEND=y
 CONFIG_EARLYSUSPEND=n
+
+# enable frandom support
+CONFIG_FRANDOM=y
