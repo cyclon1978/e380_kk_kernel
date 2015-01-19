@@ -43,7 +43,6 @@
 #include <linux/fcntl.h>
 #include <linux/fs.h>
 #include <linux/ip.h>
-#include <linux/powersuspend.h>
 #include <net/addrconf.h>
 
 #include <asm/uaccess.h>
@@ -335,7 +334,7 @@ typedef struct dhd_info {
 
 #if defined(CONFIG_POWERSUSPEND) && defined(DHD_USE_POWERSUSPEND)
 	struct power_suspend power_suspend;
-#endif /* CONFIG_POWERSUSPEND && DHD_USE_POWERSUSPEND */
+#endif /* defined(CONFIG_POWERSUSPEND) && defined(DHD_USE_POWERSUSPEND) */
 
 #ifdef ARP_OFFLOAD_SUPPORT
 	u32 pend_ipaddr;
@@ -762,7 +761,7 @@ static int dhd_set_suspend(int value, dhd_pub_t *dhd)
 	if (dhd->up) {
 		if (value && dhd->in_suspend) {
 #ifdef PKT_FILTER_SUPPORT
-				dhd->early_suspended = 1;
+				dhd->power_suspended = 1;
 #endif
 				/* Kernel suspended */
 				DHD_ERROR(("%s: force extra Suspend setting \n", __FUNCTION__));
@@ -795,7 +794,7 @@ static int dhd_set_suspend(int value, dhd_pub_t *dhd)
 #endif /* ENABLE_FW_ROAM_SUSPEND */
 			} else {
 #ifdef PKT_FILTER_SUPPORT
-				dhd->early_suspended = 0;
+				dhd->power_suspended = 0;
 #endif
 				/* Kernel resumed  */
 				DHD_ERROR(("%s: Remove extra suspend setting \n", __FUNCTION__));
@@ -856,7 +855,7 @@ static void dhd_power_suspend(struct power_suspend *h)
 		dhd_suspend_resume_helper(dhd, 1, 0);
 }
 
-static void dhd_late_resume(struct power_suspend *h)
+static void dhd_power_resume(struct power_suspend *h)
 {
 	struct dhd_info *dhd = container_of(h, struct dhd_info, power_suspend);
 	DHD_TRACE_HW4(("%s: enter\n", __FUNCTION__));
@@ -3358,9 +3357,9 @@ dhd_attach(osl_t *osh, struct dhd_bus *bus, uint bus_hdrlen)
 
 #if defined(CONFIG_POWERSUSPEND) && defined(DHD_USE_POWERSUSPEND)
 	dhd->power_suspend.suspend = dhd_power_suspend;
-	dhd->power_suspend.resume = dhd_late_resume;
+	dhd->power_suspend.resume = dhd_power_resume;
 	register_power_suspend(&dhd->power_suspend);
-	dhd_state |= DHD_ATTACH_STATE_EARLYSUSPEND_DONE;
+	dhd_state |= DHD_ATTACH_STATE_POWERSUSPEND_DONE;
 #endif /* CONFIG_POWERSUSPEND && DHD_USE_POWERSUSPEND */
 
 #ifdef ARP_OFFLOAD_SUPPORT
@@ -4577,7 +4576,7 @@ void dhd_detach(dhd_pub_t *dhdp)
 			dhd_prot_detach(dhdp);
 	}
 #if defined(CONFIG_POWERSUSPEND) && defined(DHD_USE_POWERSUSPEND)
-	if (dhd->dhd_state & DHD_ATTACH_STATE_EARLYSUSPEND_DONE) {
+	if (dhd->dhd_state & DHD_ATTACH_STATE_POWERSUSPEND_DONE) {
 		if (dhd->power_suspend.suspend)
 			unregister_power_suspend(&dhd->power_suspend);
 	}

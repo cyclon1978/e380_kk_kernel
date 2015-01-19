@@ -24,9 +24,7 @@
 #include <linux/android_pmem.h>
 #include <mach/dma.h>
 #include <linux/delay.h>
-#ifdef CONFIG_POWERSUSPEND
 #include <linux/powersuspend.h>
-#endif
 #include "mach/sync_write.h"
 #include "mach/mt_reg_base.h"
 #include "mach/mt_clkmgr.h"
@@ -2030,29 +2028,28 @@ static void vcodec_power_suspend(struct power_suspend *h)
     MFV_LOGD("vcodec_power_suspend - tid = %d\n", current->pid);
 }
 
-static void vcodec_late_resume(struct power_suspend *h)
+static void vcodec_power_resume(struct power_suspend *h)
 {
     mutex_lock(&PWRLock);
-    MFV_LOGE("vcodec_late_resume, tid = %d, PWR_USER = %d\n", current->pid, gu4PWRCounter);
+    MFV_LOGE("vcodec_power_resume, tid = %d, PWR_USER = %d\n", current->pid, gu4PWRCounter);
     mutex_unlock(&PWRLock);
 /*
     if (gu4PWRCounter != 0)
     {
-        MFV_LOGE("[vcodec_late_resume] Someone Use HW, Enable Power!\n");
+        MFV_LOGE("[vcodec_power_resume] Someone Use HW, Enable Power!\n");
         enable_clock(MT65XX_PDN_MM_VBUF, "Video_VBUF");
         enable_clock(MT_CG_VDEC0_VDE, "VideoDec");
         enable_clock(MT_CG_VENC_VEN, "VideoEnc");
         enable_clock(MT65XX_PDN_MM_GDC_SHARE_MACRO, "VideoEnc");
     }
 */
-    MFV_LOGD("vcodec_late_resume - tid = %d\n", current->pid);
+    MFV_LOGD("vcodec_power_resume - tid = %d\n", current->pid);
 }
 
 static struct power_suspend vcodec_power_suspend_handler =
 {
-    //.level = (EARLY_SUSPEND_LEVEL_DISABLE_FB - 1),
     .suspend = vcodec_power_suspend,
-    .resume = vcodec_late_resume,
+    .resume = vcodec_power_resume,
 };
 #endif
 

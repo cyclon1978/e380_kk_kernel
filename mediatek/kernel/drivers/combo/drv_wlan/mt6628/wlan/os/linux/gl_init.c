@@ -155,7 +155,7 @@
  *
  * 04 27 2011 george.huang
  * [WCXRP00000684] [MT6620 Wi-Fi][Driver] Support P2P setting ARP filter
- * Support P2P ARP filter setting on power suspend/ late resume
+ * Support P2P ARP filter setting on power suspend/ power resume
  *
  * 04 18 2011 terry.wu
  * [WCXRP00000660] [MT6620 Wi-Fi][Driver] Remove flag CFG_WIFI_DIRECT_MOVED
@@ -281,7 +281,7 @@
  *
  * 02 16 2011 jeffrey.chang
  * NULL
- * Add query ipv4 and ipv6 address during power suspend and late resume
+ * Add query ipv4 and ipv6 address during power suspend and power resume
  *
  * 02 15 2011 jeffrey.chang
  * NULL
@@ -869,11 +869,11 @@ static struct cfg80211_ops mtk_wlan_ops = {
 ********************************************************************************
 */
 
-#if defined(CONFIG_POWERSUSPEND)
+#ifdef CONFIG_POWERSUSPEND
 extern int glRegisterPowerSuspend(
     struct power_suspend        *prDesc,
     power_suspend_callback      wlanSuspend,
-    late_resume_callback        wlanResume);
+    power_resume_callback        wlanResume);
 
 extern int glUnregisterPowerSuspend(struct power_suspend *prDesc);
 #endif
@@ -2448,7 +2448,7 @@ fgIsUnderEarlierSuspend = true;
     }
 }
 
-static void wlanLateResume(void)
+static void wlanPowerResume(void)
 {
     struct net_device *prDev = NULL;
     P_GLUE_INFO_T prGlueInfo = NULL;
@@ -2457,12 +2457,12 @@ static void wlanLateResume(void)
     UINT_8  ip6[16] = { 0 };     // FIX ME: avoid to allocate large memory in stack
 #endif
 
-    DBGLOG(INIT, INFO, ("*********wlanLateResume************\n"));
+    DBGLOG(INIT, INFO, ("*********wlanPowerResume************\n"));
 
     // <1> Sanity check and acquire the net_device
     ASSERT(u4WlanDevNum <= CFG_MAX_WLAN_DEVICES);
     if(u4WlanDevNum == 0){
-        DBGLOG(INIT, ERROR, ("wlanLateResume u4WlanDevNum==0 invalid!!\n"));
+        DBGLOG(INIT, ERROR, ("wlanPowerResume u4WlanDevNum==0 invalid!!\n"));
         return;
     }
     prDev = arWlanDevInfo[u4WlanDevNum-1].prDev;
@@ -2534,9 +2534,8 @@ fgIsUnderEarlierSuspend = false;
     }
 }
 
-#if defined(CONFIG_POWERSUSPEND)
+#ifdef CONFIG_POWERSUSPEND
 static struct power_suspend mt6620_power_suspend_desc = {
-    //.level = EARLY_SUSPEND_LEVEL_BLANK_SCREEN,
 };
 
 static void wlan_power_suspend(struct power_suspend *h)
@@ -2545,12 +2544,12 @@ static void wlan_power_suspend(struct power_suspend *h)
     wlanPowerSuspend();
 }
 
-static void wlan_late_resume(struct power_suspend *h)
+static void wlan_power_resume(struct power_suspend *h)
 {
-    DBGLOG(INIT, INFO, ("*********wlan_late_resume************\n"));
-    wlanLateResume();
+    DBGLOG(INIT, INFO, ("*********wlan_power_resume************\n"));
+    wlanPowerResume();
 }
-#endif //defined(CONFIG_POWERSUSPEND)
+#endif //#ifdef CONFIG_POWERSUSPEND
 #endif //! CONFIG_X86
 
 extern void wlanRegisterNotifier(void);
@@ -2818,8 +2817,8 @@ bailout:
             DBGLOG(INIT, ERROR, ("wlanProbe: Cannot register the net_device context to the kernel\n"));
             break;
         }
-#if defined(CONFIG_POWERSUSPEND)
-        glRegisterPowerSuspend(&mt6620_power_suspend_desc, wlan_power_suspend, wlan_late_resume);
+#ifdef CONFIG_POWERSUSPEND
+        glRegisterPowerSuspend(&mt6620_power_suspend_desc, wlan_power_suspend, wlan_power_resume);
         wlanRegisterNotifier();
 #endif
 
@@ -2995,7 +2994,7 @@ wlanRemove(
     wlanNetDestroy(prDev->ieee80211_ptr);
     prDev = NULL;
 
-#if defined(CONFIG_POWERSUSPEND)
+#ifdef CONFIG_POWERSUSPEND
     glUnregisterPowerSuspend(&mt6620_power_suspend_desc);
 #endif
     wlanUnregisterNotifier();

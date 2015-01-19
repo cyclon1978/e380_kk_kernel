@@ -14,9 +14,7 @@
 #include <linux/proc_fs.h>
 #include <linux/miscdevice.h>
 #include <linux/platform_device.h>
-#ifdef CONFIG_POWERSUSPEND
 #include <linux/powersuspend.h>
-#endif
 #include <linux/spinlock.h>
 #include <linux/kthread.h>
 #include <linux/hrtimer.h>
@@ -45,7 +43,6 @@ do {                                                                    \
 #ifdef CONFIG_POWERSUSPEND
 static struct power_suspend mt_emifreq_power_suspend_handler =
 {
-    //.level = EARLY_SUSPEND_LEVEL_DISABLE_FB + 200,
     .suspend = NULL,
     .resume  = NULL,
 };
@@ -172,14 +169,14 @@ void mt_emifreq_power_suspend(struct power_suspend *h)
 }
 
 /*******************************
-* late resume callback function
+* power resume callback function
 ********************************/
-void mt_emifreq_late_resume(struct power_suspend *h)
+void mt_emifreq_power_resume(struct power_suspend *h)
 {
     if(mt_emifreq_pause == false)
     {
         mt_l2h_mempll();
-        dprintk("mt_emifreq_late_resume\n");
+        dprintk("mt_emifreq_power_resume\n");
     }
 }
 
@@ -193,7 +190,7 @@ static int __init mt_emifreq_init(void)
 	
     #ifdef CONFIG_POWERSUSPEND
     mt_emifreq_power_suspend_handler.suspend = mt_emifreq_power_suspend;
-    mt_emifreq_power_suspend_handler.resume = mt_emifreq_late_resume;
+    mt_emifreq_power_suspend_handler.resume = mt_emifreq_power_resume;
     register_power_suspend(&mt_emifreq_power_suspend_handler);
     #endif
 

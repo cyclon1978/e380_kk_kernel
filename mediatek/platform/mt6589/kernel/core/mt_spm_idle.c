@@ -4,9 +4,7 @@
 #include <linux/spinlock.h>
 #include <linux/proc_fs.h>
 #include <linux/platform_device.h>
-#ifdef CONFIG_POWERSUSPEND
 #include <linux/powersuspend.h>
-#endif
 #include <linux/sched.h>
 #include <linux/kthread.h>
 #include <linux/err.h>
@@ -1642,10 +1640,10 @@ static void spm_mcdi_power_suspend(struct power_suspend *h)
     #endif
 }
 
-static void spm_mcdi_late_resume(struct power_suspend *h) 
+static void spm_mcdi_power_resume(struct power_suspend *h) 
 {
     #if MCDI_KICK_PCM
-    clc_notice("spm_mcdi_late_resume start.\n");
+    clc_notice("spm_mcdi_power_resume start.\n");
     spm_go_to_MCDI();    
     #endif
 }
@@ -1663,9 +1661,8 @@ static struct platform_driver mtk_spm_mcdi_driver = {
 
 static struct power_suspend mtk_spm_mcdi_power_suspend_driver =
 {
-   //.level = EARLY_SUSPEND_LEVEL_DISABLE_FB + 251,
    .suspend = spm_mcdi_power_suspend,
-   .resume  = spm_mcdi_late_resume,
+    .resume  = spm_mcdi_power_resume,
 };
 
 void spm_mcdi_LDVT_sodi(void)

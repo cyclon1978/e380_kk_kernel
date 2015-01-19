@@ -443,11 +443,11 @@ static const struct file_operations stack_trace_filter_fops = {
 #ifdef CONFIG_POWERSUSPEND
 /*add for stack_trace suspend-resume issue*/
 static int stack_tracer_enabled_backup;
-static int stack_trace_early_suspend_register = 0;
-static void stack_trace_early_suspend(struct power_suspend *h)
+static int stack_trace_power_suspend_register = 0;
+static void stack_trace_power_suspend(struct power_suspend *h)
 {
 	stack_tracer_enabled_backup = stack_tracer_enabled;
-	printk("[STACK_TRACER]stack_trace_early_suspend:%d\n", stack_tracer_enabled_backup);
+	printk("[STACK_TRACER]stack_trace_power_suspend:%d\n", stack_tracer_enabled_backup);
 	if(stack_tracer_enabled) {
 	    mutex_lock(&stack_sysctl_mutex);
 	    
@@ -460,9 +460,9 @@ static void stack_trace_early_suspend(struct power_suspend *h)
 	}
 }
 
-static void stack_trace_late_resume(struct power_suspend *h)
+static void stack_trace_power_resume(struct power_suspend *h)
 {
-	printk("[STACK_TRACER]stack_trace_late_resume:%d\n", stack_tracer_enabled_backup);
+	printk("[STACK_TRACER]stack_trace_power_resume:%d\n", stack_tracer_enabled_backup);
 	if(stack_tracer_enabled_backup) {
 	    mutex_lock(&stack_sysctl_mutex);
 	    
@@ -475,11 +475,10 @@ static void stack_trace_late_resume(struct power_suspend *h)
 	}
 }
 
-static struct power_suspend stack_tracer_early_suspend_handler =
+static struct power_suspend stack_tracer_power_suspend_handler =
 {
-    //.level = EARLY_SUSPEND_LEVEL_BLANK_SCREEN,
-    .suspend = stack_trace_early_suspend,
-    .resume  = stack_trace_late_resume,
+    .suspend = stack_trace_power_suspend,
+    .resume  = stack_trace_power_resume,
 };
 #endif
 
@@ -502,9 +501,9 @@ stack_trace_sysctl(struct ctl_table *table, int write,
 
 	if (stack_tracer_enabled) {
     #ifdef CONFIG_POWERSUSPEND
-        if (!stack_trace_early_suspend_register) {
-            register_power_suspend(&stack_tracer_early_suspend_handler);
-            stack_trace_early_suspend_register = 1;
+        if (!stack_trace_power_suspend_register) {
+            register_power_suspend(&stack_tracer_power_suspend_handler);
+            stack_trace_power_suspend_register = 1;
         }
     #endif
 		register_ftrace_function(&trace_ops);
@@ -512,9 +511,9 @@ stack_trace_sysctl(struct ctl_table *table, int write,
 	else {
 		unregister_ftrace_function(&trace_ops);
     #ifdef CONFIG_POWERSUSPEND
-        if (stack_trace_early_suspend_register) {
-            unregister_power_suspend(&stack_tracer_early_suspend_handler);
-            stack_trace_early_suspend_register = 0;
+        if (stack_trace_power_suspend_register) {
+            unregister_power_suspend(&stack_tracer_power_suspend_handler);
+            stack_trace_power_suspend_register = 0;
         }
     #endif
     }
@@ -566,9 +565,9 @@ static __init int stack_trace_init(void)
 		register_ftrace_function(&trace_ops);
 		
     #ifdef CONFIG_POWERSUSPEND
-        if (!stack_trace_early_suspend_register) {
-            register_power_suspend(&stack_tracer_early_suspend_handler);
-            stack_trace_early_suspend_register = 1;
+        if (!stack_trace_power_suspend_register) {
+            register_power_suspend(&stack_tracer_power_suspend_handler);
+            stack_trace_power_suspend_register = 1;
         }
     #endif
     }

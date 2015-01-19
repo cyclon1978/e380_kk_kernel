@@ -92,9 +92,9 @@
     #endif
 #endif
 
-#if defined(CONFIG_POWERSUSPEND)
+#ifdef CONFIG_POWERSUSPEND
 typedef void (*power_suspend_callback)(struct power_suspend *h);
-typedef void (*late_resume_callback) (struct power_suspend *h);
+typedef void (*power_resume_callback) (struct power_suspend *h);
 #endif
 
 

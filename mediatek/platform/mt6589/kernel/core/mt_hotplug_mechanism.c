@@ -12,9 +12,7 @@
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/cpu.h>
-#ifdef CONFIG_POWERSUSPEND
 #include <linux/powersuspend.h>
-#endif
 #include <linux/proc_fs.h>
 #include <linux/wakelock.h>
 #include <linux/platform_device.h>
@@ -31,7 +29,7 @@
 
 #define STATE_INIT                  0
 #define STATE_ENTER_POWER_SUSPEND   1
-#define STATE_ENTER_LATE_RESUME     2
+#define STATE_ENTER_POWER_RESUME            2
 
 #endif //#ifdef CONFIG_POWERSUSPEND
 
@@ -51,11 +49,10 @@ static int g_prev_cpu_rush_boost_enable = 0;
 
 static struct power_suspend mt_hotplug_mechanism_power_suspend_handler =
 {
-    //.level = EARLY_SUSPEND_LEVEL_DISABLE_FB + 250,
     .suspend = NULL,
     .resume  = NULL,
 };
-static int g_cur_state = STATE_ENTER_LATE_RESUME;
+static int g_cur_state = STATE_ENTER_POWER_RESUME;
 #endif //#ifdef CONFIG_POWERSUSPEND
 
 static int g_enable_dynamic_cpu_hotplug_at_suspend = 0;
@@ -124,12 +121,12 @@ power_suspend_end:
 * late resume callback function
 ********************************/
 #ifdef CONFIG_POWERSUSPEND
-static void mt_hotplug_mechanism_late_resume(struct power_suspend *h)
+static void mt_hotplug_mechanism_power_resume(struct power_suspend *h)
 {
-    HOTPLUG_INFO("mt_hotplug_mechanism_late_resume");
+    HOTPLUG_INFO("mt_hotplug_mechanism_power_resume");
 
     if (!g_enable)
-        goto late_resume_end;
+        goto power_resume_end;
     
     if (!g_enable_cpu_rush_boost)
     {
@@ -138,8 +135,8 @@ static void mt_hotplug_mechanism_late_resume(struct power_suspend *h)
     #endif //#ifdef CONFIG_CPU_FREQ_GOV_HOTPLUG
     }
     
-late_resume_end:
-    g_cur_state = STATE_ENTER_LATE_RESUME;
+power_resume_end:
+    g_cur_state = STATE_ENTER_POWER_RESUME;
 
     return;
 }
@@ -360,7 +357,7 @@ static int __init mt_hotplug_mechanism_init(void)
     
 #ifdef CONFIG_POWERSUSPEND
     mt_hotplug_mechanism_power_suspend_handler.suspend = mt_hotplug_mechanism_power_suspend;
-    mt_hotplug_mechanism_power_suspend_handler.resume = mt_hotplug_mechanism_late_resume;
+    mt_hotplug_mechanism_power_suspend_handler.resume = mt_hotplug_mechanism_power_resume;
     register_power_suspend(&mt_hotplug_mechanism_power_suspend_handler);
 #endif //#ifdef CONFIG_POWERSUSPEND
 

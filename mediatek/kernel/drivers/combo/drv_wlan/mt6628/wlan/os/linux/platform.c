@@ -113,7 +113,7 @@
 #include "gl_os.h"
 
 #ifndef CONFIG_X86
-#if defined(CONFIG_POWERSUSPEND)
+#ifdef CONFIG_POWERSUSPEND
     #include <linux/powersuspend.h>
 #endif
 #endif
@@ -337,7 +337,7 @@ void wlanUnregisterNotifier(void)
 //EXPORT_SYMBOL(wlanUnregisterNotifier);
 
 #ifndef CONFIG_X86
-#if defined(CONFIG_POWERSUSPEND)
+#ifdef CONFIG_POWERSUSPEND
 
 
 /*----------------------------------------------------------------------------*/
@@ -354,7 +354,7 @@ void wlanUnregisterNotifier(void)
 int glRegisterPowerSuspend(
     struct power_suspend        *prDesc,
     power_suspend_callback      wlanSuspend,
-    late_resume_callback        wlanResume)
+    power_resume_callback        wlanResume)
 {
     int ret = 0;
 

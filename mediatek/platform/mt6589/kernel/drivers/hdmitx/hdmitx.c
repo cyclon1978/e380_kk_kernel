@@ -468,7 +468,7 @@ void hdmi_waitVsync(void)
 
     if (wait_event_interruptible_timeout(hdmi_vsync_wq, hdmi_vsync_flag, HZ / 10) == 0)
     {
-        printk("[hdmi] Wait VSync timeout. early_suspend=%d\n", p->is_clock_on);
+        printk("[hdmi] Wait VSync timeout. power_suspend=%d\n", p->is_clock_on);
     }
 
     MMProfileLogEx(HDMI_MMP_Events.WaitVSync, MMProfileFlagEnd, hdmi_vsync_cnt, p->is_clock_on);

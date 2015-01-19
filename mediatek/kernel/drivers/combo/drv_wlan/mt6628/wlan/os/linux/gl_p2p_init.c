@@ -71,11 +71,11 @@ static UINT_16 mode = RUNNING_P2P_MODE;
 *                   F U N C T I O N   D E C L A R A T I O N S
 ********************************************************************************
 */
-#if defined(CONFIG_POWERSUSPEND)
+#ifdef CONFIG_POWERSUSPEND
 extern int glRegisterPowerSuspend(
     struct power_suspend        *prDesc,
     power_suspend_callback      wlanSuspend,
-    late_resume_callback        wlanResume);
+    power_resume_callback        wlanResume);
 
 extern int glUnregisterPowerSuspend(struct power_suspend *prDesc);
 #endif
@@ -263,7 +263,7 @@ static void wlanP2PPowerSuspend(void)
 }
 
 
-static void wlanP2PLateResume(void)
+static void wlanP2PPowerResume(void)
 {
     struct net_device *prDev = NULL;
     P_GLUE_INFO_T prGlueInfo = NULL;
@@ -272,9 +272,9 @@ static void wlanP2PLateResume(void)
     UINT_8  ip6[16] = { 0 };     // FIX ME: avoid to allocate large memory in stack
 #endif
 
-    printk(KERN_INFO "*********wlanP2PLateResume************\n");
+    printk(KERN_INFO "*********wlanP2PPowerResume************\n");
     if(!wlanExportGlueInfo(&prGlueInfo)) {
-        printk(KERN_INFO "*********p2pLateResume ignored************\n");
+        printk(KERN_INFO "*********p2pPowerResume ignored************\n");
         return;
     }
 
@@ -343,9 +343,8 @@ static void wlanP2PLateResume(void)
     }
 }
 
-#if defined(CONFIG_POWERSUSPEND)
+#ifdef CONFIG_POWERSUSPEND
 static struct power_suspend mt6620_p2p_power_suspend_desc = {
-    //.level = EARLY_SUSPEND_LEVEL_BLANK_SCREEN,
 };
 
 static void p2p_power_suspend(struct power_suspend *h)
@@ -354,10 +353,10 @@ static void p2p_power_suspend(struct power_suspend *h)
     wlanP2PPowerSuspend();
 }
 
-static void p2p_late_resume(struct power_suspend *h)
+static void p2p_power_resume(struct power_suspend *h)
 {
-    printk(KERN_INFO "*********wlanP2P_late_resume************\n");
-    wlanP2PLateResume();
+    printk(KERN_INFO "*********wlanP2P_power_resume************\n");
+    wlanP2PPowerResume();
 }
 #endif
 
@@ -387,9 +386,9 @@ p2pLaunch(
 
         printk("Launch success, fgIsP2PRegistered TRUE.\n");
 
-#if defined(CONFIG_POWERSUSPEND)
+#ifdef CONFIG_POWERSUSPEND
         /* Here, we register the power suspend and resume callback  */
-        glRegisterPowerSuspend(&mt6620_p2p_power_suspend_desc, p2p_power_suspend, p2p_late_resume);
+        glRegisterPowerSuspend(&mt6620_p2p_power_suspend_desc, p2p_power_suspend, p2p_power_resume);
 #endif
 
         return TRUE;
@@ -441,7 +440,7 @@ p2pRemove(
     }
     else {
 
-#if defined(CONFIG_POWERSUSPEND)
+#ifdef CONFIG_POWERSUSPEND
         glUnregisterPowerSuspend(&mt6620_p2p_power_suspend_desc);
 #endif
         /*Check p2p fsm is stop or not. If not then stop now*/

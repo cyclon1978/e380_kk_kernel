@@ -52,7 +52,7 @@ struct synaptics_ts_data {
 
 #ifdef CONFIG_POWERSUSPEND
 static void synaptics_ts_power_suspend(struct power_suspend *h);
-static void synaptics_ts_late_resume(struct power_suspend *h);
+static void synaptics_ts_power_resume(struct power_suspend *h);
 #endif
 
 static int synaptics_init_panel(struct synaptics_ts_data *ts)
@@ -533,9 +533,8 @@ static int synaptics_ts_probe(
 		hrtimer_start(&ts->timer, ktime_set(1, 0), HRTIMER_MODE_REL);
 	}
 #ifdef CONFIG_POWERSUSPEND
-	//ts->early_suspend.level = EARLY_SUSPEND_LEVEL_BLANK_SCREEN + 1;
 	ts->power_suspend.suspend = synaptics_ts_power_suspend;
-	ts->power_suspend.resume = synaptics_ts_late_resume;
+	ts->power_suspend.resume = synaptics_ts_power_resume;
 	register_power_suspend(&ts->power_suspend);
 #endif
 
@@ -627,7 +626,7 @@ static void synaptics_ts_power_suspend(struct power_suspend *h)
 	synaptics_ts_suspend(ts->client, PMSG_SUSPEND);
 }
 
-static void synaptics_ts_late_resume(struct power_suspend *h)
+static void synaptics_ts_power_resume(struct power_suspend *h)
 {
 	struct synaptics_ts_data *ts;
 	ts = container_of(h, struct synaptics_ts_data, power_suspend);

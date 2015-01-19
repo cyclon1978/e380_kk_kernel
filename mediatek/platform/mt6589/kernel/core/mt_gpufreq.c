@@ -14,9 +14,7 @@
 #include <linux/proc_fs.h>
 #include <linux/miscdevice.h>
 #include <linux/platform_device.h>
-#ifdef CONFIG_POWERSUSPEND
 #include <linux/powersuspend.h>
-#endif
 #include <linux/spinlock.h>
 #include <linux/kthread.h>
 #include <linux/hrtimer.h>
@@ -51,7 +49,6 @@ do {                                                                    \
 #ifdef CONFIG_POWERSUSPEND
 static struct power_suspend mt_gpufreq_power_suspend_handler =
 {
-    //.level = EARLY_SUSPEND_LEVEL_DISABLE_FB + 200,
     .suspend = NULL,
     .resume  = NULL,
 };

@@ -490,7 +490,6 @@ MTKLFB_ERROR MTKLFBEnableLFBEventNotification(MTKLFB_DEVINFO *psDevInfo)
 #ifdef CONFIG_POWERSUSPEND
 	psDevInfo->sPowerSuspend.suspend = MTKLFBPowerSuspendHandler;
 	psDevInfo->sPowerSuspend.resume = MTKLFBPowerResumeHandler;
-	//psDevInfo->sEarlySuspend.level = EARLY_SUSPEND_LEVEL_DISABLE_FB + 1;
 	register_power_suspend(&psDevInfo->sPowerSuspend);
 #endif
 
