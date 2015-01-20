@@ -387,7 +387,9 @@ void tcp_retransmit_timer(struct sock *sk)
 	} else {
 	    if (icsk->icsk_MMSRB == 1)
 	    {
-	        printk("[mmspb] tcp_retransmit_timer enter loss\n");
+	    	#ifdef CONFIG_MTK_NET_LOGGING  
+	        printk(KERN_DEBUG "[mtk_net][mmspb] tcp_retransmit_timer enter loss\n");
+	        #endif
 	    }	
 		tcp_enter_loss(sk, 0);
 	}
@@ -461,7 +463,11 @@ static void tcp_write_timer(unsigned long data)
 		sk_reset_timer(sk, &icsk->icsk_retransmit_timer, jiffies + (HZ / 20));
 		
 		if (icsk->icsk_MMSRB == 1)
-		printk("[mmspb] tcp_write_timer user owner sock\n");
+		{
+			#ifdef CONFIG_MTK_NET_LOGGING 
+		    printk(KERN_DEBUG "[mtk_net][mmspb] tcp_write_timer user owner sock\n");
+		    #endif
+	    }
 		
 		goto out_unlock;
 	}
