@@ -33,6 +33,7 @@ unsigned char data_xy[150] = {0};
 #define FTS_GESTURE_OUTPUT_UNIT_LENGTH 4
 int gestrue_id = 0;
 #endif
+
 extern int tpd_chk_ges_en(void);
 #ifdef TPD_SUPPORT_DOOV
 static unsigned char tpd_hall_sensor_enable=0;
@@ -154,7 +155,7 @@ static int tpd_wb_start_local[TPD_WARP_CNT] = TPD_WARP_START;
 static int tpd_wb_end_local[TPD_WARP_CNT]   = TPD_WARP_END;
 #endif
 #if (defined(TPD_HAVE_CALIBRATION) && !defined(TPD_CUSTOM_CALIBRATION))
-static int tpd_calmat_local[8]     = TPD_CALIBRATION_MATRIX;
+static int tpd_calmat_local[8]     = TPD_CALIBRATION_MATRIX;x
 static int tpd_def_calmat_local[8] = TPD_CALIBRATION_MATRIX;
 #endif
 
@@ -632,7 +633,7 @@ static int tpd_gesture_handle2(struct touch_info *cinfo)
 		high_byte &= 0x0f00;
 		low_byte = data[3+6*i + 1];
 		cinfo->x[i] = high_byte |low_byte;
-	
+
 		/*get the Y coordinate, 2 bytes*/
 		
 		high_byte = data[3+6*i+2];
@@ -640,6 +641,7 @@ static int tpd_gesture_handle2(struct touch_info *cinfo)
 		high_byte &= 0x0f00;
 		low_byte = data[3+6*i+3];
 		cinfo->y[i] = high_byte |low_byte;
+
 #ifdef TP_GESTURE_SUPPORT
 		cinfo->xy[i] =  data[3+6*i+4];
 #endif
@@ -885,7 +887,7 @@ static int tpd_touchinfo(struct touch_info *cinfo, struct touch_info *pinfo)
 		cinfo->x[i] = high_byte |low_byte;
 
 		//cinfo->x[i] =  cinfo->x[i] * 480 >> 11; //calibra
-	
+
 		/*get the Y coordinate, 2 bytes*/
 		
 		high_byte = data[3+6*i+2];
@@ -895,6 +897,7 @@ static int tpd_touchinfo(struct touch_info *cinfo, struct touch_info *pinfo)
 		cinfo->y[i] = high_byte |low_byte;
 
 		 //cinfo->y[i]=  cinfo->y[i] * 800 >> 11;
+
 	}
 	printk(" cinfo->x[0] = %d, cinfo->y[0] = %d, cinfo->p[0] = %d, point_num=%d\n", cinfo->x[0], cinfo->y[0], cinfo->p[0],point_num);	
 	//TPD_DEBUG(" cinfo->x[1] = %d, cinfo->y[1] = %d, cinfo->p[1] = %d\n", cinfo->x[1], cinfo->y[1], cinfo->p[1]);		
@@ -1131,8 +1134,8 @@ void tpd_enable_hallsensor_dov(u8 enable)
 			    for(i =0; i<point_num; i++)//only support 3 point
 			    {
 			        // tpd_down(cinfo.x[i], cinfo.y[i], cinfo.id[i]);
-				if(cinfo.y[i]>TPD_RES_Y) //button area
-					tpd_down(cinfo.x[i], cinfo.y[i], cinfo.id[i]);
+				if(cinfo.y[i]<80) //button area
+					tpd_down(cinfo.x[i], TPD_WARP_Y_BUTTONS(cinfo.y[i]), cinfo.id[i]);
 				else	//lcd area
 					tpd_down(TPD_WARP_X(cinfo.x[i]), TPD_WARP_Y(cinfo.y[i]), cinfo.id[i]);
 			    }
@@ -1142,8 +1145,8 @@ void tpd_enable_hallsensor_dov(u8 enable)
 			else  
     		{
 			    //tpd_up(cinfo.x[0], cinfo.y[0]);
-				if(cinfo.y[0]>TPD_RES_Y) //button area
-					tpd_up(cinfo.x[0], cinfo.y[0]);
+				if(cinfo.y[0]<80) //button area
+					tpd_up(cinfo.x[0], TPD_WARP_Y_BUTTONS(cinfo.y[0]));
 				else	//lcd area
 					tpd_up(TPD_WARP_X(cinfo.x[0]), TPD_WARP_Y(cinfo.y[0]));			    
         	    //TPD_DEBUG("release --->\n"); 
@@ -1393,7 +1396,7 @@ static int tpd_local_init(void)
 #endif 
 
 #if (defined(TPD_HAVE_CALIBRATION) && !defined(TPD_CUSTOM_CALIBRATION))
-    memcpy(tpd_calmat, tpd_def_calmat_local, 8*4);
+    memcpy(tpd_calmat, tpd_def_calmat_local, 8*4); xx
     memcpy(tpd_def_calmat, tpd_def_calmat_local, 8*4);	
 #endif  
     TPD_DMESG("end %s, %d\n", __FUNCTION__, __LINE__);  

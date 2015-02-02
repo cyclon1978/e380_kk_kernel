@@ -42,10 +42,16 @@
 #define TPD_POWER_SOURCE_CUSTOM        MT65XX_POWER_LDO_VGP4
 #define TPD_I2C_NUMBER           		0
 #define TPD_RES_X                		720
-#define TPD_RES_Y                		1280
+#define TPD_RES_Y                		1180
 
-#define TPD_WARP_Y(y) y 
+// y goes from 80 to 1259 -> 1180 is "resolution", original touchpad has 1280 resolution; 
+//#define TPD_WARP_Y(y) (((((1260-y)) * 1280) / 1180)-1)
+#define TPD_WARP_Y(y) (((((1259-y)) * 1280) / 1180))
 #define TPD_WARP_X(x) x 
+
+// y is always 1 for buttons but should be 1400
+// #define TPD_WARP_Y_BUTTONS(y) (y+1399)
+#define TPD_WARP_Y_BUTTONS(y) 1400
 
 /**************************step 2:virtual key*********************/
 #define TPD_HAVE_BUTTON					// if have virtual key,need define the MACRO
@@ -56,7 +62,8 @@
 //#define TPD_KEYS_DIM_QHD            	{{66,1000,60,TPD_BUTTON_HEIGH}, {418,1000,60,TPD_BUTTON_HEIGH}, {200,1000,60,TPD_BUTTON_HEIGH}, {300,1000,60,TPD_BUTTON_HEIGH}}
 //#define TPD_KEYS_DIM_FWVGA            	{{66,880,60,TPD_BUTTON_HEIGH}, 	{418,880,60,TPD_BUTTON_HEIGH}, 	{200,880,60,TPD_BUTTON_HEIGH}, 	{300,880,60,TPD_BUTTON_HEIGH}}
 #define TPD_KEYS 			{ KEY_BACK, KEY_HOMEPAGE, KEY_MENU}
-#define TPD_KEYS_DIM {{150,1400,20,10},{400,1400,20,10},{580,1400,20,10}}
+//#define TPD_KEYS_DIM {{150,1400,20,10},{400,1400,20,10},{580,1400,20,10}}
+#define TPD_KEYS_DIM {{89,1400,20,10},{328,1400,20,10},{627,1400,20,10}}
 
 
 /**************************step3: define func****************************************************/
@@ -86,7 +93,8 @@
 #define TPD_VELOCITY_CUSTOM_Y 			20
 #define TPD_DELAY                		(2*HZ/100)
 
-#define TPD_CALIBRATION_MATRIX  		{962,0,0,0,1600,0,0,0};
+//#define TPD_CALIBRATION_MATRIX  		{962,0,0,0,1600,0,0,0};
+//#define TPD_CALIBRATION_MATRIX  		{962,0,0,0,1500,0,0,0};
 
 //#define TPD_HAVE_CALIBRATION
 //#define TPD_HAVE_TREMBLE_ELIMINATION
