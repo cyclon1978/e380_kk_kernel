@@ -644,7 +644,8 @@ static int tpd_gesture_handle2(struct touch_info *cinfo)
 		cinfo->xy[i] =  data[3+6*i+4];
 #endif
 	}
-	printk(" tpd_gesture_handle2 cinfo->x[0] = %d, cinfo->y[0] = %d, cinfo->p[0] = %d, cinfo->xy[0]=%d\n", cinfo->x[0], cinfo->y[0], cinfo->p[0],cinfo->xy[0]);	
+	// enable to log raw touchpad coords
+	// printk(" tpd_gesture_handle2 cinfo->x[0] = %d, cinfo->y[0] = %d, cinfo->p[0] = %d, cinfo->xy[0]=%d\n", cinfo->x[0], cinfo->y[0], cinfo->p[0],cinfo->xy[0]);	
 	//TPD_DEBUG(" cinfo->x[1] = %d, cinfo->y[1] = %d, cinfo->p[1] = %d\n", cinfo->x[1], cinfo->y[1], cinfo->p[1]);		
 	//TPD_DEBUG(" cinfo->x[2]= %d, cinfo->y[2]= %d, cinfo->p[2] = %d\n", cinfo->x[2], cinfo->y[2], cinfo->p[2]);	
 
@@ -896,7 +897,8 @@ static int tpd_touchinfo(struct touch_info *cinfo, struct touch_info *pinfo)
 
 		 //cinfo->y[i]=  cinfo->y[i] * 800 >> 11;
 	}
-	printk(" cinfo->x[0] = %d, cinfo->y[0] = %d, cinfo->p[0] = %d, point_num=%d\n", cinfo->x[0], cinfo->y[0], cinfo->p[0],point_num);	
+	// enable to log raw touchpad coords
+	// printk(" cinfo->x[0] = %d, cinfo->y[0] = %d, cinfo->p[0] = %d, point_num=%d\n", cinfo->x[0], cinfo->y[0], cinfo->p[0],point_num);	
 	//TPD_DEBUG(" cinfo->x[1] = %d, cinfo->y[1] = %d, cinfo->p[1] = %d\n", cinfo->x[1], cinfo->y[1], cinfo->p[1]);		
 	//TPD_DEBUG(" cinfo->x[2]= %d, cinfo->y[2]= %d, cinfo->p[2] = %d\n", cinfo->x[2], cinfo->y[2], cinfo->p[2]);	
 		  
