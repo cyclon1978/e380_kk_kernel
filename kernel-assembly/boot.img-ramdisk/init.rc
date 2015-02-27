@@ -692,6 +692,12 @@ on post-fs-data
 # End of adding by MTK drivers
 # -----------------------
 
+    #hotplug file
+    mkdir /data/data/hotplug
+    write /data/data/hotplug/cmd 0
+    chmod 0666 /data/data/hotplug/cmd
+    chmod 0666 /data/data/hotplug
+
 on boot
    start drvbd
 
