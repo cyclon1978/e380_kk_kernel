@@ -1,12 +1,26 @@
 // GPU PART
 
-#define GPU_OVERCLOCK 1
+#define GPU_OVERCLOCK 2
 
+// 286 MHz is mt6589 default gpu clock
 #if GPU_OVERCLOCK == 1
   // far away from MT6589T maximum... 312Mhz
   #define GPU_CUR_FREQ 312000
   #define GPU_CUR_FREQ_CLOCK 312000000
+#elif GPU_OVERCLOCK == 2
+  // MT6589T frequency 357Mhz
+  #define GPU_CUR_FREQ 357000
+  #define GPU_CUR_FREQ_CLOCK 357000000
+#elif GPU_OVERCLOCK == 3
+  // ?
+  #define GPU_CUR_FREQ 403000
+  #define GPU_CUR_FREQ_CLOCK 403000000
+#elif GPU_OVERCLOCK == 4
+  // ?
+  #define GPU_CUR_FREQ 476000
+  #define GPU_CUR_FREQ_CLOCK 476000000
 #else
+  // stock mt6589 frequency
   #define GPU_CUR_FREQ       286000
   #define GPU_CUR_FREQ_CLOCK 286000000
 #endif
@@ -20,7 +34,8 @@
   #define MTK_VOLTAGE_LEVEL_LOWERED 0 // no voltage lowering with this faulty cpu
 #else
   #define MT_FORCE_1200_MHZ 0
-  #define MTK_VOLTAGE_LEVEL_LOWERED 1 // use voltage lowering
+  // #define MTK_VOLTAGE_LEVEL_LOWERED 1 // use voltage lowering
+  #define MTK_VOLTAGE_LEVEL_LOWERED 0 // use no voltage lowering to see if antutu reacts
 #endif
 
 // #define MT_OVERCLOCK 1 // see mt_devs.c
