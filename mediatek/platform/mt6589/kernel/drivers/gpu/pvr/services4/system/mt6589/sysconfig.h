@@ -33,11 +33,9 @@
 #define VS_PRODUCT_NAME	"MT6575"
 #endif*/
 
-#include "mach/voltage_control.h"
-
 #define VS_PRODUCT_NAME "MT6589"
 
-#define SYS_SGX_CLOCK_SPEED     GPU_CUR_FREQ_CLOCK
+#define SYS_SGX_CLOCK_SPEED     286000000
 
 #define SYS_SGX_HWRECOVERY_TIMEOUT_FREQ		(100)	
 #define SYS_SGX_PDS_TIMER_FREQ				(1000)	

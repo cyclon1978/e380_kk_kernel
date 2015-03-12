@@ -1,30 +1,3 @@
-// GPU PART
-
-#define GPU_OVERCLOCK 2
-
-// 286 MHz is mt6589 default gpu clock
-#if GPU_OVERCLOCK == 1
-  // far away from MT6589T maximum... 312Mhz
-  #define GPU_CUR_FREQ 312000
-  #define GPU_CUR_FREQ_CLOCK 312000000
-#elif GPU_OVERCLOCK == 2
-  // MT6589T frequency 357Mhz
-  #define GPU_CUR_FREQ 357000
-  #define GPU_CUR_FREQ_CLOCK 357000000
-#elif GPU_OVERCLOCK == 3
-  // ?
-  #define GPU_CUR_FREQ 403000
-  #define GPU_CUR_FREQ_CLOCK 403000000
-#elif GPU_OVERCLOCK == 4
-  // ?
-  #define GPU_CUR_FREQ 476000
-  #define GPU_CUR_FREQ_CLOCK 476000000
-#else
-  // stock mt6589 frequency
-  #define GPU_CUR_FREQ       286000
-  #define GPU_CUR_FREQ_CLOCK 286000000
-#endif
-
 // CPU/VOLTAGE PART
 
 #define RELEASE_MODE_SPECIAL 0
