@@ -2692,5 +2692,8 @@ CONFIG_MTK_TETHERINGIPV6_SUPPORT=n
 CONFIG_MTK_IPV6_TETHER_NDP_MODE=n
 CONFIG_MTK_DHCPV6C_WIFI=n
 
+# new configs for fixing sched (used in mediatek/kernel/kernel/sched) but were not originally defined
 # add config according to sprout: for INTELLI_PLUG!!!
+CONFIG_MT_PRIO_TRACER=n
+CONFIG_MTK_SCHED_RQAVG_US=y
 CONFIG_MTK_SCHED_RQAVG_KS=y
