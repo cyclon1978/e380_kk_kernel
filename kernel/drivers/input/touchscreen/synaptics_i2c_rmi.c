@@ -15,7 +15,9 @@
 
 #include <linux/module.h>
 #include <linux/delay.h>
+#ifdef CONFIG_POWERSUSPEND
 #include <linux/powersuspend.h>
+#endif
 #include <linux/hrtimer.h>
 #include <linux/i2c.h>
 #include <linux/input.h>
@@ -47,7 +49,9 @@ struct synaptics_ts_data {
 	int reported_finger_count;
 	int8_t sensitivity_adjust;
 	int (*power)(int on);
+#ifdef CONFIG_POWERSUSPEND
 	struct power_suspend power_suspend;
+#endif
 };
 
 #ifdef CONFIG_POWERSUSPEND
@@ -557,7 +561,9 @@ err_check_functionality_failed:
 static int synaptics_ts_remove(struct i2c_client *client)
 {
 	struct synaptics_ts_data *ts = i2c_get_clientdata(client);
+#ifdef CONFIG_POWERSUSPEND
 	unregister_power_suspend(&ts->power_suspend);
+#endif
 	if (ts->use_irq)
 		free_irq(client->irq, ts);
 	else
@@ -642,7 +648,7 @@ static const struct i2c_device_id synaptics_ts_id[] = {
 static struct i2c_driver synaptics_ts_driver = {
 	.probe		= synaptics_ts_probe,
 	.remove		= synaptics_ts_remove,
-#ifndef CONFIG_POWERSUSPEND
+#ifndef (CONFIG_POWERSUSPEND)
 	.suspend	= synaptics_ts_suspend,
 	.resume		= synaptics_ts_resume,
 #endif

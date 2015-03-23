@@ -168,7 +168,7 @@ void save_restore_alt_param(int replace, int quiet)
 
 	if (replace) {
 		toi_state_save = toi_state;
-		strncpy(resume_param_save, resume_file, sizeof(resume_param_save)-1);
+		strcpy(resume_param_save, resume_file);
 		strcpy(resume_file, alt_resume_param);
 	} else {
 		strcpy(resume_file, resume_param_save);
@@ -1067,7 +1067,7 @@ static int write_module_configs(void)
 		toi_module_header.type = this_module->type;
 		toi_module_header.index = index++;
 		strncpy(toi_module_header.name, this_module->name,
-					sizeof(toi_module_header.name)-1);
+					sizeof(toi_module_header.name));
 		toiActiveAllocator->rw_header_chunk(WRITE,
 				this_module,
 				(char *) &toi_module_header,

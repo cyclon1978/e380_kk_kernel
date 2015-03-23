@@ -42,9 +42,6 @@
 /* Version of this UBIFS implementation */
 #define UBIFS_VERSION 1
 
-/* Enable using log LEB fully */
-#define CONFIG_UBIFS_FS_FULL_USE_LOG
-
 /* Normal UBIFS messages */
 #define ubifs_msg(fmt, ...) \
 		printk(KERN_NOTICE "UBIFS: " fmt "\n", ##__VA_ARGS__)
@@ -163,13 +160,6 @@
 
 /* Maximum number of data nodes to bulk-read */
 #define UBIFS_MAX_BULK_READ 32
-
-/* MTK: UBIFS performance log */
-#define FEATURE_UBIFS_PERF_INDEX
-
-#ifdef USER_BUILD_KERNEL
-#undef FEATURE_UBIFS_PERF_INDEX
-#endif
 
 /*
  * Lockdep classes for UBIFS inode @ui_mutex.
@@ -661,6 +651,8 @@ typedef int (*ubifs_lpt_scan_callback)(struct ubifs_info *c,
  * @avail: number of bytes available in the write-buffer
  * @used:  number of used bytes in the write-buffer
  * @size: write-buffer size (in [@c->min_io_size, @c->max_write_size] range)
+ * @dtype: type of data stored in this LEB (%UBI_LONGTERM, %UBI_SHORTTERM,
+ * %UBI_UNKNOWN)
  * @jhead: journal head the mutex belongs to (note, needed only to shut lockdep
  *         up by 'mutex_lock_nested()).
  * @sync_callback: write-buffer synchronization callback
@@ -694,6 +686,7 @@ struct ubifs_wbuf {
 	int avail;
 	int used;
 	int size;
+	int dtype;
 	int jhead;
 	int (*sync_callback)(struct ubifs_info *c, int lnum, int free, int pad);
 	struct mutex io_mutex;
@@ -705,7 +698,6 @@ struct ubifs_wbuf {
 	unsigned int need_sync:1;
 	int next_ino;
 	ino_t *inodes;
-	uint64_t w_count;
 };
 
 /**
@@ -914,6 +906,7 @@ struct ubifs_budget_req {
  * @dnext: next orphan to delete
  * @inum: inode number
  * @new: %1 => added since the last commit, otherwise %0
+ * @del: %1 => delete pending, otherwise %0
  */
 struct ubifs_orphan {
 	struct rb_node rb;
@@ -923,6 +916,7 @@ struct ubifs_orphan {
 	struct ubifs_orphan *dnext;
 	ino_t inum;
 	int new;
+	unsigned del:1;
 };
 
 /**
@@ -1048,7 +1042,6 @@ struct ubifs_debug_info;
  *
  * @mst_node: master node
  * @mst_offs: offset of valid master node
- * @mst_mutex: protects the master node area, @mst_node, and @mst_offs
  *
  * @max_bu_buf_len: maximum bulk-read buffer length
  * @bu_mutex: protects the pre-allocated bulk-read buffer and @c->bu
@@ -1193,8 +1186,6 @@ struct ubifs_debug_info;
  * @freeable_list: list of freeable non-index LEBs (free + dirty == @leb_size)
  * @frdi_idx_list: list of freeable index LEBs (free + dirty == @leb_size)
  * @freeable_cnt: number of freeable LEBs in @freeable_list
- * @in_a_category_cnt: count of lprops which are in a certain category, which
- *                     basically meants that they were loaded from the flash
  *
  * @ltab_lnum: LEB number of LPT's own lprops table
  * @ltab_offs: offset of LPT's own lprops table
@@ -1288,7 +1279,6 @@ struct ubifs_info {
 
 	struct ubifs_mst_node *mst_node;
 	int mst_offs;
-	struct mutex mst_mutex;
 
 	int max_bu_buf_len;
 	struct mutex bu_mutex;
@@ -1424,7 +1414,6 @@ struct ubifs_info {
 	struct list_head freeable_list;
 	struct list_head frdi_idx_list;
 	int freeable_cnt;
-	int in_a_category_cnt;
 
 	int ltab_lnum;
 	int ltab_offs;
@@ -1456,8 +1445,6 @@ struct ubifs_info {
 	struct rb_root size_tree;
 	struct ubifs_mount_opts mount_opts;
 
-	int host_wcount;
-
 #ifdef CONFIG_UBIFS_FS_DEBUG
 	struct ubifs_debug_info *dbg;
 #endif
@@ -1483,20 +1470,22 @@ void ubifs_ro_mode(struct ubifs_info *c, int err);
 int ubifs_leb_read(const struct ubifs_info *c, int lnum, void *buf, int offs,
 		   int len, int even_ebadmsg);
 int ubifs_leb_write(struct ubifs_info *c, int lnum, const void *buf, int offs,
-		    int len);
-int ubifs_leb_change(struct ubifs_info *c, int lnum, const void *buf, int len);
+		    int len, int dtype);
+int ubifs_leb_change(struct ubifs_info *c, int lnum, const void *buf, int len,
+		     int dtype);
 int ubifs_leb_unmap(struct ubifs_info *c, int lnum);
-int ubifs_leb_map(struct ubifs_info *c, int lnum);
+int ubifs_leb_map(struct ubifs_info *c, int lnum, int dtype);
 int ubifs_is_mapped(const struct ubifs_info *c, int lnum);
 int ubifs_wbuf_write_nolock(struct ubifs_wbuf *wbuf, void *buf, int len);
-int ubifs_wbuf_seek_nolock(struct ubifs_wbuf *wbuf, int lnum, int offs);
+int ubifs_wbuf_seek_nolock(struct ubifs_wbuf *wbuf, int lnum, int offs,
+			   int dtype);
 int ubifs_wbuf_init(struct ubifs_info *c, struct ubifs_wbuf *wbuf);
 int ubifs_read_node(const struct ubifs_info *c, void *buf, int type, int len,
 		    int lnum, int offs);
 int ubifs_read_node_wbuf(struct ubifs_wbuf *wbuf, void *buf, int type, int len,
 			 int lnum, int offs);
 int ubifs_write_node(struct ubifs_info *c, void *node, int len, int lnum,
-		     int offs);
+		     int offs, int dtype);
 int ubifs_check_node(const struct ubifs_info *c, const void *buf, int lnum,
 		     int offs, int quiet, int must_chk_crc);
 void ubifs_prepare_node(struct ubifs_info *c, void *buf, int len, int pad);

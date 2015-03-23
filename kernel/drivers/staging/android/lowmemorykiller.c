@@ -66,15 +66,6 @@ void add_kmem_status_lmk_counter(void);
 extern void show_free_areas_minimum(void);
 
 static uint32_t lowmem_debug_level = 2;
-
-#ifdef CONFIG_ANDROID_LOW_MEMORY_KILLER_AUTODETECT_OOM_ADJ_VALUES
-#define CONVERT_ADJ(x) ((x * OOM_SCORE_ADJ_MAX) / -OOM_DISABLE)
-#define REVERT_ADJ(x) (x * (-OOM_DISABLE + 1) / OOM_SCORE_ADJ_MAX)
-#else
-#define CONVERT_ADJ(x) (x)
-#define REVERT_ADJ(x) (x)
-#endif // CONFIG_ANDROID_LOW_MEMORY_KILLER_AUTODETECT_OOM_ADJ_VALUES
-
 #ifdef CONFIG_MT_ENG_BUILD
 static uint32_t lowmem_debug_adj = 1;
 #endif
@@ -145,11 +136,6 @@ static int lowmem_shrink(struct shrinker *s, struct shrink_control *sc)
 #ifdef CONFIG_MT_ENG_BUILD
 	int print_extra_info = 0;
 	static unsigned long lowmem_print_extra_info_timeout = 0;
-	
-	/*dump memory info when framework low memory*/
-	int pid_dump = -1; // process which need to be dump
-	int pid_sec_mem = -1;
-	int max_mem = 0;
 #endif // CONFIG_MT_ENG_BUILD
 
 	/*
@@ -285,13 +271,12 @@ static int lowmem_shrink(struct shrinker *s, struct shrink_control *sc)
 #ifdef CONFIG_MT_ENG_BUILD
 		if (print_extra_info) {
 #ifdef CONFIG_SWAP
-			lowmem_print(1, "Candidate %d (%s), oom_score_adj %d, oom_adj %d, rss %lu, rswap %lu, to kill\n",
-				     p->pid, p->comm, oom_score_adj, REVERT_ADJ(oom_score_adj), get_mm_rss(p->mm),
+			lowmem_print(1, "Candidate %d (%s), adj %d, rss %lu, rswap %lu, to kill\n",
+				     p->pid, p->comm, oom_score_adj, get_mm_rss(p->mm),
 				     get_mm_counter(p->mm, MM_SWAPENTS));
 #else // CONFIG_SWAP
-			lowmem_print(1, "Candidate %d (%s), oom_score_adj %d, oom_adj %d, rss %lu, to kill\n",
-				     p->pid, p->comm, oom_score_adj, REVERT_ADJ(oom_score_adj), get_mm_rss(p->mm));
-
+			lowmem_print(1, "Candidate %d (%s), adj %d, rss %lu, to kill\n",
+				     p->pid, p->comm, oom_score_adj, get_mm_rss(p->mm));
 #endif // CONFIG_SWAP
                 }
 #endif // CONFIG_MT_ENG_BUILD
@@ -307,19 +292,6 @@ static int lowmem_shrink(struct shrinker *s, struct shrink_control *sc)
 		task_unlock(p);
 		if (tasksize <= 0)
 			continue;
-
-#ifdef CONFIG_MT_ENG_BUILD
-		/*
-         	 * dump memory info when framework low memory:
-         	 * record the first two pid which consumed most memory.
-         	 */
-		if (tasksize > max_mem) {
-			max_mem = tasksize;
-			pid_sec_mem = pid_dump;
-			pid_dump = p->pid;			
-		}
-#endif
-
 		if (selected) {
 			if (oom_score_adj < selected_oom_score_adj)
 				continue;
@@ -330,18 +302,17 @@ static int lowmem_shrink(struct shrinker *s, struct shrink_control *sc)
 		selected = p;
 		selected_tasksize = tasksize;
 		selected_oom_score_adj = oom_score_adj;
-		lowmem_print(2, "select '%s' (%d), oom_score_adj %d, oom_adj %d, size %d, to kill\n",
-			     p->comm, p->pid, oom_score_adj, REVERT_ADJ(oom_score_adj), tasksize);
+		lowmem_print(2, "select '%s' (%d), adj %d, size %d, to kill\n",
+			     p->comm, p->pid, oom_score_adj, tasksize);
 	}
 
 	if (selected) {
-		lowmem_print(1, "Killing '%s' (%d), oom_score_adj %d (oom_adj %d),\n" \
+		lowmem_print(1, "Killing '%s' (%d), adj %d,\n" \
 				"   to free %ldkB on behalf of '%s' (%d) because\n" \
 				"   cache %ldkB is below limit %ldkB for oom_score_adj %d\n" \
 				"   Free memory is %ldkB above reserved [gfp(0x%x)]\n",
 			     selected->comm, selected->pid,
 			     selected_oom_score_adj,
-			     REVERT_ADJ(selected_oom_score_adj),
 			     selected_tasksize * (long)(PAGE_SIZE / 1024),
 			     current->comm, current->pid,
 			     other_file * (long)(PAGE_SIZE / 1024),
@@ -400,15 +371,8 @@ static int lowmem_shrink(struct shrinker *s, struct shrink_control *sc)
 #endif
 			/* To avoid too frequent aee warning! */
 			if ((next_aee_dump--) == 0) {
-#define MSG_SIZE_TO_AEE 70
-				char msg_to_aee[MSG_SIZE_TO_AEE];
-				if (pid_dump == selected->pid)
-					pid_dump = pid_sec_mem;
-				snprintf(msg_to_aee, MSG_SIZE_TO_AEE, "please contact AP/AF memory module owner[pid:%d]\n", pid_dump);
-				aee_kernel_warning_api("LMK", 0, DB_OPT_DEFAULT|DB_OPT_DUMPSYS_ACTIVITY|DB_OPT_LOW_MEMORY_KILLER
-						| DB_OPT_PID_MEMORY_INFO /*for smaps and hprof*/
-						| DB_OPT_PROCESS_COREDUMP,
-						"Framework low memory\nCRDISPATCH_KEY:FLM_APAF", msg_to_aee);
+				aee_kernel_warning_api("LMK", 0, DB_OPT_DEFAULT|DB_OPT_DUMPSYS_ACTIVITY|DB_OPT_LOW_MEMORY_KILLER,
+						"Framework low memory\nCRDISPATCH_KEY:FLM_APAF", "please contact AP/AF memory module owner\n");
 				next_aee_dump = NR_CPUS << 1;
 			}
 		}
@@ -690,7 +654,7 @@ static int lowmem_adj_size = 9;
 static int lowmem_minfree[9] = {
 	4 * 256,	/*  0 ->  4MB */
 	12 * 256,	/*  1 -> 12MB */
-	20 * 256,	/*  2 -> 16MB */
+	16 * 256,	/*  2 -> 16MB */
 	24 * 256,	/*  4 -> 24MB */
 	28 * 256,	/*  6 -> 28MB */
 	32 * 256,	/*  8 -> 32MB */

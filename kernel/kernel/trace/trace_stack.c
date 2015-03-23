@@ -60,8 +60,8 @@ static int last_stack_tracer_enabled;
 static unsigned long stack_overflow_thd = THREAD_SIZE-768-1600;
 module_param_named(stack_overflow_thd, stack_overflow_thd, ulong, S_IRUGO | S_IWUSR);
 
-static void dump_max_stack_trace(void) {
-    long i;
+static void dump_max_stack_trace() {
+    int i = 0;
     int size;
     printk(KERN_INFO "        Depth    Size   Location"
 			   "    (%d entries)\n"
@@ -78,7 +78,7 @@ static void dump_max_stack_trace(void) {
 	    else
 		    size = stack_dump_index[i] - stack_dump_index[i+1];
 
-	    printk(KERN_INFO "%3ld) %8d   %5d   %pS\n", i, stack_dump_index[i], size, (void *)stack_dump_trace[i]);
+	    printk(KERN_INFO "%3ld) %8d   %5d   %pS\n", i, stack_dump_index[i], size, stack_dump_trace[i]);
     }
 }
 #endif
@@ -390,7 +390,7 @@ static int t_show(struct seq_file *m, void *v)
 	i = *(long *)v;
 
 	if (i >= max_stack_trace.nr_entries ||
-	    stack_dump_trace[i] == ULONG_MAX || (i < 0))
+	    stack_dump_trace[i] == ULONG_MAX)
 		return 0;
 
 	if (i+1 == max_stack_trace.nr_entries ||

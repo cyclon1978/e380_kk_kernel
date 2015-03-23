@@ -55,7 +55,6 @@ static ssize_t disksize_show(struct device *dev,
 static ssize_t disksize_store(struct device *dev,
 		struct device_attribute *attr, const char *buf, size_t len)
 {
-	int ret;
 	u64 disksize;
 	struct zram_meta *meta;
 	struct zram *zram = dev_to_zram(dev);
@@ -67,25 +66,16 @@ static ssize_t disksize_store(struct device *dev,
 		return -EINVAL;
 	*/
 #else	/* Fix disksize */
-	/* Get disksize from user */
-	ret = kstrtoull(buf, 10, &disksize);
-	if (ret)
-		return ret;
-
-	/* If disksize is 0, then we give it a default setting. */
-	if (disksize == 0) {
-		/* Fix disksize */
-		disksize = default_disksize_perc_ram * ((totalram_pages << PAGE_SHIFT) / 100);
-		/* Expand its disksize if we have little system ram! */
-		if (totalram_pages < SUPPOSED_TOTALRAM) {
-			disksize += (disksize >> 1) ;
-		}
+	disksize = default_disksize_perc_ram * ((totalram_pages << PAGE_SHIFT) / 100);
+	/* Expand its disksize if we have little system ram! */
+	if (totalram_pages < SUPPOSED_TOTALRAM) {
+		disksize += (disksize >> 1) ;
 	}
 	/* Align it! */
 	disksize = round_up(disksize, DISKSIZE_ALIGNMENT);
 #endif
 
-	/*disksize = PAGE_ALIGN(disksize);*/
+	disksize = PAGE_ALIGN(disksize);
 	meta = zram_meta_alloc(disksize);
 	/* Check whether meta is null */
 	if (!meta) {
@@ -106,6 +96,7 @@ static ssize_t disksize_store(struct device *dev,
 	up_write(&zram->init_lock);
 
 	return len;
+
 }
 
 static ssize_t initstate_show(struct device *dev,
@@ -231,8 +222,11 @@ static ssize_t mem_used_total_show(struct device *dev,
 	struct zram *zram = dev_to_zram(dev);
 	struct zram_meta *meta = zram->meta;
 
+	down_read(&zram->init_lock);
 	if (zram->init_done)
 		val = zs_get_total_size_bytes(meta->mem_pool);
+
+	up_read(&zram->init_lock);
 
 	return sprintf(buf, "%llu\n", val);
 }

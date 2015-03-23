@@ -701,7 +701,8 @@ int ubifs_create_dflt_lpt(struct ubifs_info *c, int *main_lebs, int lpt_first,
 			alen = ALIGN(len, c->min_io_size);
 			set_ltab(c, lnum, c->leb_size - alen, alen - len);
 			memset(p, 0xff, alen - len);
-			err = ubifs_leb_change(c, lnum++, buf, alen);
+			err = ubifs_leb_change(c, lnum++, buf, alen,
+					       UBI_SHORTTERM);
 			if (err)
 				goto out;
 			p = buf;
@@ -731,7 +732,8 @@ int ubifs_create_dflt_lpt(struct ubifs_info *c, int *main_lebs, int lpt_first,
 				set_ltab(c, lnum, c->leb_size - alen,
 					    alen - len);
 				memset(p, 0xff, alen - len);
-				err = ubifs_leb_change(c, lnum++, buf, alen);
+				err = ubifs_leb_change(c, lnum++, buf, alen,
+						       UBI_SHORTTERM);
 				if (err)
 					goto out;
 				p = buf;
@@ -778,7 +780,8 @@ int ubifs_create_dflt_lpt(struct ubifs_info *c, int *main_lebs, int lpt_first,
 			alen = ALIGN(len, c->min_io_size);
 			set_ltab(c, lnum, c->leb_size - alen, alen - len);
 			memset(p, 0xff, alen - len);
-			err = ubifs_leb_change(c, lnum++, buf, alen);
+			err = ubifs_leb_change(c, lnum++, buf, alen,
+					       UBI_SHORTTERM);
 			if (err)
 				goto out;
 			p = buf;
@@ -803,7 +806,7 @@ int ubifs_create_dflt_lpt(struct ubifs_info *c, int *main_lebs, int lpt_first,
 		alen = ALIGN(len, c->min_io_size);
 		set_ltab(c, lnum, c->leb_size - alen, alen - len);
 		memset(p, 0xff, alen - len);
-		err = ubifs_leb_change(c, lnum++, buf, alen);
+		err = ubifs_leb_change(c, lnum++, buf, alen, UBI_SHORTTERM);
 		if (err)
 			goto out;
 		p = buf;
@@ -823,7 +826,7 @@ int ubifs_create_dflt_lpt(struct ubifs_info *c, int *main_lebs, int lpt_first,
 
 	/* Write remaining buffer */
 	memset(p, 0xff, alen - len);
-	err = ubifs_leb_change(c, lnum, buf, alen);
+	err = ubifs_leb_change(c, lnum, buf, alen, UBI_SHORTTERM);
 	if (err)
 		goto out;
 

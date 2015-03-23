@@ -1866,20 +1866,6 @@ static int send_status(struct fsg_common *common)
 		return -EIO;
 
 	common->next_buffhd_to_fill = bh->next;
-
-#ifdef MTK_ICUSB_SUPPORT
-#define ICUSB_FSYNC_MAGIC_TIME 2
-	if (curlun->filp && curlun->isICUSB)
-	{
-		struct timeval tv_before, tv_after;
-		do_gettimeofday(&tv_before);
-		vfs_fsync(curlun->filp, 1);
-		do_gettimeofday(&tv_after);
-		if( (tv_after.tv_sec - tv_before.tv_sec) >= ICUSB_FSYNC_MAGIC_TIME){
-			printk(KERN_WARNING "time spent more than %d sec, sec : %d, usec : %d\n", ICUSB_FSYNC_MAGIC_TIME, (unsigned int)(tv_after.tv_sec - tv_before.tv_sec), (unsigned int)(tv_after.tv_usec - tv_before.tv_usec));
-		}
-	}
-#endif
 	return 0;
 }
 
@@ -2792,6 +2778,7 @@ static int fsg_main_thread(void *common_)
 static DEVICE_ATTR(ro, 0644, fsg_show_ro, fsg_store_ro);
 static DEVICE_ATTR(nofua, 0644, fsg_show_nofua, fsg_store_nofua);
 static DEVICE_ATTR(file, 0644, fsg_show_file, fsg_store_file);
+static DEVICE_ATTR(cdrom, 0644, fsg_show_cdrom, fsg_store_cdrom);
 
 
 /****************************** FSG COMMON ******************************/
@@ -2917,6 +2904,9 @@ static struct fsg_common *fsg_common_init(struct fsg_common *common,
 		if (rc)
 			goto error_luns;
 		rc = device_create_file(&curlun->dev, &dev_attr_nofua);
+		if (rc)
+			goto error_luns;
+		rc = device_create_file(&curlun->dev, &dev_attr_cdrom);
 		if (rc)
 			goto error_luns;
 
@@ -3050,6 +3040,7 @@ static void fsg_common_release(struct kref *ref)
 
 		/* In error recovery common->nluns may be zero. */
 		for (; i; --i, ++lun) {
+			device_remove_file(&lun->dev, &dev_attr_cdrom);
 			device_remove_file(&lun->dev, &dev_attr_nofua);
 			device_remove_file(&lun->dev, &dev_attr_ro);
 			device_remove_file(&lun->dev, &dev_attr_file);

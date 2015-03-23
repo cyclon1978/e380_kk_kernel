@@ -145,38 +145,6 @@ static void pageset2_full(void)
 	int i;
 
 	for_each_populated_zone(zone) {
-#ifdef CONFIG_CGROUP_MEM_RES_CTLR
-		struct mem_cgroup *memcg;
-		struct lruvec *lruvec;
-		/* Root memcg */
-		memcg = mem_cgroup_iter(NULL, NULL, NULL);
-		do {
-			/* Find corresponding lruvec */
-			lruvec = mem_cgroup_zone_lruvec(zone, memcg);
-
-			/* Go through memcg lrus */
-			spin_lock_irqsave(&zone->lru_lock, flags);
-			for_each_lru(i) {
-				/* Is this memcg lru[i] empty? */
-				if (!mem_cgroup_zone_nr_lru_pages(memcg, zone_to_nid(zone), zone_idx(zone), BIT(i)))
-					continue;
-
-				/* Scan this lru */
-				list_for_each_entry(page, &lruvec->lists[i], lru) {
-					struct address_space *mapping;
-
-					mapping = page_mapping(page);
-					if (!mapping || !mapping->host ||
-					    !(mapping->host->i_flags & S_ATOMIC_COPY))
-						SetPagePageset2(page);
-				}
-			}
-			spin_unlock_irqrestore(&zone->lru_lock, flags);
-
-			/* Next memcg */
-			memcg = mem_cgroup_iter(NULL, memcg, NULL);
-		} while (memcg);
-#else
 		spin_lock_irqsave(&zone->lru_lock, flags);
 		for_each_lru(i) {
 			if (!zone_page_state(zone, NR_LRU_BASE + i))
@@ -192,7 +160,6 @@ static void pageset2_full(void)
 			}
 		}
 		spin_unlock_irqrestore(&zone->lru_lock, flags);
-#endif
 	}
 }
 
@@ -256,6 +223,25 @@ static void toi_mark_task_as_pageset(struct task_struct *t, int pageset2)
 
 static void mark_tasks(int pageset)
 {
+#ifdef CONFIG_MTK_HIBERNATION
+    struct task_struct *tsk;
+
+    toi_read_lock_tasklist();
+    for_each_process(tsk) {
+        struct task_struct *p;
+
+        if (tsk->flags & PF_KTHREAD)
+            continue;
+
+        p = find_lock_task_mm(tsk);
+        if (!p)
+            continue;
+
+        toi_mark_task_as_pageset(p, pageset);
+        task_unlock(p);
+    }
+    toi_read_unlock_tasklist();
+#else
 	struct task_struct *p;
 
 	toi_read_lock_tasklist();
@@ -269,6 +255,7 @@ static void mark_tasks(int pageset)
 		toi_mark_task_as_pageset(p, pageset);
 	}
 	toi_read_unlock_tasklist();
+#endif
 
 }
 

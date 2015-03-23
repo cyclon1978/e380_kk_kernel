@@ -182,9 +182,9 @@ print_tainted()
 extern wl_iw_extra_params_t  g_wl_iw_params;
 #endif /* defined(WL_WIRELESS_EXT) */
 
-#if defined(CONFIG_POWERSUSPEND) && defined(DHD_USE_POWERSUSPEND)
+#if defined(CONFIG_POWERSUSPEND)
 #include <linux/powersuspend.h>
-#endif /* defined(CONFIG_POWERSUSPEND) && defined(DHD_USE_POWERSUSPEND) */
+#endif /* defined(CONFIG_POWERSUSPEND) */
 
 extern int dhd_get_suspend_bcn_li_dtim(dhd_pub_t *dhd);
 
@@ -217,9 +217,9 @@ typedef struct dhd_if {
 	/* OS/stack specifics */
 	struct net_device *net;
 	struct net_device_stats stats;
-	int idx;			/* iface idx in dongle */
-	dhd_if_state_t state;			/* interface state */
-	uint			subunit;		/* subunit */
+	int 			idx;			/* iface idx in dongle */
+	dhd_if_state_t	state;			/* interface state */
+	uint 			subunit;		/* subunit */
 	uint8			mac_addr[ETHER_ADDR_LEN];	/* assigned MAC address */
 	bool			attached;		/* Delayed attachment when unset */
 	bool			txflowcontrol;	/* Per interface flow control indicator */
@@ -332,9 +332,9 @@ typedef struct dhd_info {
 	atomic_t pend_8021x_cnt;
 	dhd_attach_states_t dhd_state;
 
-#if defined(CONFIG_POWERSUSPEND) && defined(DHD_USE_POWERSUSPEND)
+#if defined(CONFIG_POWERSUSPEND)
 	struct power_suspend power_suspend;
-#endif /* defined(CONFIG_POWERSUSPEND) && defined(DHD_USE_POWERSUSPEND) */
+#endif /* defined(CONFIG_POWERSUSPEND) */
 
 #ifdef ARP_OFFLOAD_SUPPORT
 	u32 pend_ipaddr;
@@ -673,7 +673,7 @@ static int dhd_process_cid_mac(dhd_pub_t *dhdp, bool prepost)
 		dhd_read_macaddr(dhd);
 	} else { /* post process */
 		dhd_write_macaddr(&dhd->pub.mac);
-	}	
+	}
 
 	return 0;
 }
@@ -739,6 +739,7 @@ void dhd_enable_packet_filter(int value, dhd_pub_t *dhd)
 #endif /* PKT_FILTER_SUPPORT */
 }
 
+#if defined(CONFIG_POWERSUSPEND)
 static int dhd_set_suspend(int value, dhd_pub_t *dhd)
 {
 #ifndef SUPPORT_PM2_ONLY
@@ -750,6 +751,8 @@ static int dhd_set_suspend(int value, dhd_pub_t *dhd)
 #ifndef ENABLE_FW_ROAM_SUSPEND
 	uint roamvar = 1;
 #endif /* ENABLE_FW_ROAM_SUSPEND */
+	uint nd_ra_filter = 0;
+	int ret = 0;
 
 	if (!dhd)
 		return -ENODEV;
@@ -764,7 +767,7 @@ static int dhd_set_suspend(int value, dhd_pub_t *dhd)
 				dhd->power_suspended = 1;
 #endif
 				/* Kernel suspended */
-				DHD_ERROR(("%s: force extra Suspend setting \n", __FUNCTION__));
+				DHD_INFO(("%s: force extra Suspend setting \n", __FUNCTION__));
 
 #ifndef SUPPORT_PM2_ONLY
 				dhd_wl_ioctl_cmd(dhd, WLC_SET_PM, (char *)&power_mode,
@@ -792,12 +795,20 @@ static int dhd_set_suspend(int value, dhd_pub_t *dhd)
 					iovbuf, sizeof(iovbuf));
 				dhd_wl_ioctl_cmd(dhd, WLC_SET_VAR, iovbuf, sizeof(iovbuf), TRUE, 0);
 #endif /* ENABLE_FW_ROAM_SUSPEND */
+				if (FW_SUPPORTED(dhd, ndoe)) {
+					/* enable IPv6 RA filter in  firmware during suspend */
+					nd_ra_filter = 1;
+					bcm_mkiovar("nd_ra_filter_enable", (char *)&nd_ra_filter, 4,
+							iovbuf, sizeof(iovbuf));
+					if ((ret = dhd_wl_ioctl_cmd(dhd, WLC_SET_VAR, iovbuf, sizeof(iovbuf), TRUE, 0)) < 0)
+						DHD_ERROR(("failed to set nd_ra_filter (%d)\n", ret));
+				}
 			} else {
 #ifdef PKT_FILTER_SUPPORT
 				dhd->power_suspended = 0;
 #endif
 				/* Kernel resumed  */
-				DHD_ERROR(("%s: Remove extra suspend setting \n", __FUNCTION__));
+				DHD_INFO(("%s: Remove extra suspend setting \n", __FUNCTION__));
 
 #ifndef SUPPORT_PM2_ONLY
 				power_mode = PM_FAST;
@@ -820,6 +831,15 @@ static int dhd_set_suspend(int value, dhd_pub_t *dhd)
 					sizeof(iovbuf));
 				dhd_wl_ioctl_cmd(dhd, WLC_SET_VAR, iovbuf, sizeof(iovbuf), TRUE, 0);
 #endif /* ENABLE_FW_ROAM_SUSPEND */
+				if (FW_SUPPORTED(dhd, ndoe)) {
+					/* disable IPv6 RA filter in  firmware during suspend */
+					nd_ra_filter = 0;
+					bcm_mkiovar("nd_ra_filter_enable", (char *)&nd_ra_filter, 4,
+							iovbuf, sizeof(iovbuf));
+					if ((ret = dhd_wl_ioctl_cmd(dhd, WLC_SET_VAR, iovbuf, sizeof(iovbuf), TRUE, 0)) < 0)
+						DHD_ERROR(("failed to set nd_ra_filter (%d)\n", ret));
+				}
+
 			}
 	}
 	dhd_suspend_unlock(dhd);
@@ -845,7 +865,6 @@ static int dhd_suspend_resume_helper(struct dhd_info *dhd, int val, int force)
 	return ret;
 }
 
-#if defined(CONFIG_POWERSUSPEND) && defined(DHD_USE_POWERSUSPEND)
 static void dhd_power_suspend(struct power_suspend *h)
 {
 	struct dhd_info *dhd = container_of(h, struct dhd_info, power_suspend);
@@ -863,7 +882,7 @@ static void dhd_power_resume(struct power_suspend *h)
 	if (dhd)
 		dhd_suspend_resume_helper(dhd, 0, 0);
 }
-#endif /* CONFIG_POWERSUSPEND && DHD_USE_POWERSUSPEND */
+#endif /* CONFIG_POWERSUSPEND */
 
 /*
  * Generalized timeout mechanism.  Uses spin sleep with exponential back-off until
@@ -3355,12 +3374,12 @@ dhd_attach(osl_t *osh, struct dhd_bus *bus, uint bus_hdrlen)
 	register_pm_notifier(&dhd_sleep_pm_notifier);
 #endif /* (LINUX_VERSION >= 2.6.27 && LINUX_VERSION <= 2.6.39 && CONFIG_PM_SLEEP */
 
-#if defined(CONFIG_POWERSUSPEND) && defined(DHD_USE_POWERSUSPEND)
+#if defined(CONFIG_POWERSUSPEND)
 	dhd->power_suspend.suspend = dhd_power_suspend;
 	dhd->power_suspend.resume = dhd_power_resume;
 	register_power_suspend(&dhd->power_suspend);
-	dhd_state |= DHD_ATTACH_STATE_POWERSUSPEND_DONE;
-#endif /* CONFIG_POWERSUSPEND && DHD_USE_POWERSUSPEND */
+	dhd_state |= DHD_ATTACH_STATE_EARLYSUSPEND_DONE;
+#endif /* CONFIG_POWERSUSPEND */
 
 #ifdef ARP_OFFLOAD_SUPPORT
 	dhd->pend_ipaddr = 0;
@@ -3521,41 +3540,68 @@ dhd_bus_start(dhd_pub_t *dhdp)
 }
 
 #ifdef WLTDLS
-int dhd_tdls_enable_disable(dhd_pub_t *dhd, bool flag)
+int _dhd_tdls_enable(dhd_pub_t *dhd, bool tdls_on, bool auto_on, struct ether_addr *mac)
 {
 	char iovbuf[WLC_IOCTL_SMLEN];
-	uint32 tdls = flag;
-	int ret;
-#ifdef WLTDLS_AUTO_ENABLE
-	uint32 tdls_auto_op = 1;
+	uint32 tdls = tdls_on;
+	int ret = 0;
+	uint32 tdls_auto_op = 0;
 	uint32 tdls_idle_time = CUSTOM_TDLS_IDLE_MODE_SETTING;
-#endif /* WLTDLS_AUTO_ENABLE */
+	int32 tdls_rssi_high = CUSTOM_TDLS_RSSI_THRESHOLD_HIGH;
+	int32 tdls_rssi_low = CUSTOM_TDLS_RSSI_THRESHOLD_LOW;
 	if (!FW_SUPPORTED(dhd, tdls))
 		return BCME_ERROR;
 
+	if (dhd->tdls_enable == tdls_on)
+		goto auto_mode;
 	bcm_mkiovar("tdls_enable", (char *)&tdls, sizeof(tdls), iovbuf, sizeof(iovbuf));
 	if ((ret = dhd_wl_ioctl_cmd(dhd, WLC_SET_VAR, iovbuf, sizeof(iovbuf), TRUE, 0)) < 0) {
 		DHD_ERROR(("%s: tdls %d failed %d\n", __FUNCTION__, tdls, ret));
 		goto exit;
 	}
-	dhd->tdls_enable = flag;
-	if (!flag)
-		goto exit;
-#ifdef WLTDLS_AUTO_ENABLE
-	bcm_mkiovar("tdls_auto_op", (char *)&tdls_auto_op, sizeof(tdls_auto_op),
-		iovbuf, sizeof(iovbuf));
-	if ((ret = dhd_wl_ioctl_cmd(dhd, WLC_SET_VAR, iovbuf, sizeof(iovbuf), TRUE, 0)) < 0) {
-		DHD_ERROR(("%s: tdls_auto_op failed %d\n", __FUNCTION__, ret));
-		goto exit;
+	dhd->tdls_enable = tdls_on;
+auto_mode:
+	if (mac) {
+		tdls_auto_op = auto_on;
+		bcm_mkiovar("tdls_auto_op", (char *)&tdls_auto_op, sizeof(tdls_auto_op),
+			iovbuf, sizeof(iovbuf));
+		if ((ret = dhd_wl_ioctl_cmd(dhd, WLC_SET_VAR, iovbuf,
+				sizeof(iovbuf), TRUE, 0)) < 0) {
+			DHD_ERROR(("%s: tdls_auto_op failed %d\n", __FUNCTION__, ret));
+			goto exit;
+		}
+
+		if (tdls_auto_op) {
+			bcm_mkiovar("tdls_idle_time", (char *)&tdls_idle_time,
+				sizeof(tdls_idle_time),	iovbuf, sizeof(iovbuf));
+			if ((ret = dhd_wl_ioctl_cmd(dhd, WLC_SET_VAR, iovbuf,
+				sizeof(iovbuf), TRUE, 0)) < 0) {
+				DHD_ERROR(("%s: tdls_idle_time failed %d\n", __FUNCTION__, ret));
+				goto exit;
+			}
+			bcm_mkiovar("tdls_rssi_high", (char *)&tdls_rssi_high, 4, iovbuf, sizeof(iovbuf));
+			if ((ret = dhd_wl_ioctl_cmd(dhd, WLC_SET_VAR, iovbuf, sizeof(iovbuf), TRUE, 0)) < 0) {
+				DHD_ERROR(("%s: tdls_rssi_high failed %d\n", __FUNCTION__, ret));
+				goto exit;
+			}
+			bcm_mkiovar("tdls_rssi_low", (char *)&tdls_rssi_low, 4, iovbuf, sizeof(iovbuf));
+			if ((ret = dhd_wl_ioctl_cmd(dhd, WLC_SET_VAR, iovbuf, sizeof(iovbuf), TRUE, 0)) < 0) {
+				DHD_ERROR(("%s: tdls_rssi_low failed %d\n", __FUNCTION__, ret));
+				goto exit;
+			}
+		}
 	}
-	bcm_mkiovar("tdls_idle_time", (char *)&tdls_idle_time, sizeof(tdls_idle_time),
-		iovbuf, sizeof(iovbuf));
-	if ((ret = dhd_wl_ioctl_cmd(dhd, WLC_SET_VAR, iovbuf, sizeof(iovbuf), TRUE, 0)) < 0) {
-		DHD_ERROR(("%s: tdls_idle_time failed %d\n", __FUNCTION__, ret));
-		goto exit;
-	}
-#endif /* WLTDLS_AUTO_ENABLE */
 exit:
+	return ret;
+}
+int dhd_tdls_enable(struct net_device *dev, bool tdls_on, bool auto_on, struct ether_addr *mac)
+{
+	dhd_info_t *dhd = *(dhd_info_t **)netdev_priv(dev);
+	int ret = 0;
+	if (dhd)
+		ret = _dhd_tdls_enable(&dhd->pub, tdls_on, auto_on, mac);
+	else
+		ret = BCME_ERROR;
 	return ret;
 }
 #endif /* WLTDLS */
@@ -3712,6 +3758,9 @@ dhd_preinit_ioctls(dhd_pub_t *dhd)
 		dhd->wlfc_enabled = FALSE;
 #endif /* PROP_TXSTATUS_VSDB */
 #endif /* PROP_TXSTATUS */
+#ifdef WLTDLS
+	dhd->tdls_enable = FALSE;
+#endif /* WLTDLS */
 	dhd->suspend_bcn_li_dtim = CUSTOM_SUSPEND_BCN_LI_DTIM;
 	DHD_TRACE(("Enter %s\n", __FUNCTION__));
 	dhd->op_mode = 0;
@@ -3891,7 +3940,8 @@ dhd_preinit_ioctls(dhd_pub_t *dhd)
 #endif /* ROAM_ENABLE */
 
 #ifdef WLTDLS
-	dhd_tdls_enable_disable(dhd, 1);
+	/* by default TDLS on and auto mode off */
+	_dhd_tdls_enable(dhd, true, false, NULL);
 #endif /* WLTDLS */
 
 	/* Set PowerSave mode */
@@ -4575,12 +4625,12 @@ void dhd_detach(dhd_pub_t *dhdp)
 		if (dhdp->prot)
 			dhd_prot_detach(dhdp);
 	}
-#if defined(CONFIG_POWERSUSPEND) && defined(DHD_USE_POWERSUSPEND)
-	if (dhd->dhd_state & DHD_ATTACH_STATE_POWERSUSPEND_DONE) {
+#if defined(CONFIG_POWERSUSPEND)
+	if (dhd->dhd_state & DHD_ATTACH_STATE_EARLYSUSPEND_DONE) {
 		if (dhd->power_suspend.suspend)
 			unregister_power_suspend(&dhd->power_suspend);
 	}
-#endif /* CONFIG_POWERSUSPEND && DHD_USE_POWERSUSPEND */
+#endif /* CONFIG_POWERSUSPEND */
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 27))
 	cancel_work_sync(&dhd->work_hang);
@@ -5357,7 +5407,7 @@ int net_os_set_suspend(struct net_device *dev, int val, int force)
 	dhd_info_t *dhd = *(dhd_info_t **)netdev_priv(dev);
 
 	if (dhd) {
-#if defined(CONFIG_POWERSUSPEND) && defined(DHD_USE_POWERSUSPEND)
+#if defined(CONFIG_POWERSUSPEND)
 		ret = dhd_set_suspend(val, &dhd->pub);
 #else
 		ret = dhd_suspend_resume_helper(dhd, val, force);
@@ -5465,7 +5515,7 @@ done:
 }
 
 #ifdef PNO_SUPPORT
-/* Linux wrapper to call common dhd_pno_clean */
+/* Linux wrapper to call common dhd_pno_stop_for_ssid */
 int
 dhd_dev_pno_stop_for_ssid(struct net_device *dev)
 {

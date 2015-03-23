@@ -154,7 +154,7 @@ struct ipv6_devconf {
 	__s32		max_addresses;
 	__s32		accept_ra_defrtr;
 	__s32		accept_ra_pinfo;
-#ifdef CONFIG_MTK_DHCPV6C_WIFI	
+#ifdef MTK_DHCPV6C_WIFI	
 	__s32		ra_info_flag;
 #endif	
 #ifdef CONFIG_IPV6_ROUTER_PREF
@@ -169,6 +169,7 @@ struct ipv6_devconf {
 	__s32		accept_source_route;
 #ifdef CONFIG_IPV6_OPTIMISTIC_DAD
 	__s32		optimistic_dad;
+	__s32		use_optimistic;
 #endif
 #ifdef CONFIG_IPV6_MROUTE
 	__s32		mc_forwarding;
@@ -217,10 +218,11 @@ enum {
 	DEVCONF_DISABLE_IPV6,
 	DEVCONF_ACCEPT_DAD,
 	DEVCONF_FORCE_TLLAO,
-#ifdef CONFIG_MTK_DHCPV6C_WIFI
+	DEVCONF_ACCEPT_RA_RT_TABLE,
+#ifdef MTK_DHCPV6C_WIFI
 	DEVCONF_RA_INFO_FLAG,
 #endif
-	DEVCONF_ACCEPT_RA_RT_TABLE,
+	DEVCONF_USE_OPTIMISTIC,
 	DEVCONF_MAX
 };
 

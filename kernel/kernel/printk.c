@@ -939,9 +939,9 @@ static int console_trylock_for_printk(unsigned int cpu)
 		}
 	}
 	printk_cpu = UINT_MAX;
+	raw_spin_unlock(&logbuf_lock);
 	if (wake)
 		up(&console_sem);
-	raw_spin_unlock(&logbuf_lock);
 	return retval;
 }
 static const char recursion_bug_msg [] =
@@ -967,6 +967,7 @@ static inline void printk_delay(void)
 int mt_printk_sched(const char *fmt, ...);
 asmlinkage int vprintk(const char *fmt, va_list args)
 {
+	vscnprintf(printk_buf, sizeof(printk_buf), fmt, args);
 	int printed_len = 0;
 	int current_log_level = default_message_loglevel;
 	unsigned long flags;
@@ -979,7 +980,7 @@ asmlinkage int vprintk(const char *fmt, va_list args)
     in_irq_disable = irqs_disabled();
     in_non_preempt = in_atomic();
 #endif
-	vscnprintf(printk_buf, sizeof(printk_buf), fmt, args);
+
 	boot_delay_msec();
 	printk_delay();
 
@@ -1915,7 +1916,7 @@ late_initcall(printk_late_init);
 
 #if defined CONFIG_PRINTK
 
-int printk_sched(const char *fmt, ...)
+int printk_deferred(const char *fmt, ...)
 {
 	unsigned long flags;
 	va_list args;

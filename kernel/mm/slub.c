@@ -637,7 +637,7 @@ static void object_err(struct kmem_cache *s, struct page *page,
 {
 	slab_bug(s, "%s", reason);
 	print_trailer(s, page, object);
-	BUG();
+        aee_kernel_warning("[SLUB_DEBUG]", __FUNCTION__);
 }
 
 static void slab_err(struct kmem_cache *s, struct page *page, char *fmt, ...)
@@ -651,7 +651,7 @@ static void slab_err(struct kmem_cache *s, struct page *page, char *fmt, ...)
 	slab_bug(s, "%s", buf);
 	print_page_info(page);
 	dump_stack();
-	BUG();
+        aee_kernel_warning("[SLUB_DEBUG]", __FUNCTION__);
 }
 
 static void init_object(struct kmem_cache *s, void *object, u8 val)
@@ -694,10 +694,11 @@ static int check_bytes_and_report(struct kmem_cache *s, struct page *page,
 					fault, end - 1, fault[0], value);
 	print_trailer(s, page, object);
 
-	/* trigger BUG before restore_bytes */
-	BUG();
 	restore_bytes(s, what, value, fault, end);
-
+        printk(KERN_ERR "dump 4k covering bytes of the error object\n");
+	print_section("memdump ", (object - 0xc00), PAGE_SIZE);
+        
+        aee_kernel_warning("[SLUB_DEBUG]", __FUNCTION__);
 	return 0;
 }
 
@@ -1656,7 +1657,7 @@ static struct page *get_any_partial(struct kmem_cache *s, gfp_t flags,
 
 	do {
 		cpuset_mems_cookie = get_mems_allowed();
-		zonelist = node_zonelist(slab_node(current->mempolicy), flags);
+		zonelist = node_zonelist(slab_node(), flags);
 		for_each_zone_zonelist(zone, z, zonelist, high_zoneidx) {
 			struct kmem_cache_node *n;
 
@@ -2668,7 +2669,7 @@ EXPORT_SYMBOL(kmem_cache_free);
  * take the list_lock.
  */
 static int slub_min_order;
-static int slub_max_order = PAGE_ALLOC_COSTLY_ORDER;
+static int slub_max_order;
 static int slub_min_objects;
 
 /*
@@ -4257,7 +4258,7 @@ static void free_loc_track(struct loc_track *t)
 		free_pages((unsigned long)t->loc,
 			get_order(sizeof(struct location) * t->max));
 #else
-		__free_pages_nopagedebug((struct page *)t->loc,
+		__free_pages_nopagedebug((unsigned long)t->loc,
 			get_order(sizeof(struct location) * t->max));
 #endif
 }
@@ -4581,7 +4582,13 @@ static ssize_t show_slab_objects(struct kmem_cache *s,
 			page = c->partial;
 
 			if (page) {
-				x = page->pobjects;
+				node = page_to_nid(page);
+				if (flags & SO_TOTAL)
+					WARN_ON_ONCE(1);
+				else if (flags & SO_OBJECTS)
+					WARN_ON_ONCE(1);
+				else
+					x = page->pages;
 				total += x;
 				nodes[node] += x;
 			}
@@ -5604,7 +5611,7 @@ static int mtk_memcfg_add_location(struct loc_track *t, struct kmem_cache *s,
 		if (pos == end)
 			break;
 
-		caddrs = &(t->loc[pos].addrs);
+		caddrs = t->loc[pos].addrs;
 		if (!memcmp(caddrs, taddrs, MTK_MEMCFG_SLABTRACE_CNT * sizeof (unsigned long))) {
 
 			l = &t->loc[pos];
@@ -5678,7 +5685,7 @@ static void mtk_memcfg_process_slab(struct loc_track *t, struct kmem_cache *s,
 static int mtk_memcfg_list_locations(struct kmem_cache *s, struct seq_file *m,
 					enum track_item alloc)
 {
-	unsigned long i, j;
+	unsigned long i, j, trace_cnt;
 	struct loc_track t = { 0, 0, NULL };
 	int node;
 	unsigned long *map = kmalloc(BITS_TO_LONGS(oo_objects(s->max)) *

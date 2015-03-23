@@ -802,7 +802,7 @@ set_rcvbuf:
 
 	case SO_PEEK_OFF:
 		if (sock->ops->set_peek_off)
-			sock->ops->set_peek_off(sk, val);
+			ret = sock->ops->set_peek_off(sk, val);
 		else
 			ret = -EOPNOTSUPP;
 		break;
@@ -1613,7 +1613,6 @@ static int sock_dump_info(struct sock *sk)
 		  	  #ifdef CONFIG_MTK_NET_LOGGING  
 		      printk(KERN_INFO "[mtk_net][sock]sockdbg: socket-Name:%s \n",u->path.dentry->d_iname);
 		      #endif
-		    
 		  }
 		   else
 		  {
@@ -1656,11 +1655,9 @@ static int sock_dump_info(struct sock *sk)
 		            printk(KERN_INFO "[mtk_net][sock]sockdbg: Peer Inode [%lu] \n", SOCK_INODE(other->sk_socket)->i_ino);
 		            #endif
 				    }
-
 	            #ifdef CONFIG_MTK_NET_LOGGING  
 				printk(KERN_INFO "[mtk_net][sock]sockdbg: Peer Recieve Queue len:%d \n",other->sk_receive_queue.qlen);
                 #endif
-
 				 //dump receiver queue 128 bytes
 						/* if ((skb = skb_peek_tail(&other->sk_receive_queue)) == NULL) {
 		                        
@@ -1781,10 +1778,8 @@ struct sk_buff *sock_alloc_send_pskb(struct sock *sk, unsigned long header_len,
         #ifdef CONFIG_MTK_NET_LOGGING  
 		printk(KERN_INFO "[mtk_net][sock]sockdbg: wait_for_wmem, timeo =%ld, wmem =%d, snd buf =%d \n",
 			 timeo, atomic_read(&sk->sk_wmem_alloc), sk->sk_sndbuf); 
-
         #endif
 		timeo = sock_wait_for_wmem(sk, timeo);
-		
 		#ifdef CONFIG_MTK_NET_LOGGING  
 		printk(KERN_INFO "[mtk_net][sock]sockdbg: wait_for_wmem done, header_len=0x%lx, data_len=0x%lx,timeo =%ld \n",
 			 header_len, data_len ,timeo);

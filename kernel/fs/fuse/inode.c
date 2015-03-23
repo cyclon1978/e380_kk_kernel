@@ -92,6 +92,7 @@ static struct inode *fuse_alloc_inode(struct super_block *sb)
 	fi->attr_version = 0;
 	fi->writectr = 0;
 	fi->orig_ino = 0;
+	fi->state = 0;
 	INIT_LIST_HEAD(&fi->write_files);
 	INIT_LIST_HEAD(&fi->queued_writes);
 	INIT_LIST_HEAD(&fi->writepages);
@@ -123,7 +124,7 @@ static void fuse_destroy_inode(struct inode *inode)
 static void fuse_evict_inode(struct inode *inode)
 {
 	truncate_inode_pages(&inode->i_data, 0);
-	end_writeback(inode);
+	clear_inode(inode);
 	if (inode->i_sb->s_flags & MS_ACTIVE) {
 		struct fuse_conn *fc = get_fuse_conn(inode);
 		struct fuse_inode *fi = get_fuse_inode(inode);
@@ -199,7 +200,8 @@ void fuse_change_attributes(struct inode *inode, struct fuse_attr *attr,
 	loff_t oldsize;
 
 	spin_lock(&fc->lock);
-	if (attr_version != 0 && fi->attr_version > attr_version) {
+	if ((attr_version != 0 && fi->attr_version > attr_version) ||
+	    test_bit(FUSE_I_SIZE_UNSTABLE, &fi->state)) {
 		spin_unlock(&fc->lock);
 		return;
 	}

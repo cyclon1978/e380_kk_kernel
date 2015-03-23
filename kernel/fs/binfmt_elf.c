@@ -132,6 +132,25 @@ static int padzero(unsigned long elf_bss)
 #define ELF_BASE_PLATFORM NULL
 #endif
 
+/*
+ * Use get_random_int() to implement AT_RANDOM while avoiding depletion
+ * of the entropy pool.
+ */
+static void get_atrandom_bytes(unsigned char *buf, size_t nbytes)
+{
+	unsigned char *p = buf;
+
+	while (nbytes) {
+		unsigned int random_variable;
+		size_t chunk = min(nbytes, sizeof(random_variable));
+
+		random_variable = get_random_int();
+		memcpy(p, &random_variable, chunk);
+		p += chunk;
+		nbytes -= chunk;
+	}
+}
+
 static int
 create_elf_tables(struct linux_binprm *bprm, struct elfhdr *exec,
 		unsigned long load_addr, unsigned long interp_load_addr)
@@ -193,7 +212,7 @@ create_elf_tables(struct linux_binprm *bprm, struct elfhdr *exec,
 	/*
 	 * Generate 16 random bytes for userspace PRNG seeding.
 	 */
-	get_random_bytes(k_rand_bytes, sizeof(k_rand_bytes));
+	get_atrandom_bytes(k_rand_bytes, sizeof(k_rand_bytes));
 	u_rand_bytes = (elf_addr_t __user *)
 		       STACK_ALLOC(p, sizeof(k_rand_bytes));
 	if (__copy_to_user(u_rand_bytes, k_rand_bytes, sizeof(k_rand_bytes)))
@@ -1096,7 +1115,7 @@ out:
 
 #ifdef CONFIG_MTK_EXTMEM
 extern bool extmem_in_mspace(struct vm_area_struct *vma);
-extern unsigned long get_virt_from_mspace(unsigned long pa);
+extern void * get_virt_from_mspace(void * pa);
 #endif
 
 /*
@@ -2073,7 +2092,7 @@ static int elf_core_dump(struct coredump_params *cprm)
 
 #ifdef CONFIG_MTK_EXTMEM
 		if (extmem_in_mspace(vma)) {
-			void *extmem_va = (void *)get_virt_from_mspace(vma->vm_pgoff << PAGE_SHIFT);
+			void *extmem_va = get_virt_from_mspace(vma->vm_pgoff << PAGE_SHIFT);
 			for (addr = vma->vm_start; addr < end; addr += PAGE_SIZE, extmem_va += PAGE_SIZE) {
 				int stop;
 				stop = ((size += PAGE_SIZE) > cprm->limit) ||

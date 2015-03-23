@@ -496,7 +496,7 @@ static void bdev_evict_inode(struct inode *inode)
 	struct list_head *p;
 	truncate_inode_pages(&inode->i_data, 0);
 	invalidate_inode_buffers(inode); /* is it needed here? */
-	end_writeback(inode);
+	clear_inode(inode);
 	spin_lock(&bdev_lock);
 	while ( (p = bdev->bd_inodes.next) != &bdev->bd_inodes ) {
 		__bd_forget(list_entry(p, struct inode, i_devices));
@@ -1080,7 +1080,7 @@ int check_disk_change(struct block_device *bdev)
 	unsigned int events;
 
 	events = disk_clear_events(disk, DISK_EVENT_MEDIA_CHANGE |
-#ifdef CONFIG_MTK_MULTI_PARTITION_MOUNT_ONLY_SUPPORT	
+#ifdef MTK_MULTI_PARTITION_MOUNT_ONLY_SUPPORT	
 				   DISK_EVENT_EJECT_REQUEST | DISK_EVENT_MEDIA_DISAPPEAR);   //add DISK_EVENT_MEDIA_DISAPPEAR for sd hotplug
 #else
 					 DISK_EVENT_EJECT_REQUEST);

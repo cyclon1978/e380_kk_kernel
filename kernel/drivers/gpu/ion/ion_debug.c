@@ -422,7 +422,7 @@ struct ion_client_usage_record *ion_get_inuse_client_record(void)
        ION_DEBUG_LOG(ION_DEBUG_INFO,"[ion_get_inuse_client_record]return client_record  %x\n",(unsigned int)tmp_client);
         if(tmp_client != NULL)
         {
-                ION_DEBUG_LOG(ION_DEBUG_INFO, "[ion_get_inuse_client_record]return client %x \n",(unsigned int)tmp_client);
+                ION_DEBUG_LOG(ION_DEBUG_INFO, "[ion_get_inuse_client_record]return client %x \n",tmp_client);
                 ion_debug_show_client_usage_record(tmp_client);
         }
         return client_using_list;
@@ -433,7 +433,7 @@ struct ion_client_usage_record *ion_get_freed_client_record(void)
 	ION_DEBUG_LOG(ION_DEBUG_INFO, "[ion_get_inuse_client_record]return client_record  %x\n",(unsigned int)tmp_client);
         if(tmp_client != NULL)
         {
-                ION_DEBUG_LOG(ION_DEBUG_INFO, "[ion_get_inuse_client_record]return client %x \n",(unsigned int)tmp_client);
+                ION_DEBUG_LOG(ION_DEBUG_INFO, "[ion_get_inuse_client_record]return client %x \n",tmp_client);
                 ion_debug_show_client_usage_record(tmp_client);
         }
         return client_freed_list;
@@ -589,9 +589,9 @@ struct ion_process_record * search_process_by_file(struct file *file,struct ion_
                                 	ION_DEBUG_LOG(ION_DEBUG_INFO, "               found record tmp_process_record: 0x%x file: 0x%x\n",(unsigned int)tmp_process_record,(unsigned int)tmp_fd_record->file);
                                 	return tmp_process_record;
                         	}
-				tmp_fd_record = (struct ion_fd_usage_record *)(tmp_fd_record->next);
+				tmp_fd_record = tmp_fd_record->next;
 			}
-                        tmp_process_record = (struct ion_process_record *)tmp_process_record->next;
+                        tmp_process_record = tmp_process_record->next;
                 }
                 ION_DEBUG_LOG(ION_DEBUG_INFO, "        [search_process_in_list]can't get corresponding in process list %x\n",(unsigned int)list);
         }
@@ -664,9 +664,9 @@ unsigned int get_kernel_backtrace(unsigned long *backtrace)
 	{
 		for(i= 0 ; i < trace.nr_entries; i++)
 		{
-			//ION_DEBUG_LOG(ION_DEBUG_INFO, "bactrace[%d] : %x  ",i, (unsigned int)trace.entries[i]);
+			ION_DEBUG_LOG(ION_DEBUG_INFO, "bactrace[%d] : %x  ",i, trace.entries[i]);
 			sprint_symbol(tmp,trace.entries[i]);
-			//ION_DEBUG_LOG("%s\n",(char *)tmp);
+			ION_DEBUG_LOG("%s\n",tmp);
 		}
 		memcpy(backtrace,(unsigned long *)trace.entries,sizeof(unsigned int)*trace.nr_entries);
 	}
@@ -689,7 +689,7 @@ unsigned int get_kernel_backtrace_show(unsigned long *backtrace)
         {
                 for(i= 0 ; i < trace.nr_entries; i++)
                 {
-                        ION_DEBUG_LOG(ION_DEBUG_ERROR, "bactrace[%d] : %x  ",i, (unsigned int)trace.entries[i]);
+                        ION_DEBUG_LOG(ION_DEBUG_ERROR, "bactrace[%d] : %x  ",i, trace.entries[i]);
                         sprint_symbol(tmp,trace.entries[i]);
                         ION_DEBUG_LOG(ION_DEBUG_ERROR,"%s\n",tmp);
                 }
@@ -792,7 +792,7 @@ void *find_node_in_list(pid_t pid, unsigned int client_address,unsigned int data
 			record_ID_tmp =(ion_record_basic_info_t *)(current_node+1);
                         ION_DEBUG_LOG(ION_DEBUG_INFO, "            [find_node_in_list]current_node is %x record_ID_tmp->group_pid %d data %d \n",(unsigned int)current_node,record_ID_tmp->recordID.group_pid,data);
 
-                        if(((record_ID_tmp->recordID.pid == pid)||((unsigned int)tmp->file == data)) && (tmp->function_type == ION_FUNCTION_SHARE))
+                        if(((record_ID_tmp->recordID.pid == pid)||(tmp->file == data)) && (tmp->function_type == ION_FUNCTION_SHARE))
 			{           
 				*previous_node =  prev_node;
 				return current_node;
@@ -802,7 +802,7 @@ void *find_node_in_list(pid_t pid, unsigned int client_address,unsigned int data
 		{
 			 struct ion_fd_usage_record *tmp = (struct ion_fd_usage_record *)current_node;
 
-                        if((unsigned int)tmp->file == data)
+                        if(tmp->file == data)
                         {
                                 *previous_node =  prev_node;
                                 return current_node;
@@ -877,7 +877,7 @@ void *move_node_to_freelist(pid_t pid,unsigned int client_address,unsigned int d
 int remove_record(unsigned int node_type,unsigned int *record)
 {
 	struct kmem_cache *remove_record_cachep = NULL;
-	//struct ion_record_basic_info *tracking_info = NULL;
+	struct ion_record_basic_info *tracking_info = NULL;
 #if 0
 	ObjectEntry *entry = NULL;
 	ObjectEntry *mapping_entry = NULL;
@@ -955,7 +955,6 @@ int remove_record(unsigned int node_type,unsigned int *record)
 	{
 		kmem_cache_free(remove_record_cachep,record);
 	}
-	return 0;
 }
 void * allocate_record(unsigned int type,ion_sys_record_t *record_param)
 {
@@ -2097,7 +2096,7 @@ int record_ion_info(int from_kernel,ion_sys_record_t *record_param)
                                 {
                                         struct files_struct *files = current->files;
                                         struct fdtable *fdt;
-                                        struct file * filp = NULL;
+                                        struct file * filp;
                                         spin_lock(&files->file_lock);
                                         fdt = files_fdtable(files);
                                         if (record_param->fd >= fdt->max_fds)
@@ -2192,7 +2191,7 @@ out_unlock:
 
                                 if(process_record == NULL)
                                 {
-                                        ION_DEBUG_LOG(ION_DEBUG_ERROR, "    [%d][%d][ION_FUNCTION_SHARE_CLOSE(%d)]ERROR !!!can't found corresponding process %d in process created list %x\n",record_param->pid,record_param->group_id,from_kernel,(unsigned int)record_param->pid,(unsigned int)process_created_list);
+                                        ION_DEBUG_LOG(ION_DEBUG_ERROR, "    [%d][%d][ION_FUNCTION_SHARE_CLOSE(%d)]ERROR !!!can't found corresponding process %d in process created list %x\n",record_param->file,record_param->group_id,from_kernel,(unsigned int)record_param->pid,(unsigned int)process_created_list);
                                         break;
                                 }
 
@@ -2204,7 +2203,7 @@ out_unlock:
 				}
 				else
 				{
-					found_node = move_node_to_freelist(record_param->pid,(unsigned int)record_param->client,(unsigned int)record_param->file,(unsigned int **)&(process_record->fd_using_list),(unsigned int **)&(process_record->fd_freed_list),SEARCH_FILE,NODE_FD);
+					found_node = move_node_to_freelist(record_param->pid,(unsigned int)record_param->client,record_param->file,(unsigned int **)&(process_record->fd_using_list),(unsigned int **)&(process_record->fd_freed_list),SEARCH_FILE,NODE_FD);
 				}
                                 mutex_unlock(&process_record->ion_fd_usage_mutex);
 				if(ion_debugger_history)
@@ -2246,7 +2245,7 @@ out_unlock:
 
                                 //move buffer node from allocate list into free list
                                 mutex_lock(&buffer_record->ion_buffer_usage_mutex);
-                                found_node = move_node_to_freelist(record_param->pid,(unsigned int)0,(unsigned int)record_param->file,(unsigned int **)&(buffer_record->buffer_using_list),(unsigned int **)&(buffer_record->buffer_freed_list),SEARCH_FD_GPID,NODE_BUFFER);
+                                found_node = move_node_to_freelist(record_param->pid,(unsigned int)0,record_param->file,(unsigned int **)&(buffer_record->buffer_using_list),(unsigned int **)&(buffer_record->buffer_freed_list),SEARCH_FD_GPID,NODE_BUFFER);
                                 mutex_unlock(&buffer_record->ion_buffer_usage_mutex);
 				if(ion_debugger_history)
 				{

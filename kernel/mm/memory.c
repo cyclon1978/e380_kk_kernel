@@ -69,7 +69,7 @@
 
 #if defined(CONFIG_MTK_EXTMEM)
 extern bool extmem_in_mspace(struct vm_area_struct *vma);
-extern unsigned long get_virt_from_mspace(unsigned long pa);
+extern void * get_virt_from_mspace(void * pa);
 #endif
 
 #ifndef CONFIG_NEED_MULTIPLE_NODES
@@ -1172,8 +1172,10 @@ again:
 			if (unlikely(page_mapcount(page) < 0))
 				print_bad_pte(vma, addr, ptent, page);
 			force_flush = !__tlb_remove_page(tlb, page);
-			if (force_flush)
+			if (force_flush) {
+				addr += PAGE_SIZE;
 				break;
+			}
 			continue;
 		}
 		/*
@@ -2093,10 +2095,15 @@ int fixup_user_fault(struct task_struct *tsk, struct mm_struct *mm,
 		     unsigned long address, unsigned int fault_flags)
 {
 	struct vm_area_struct *vma;
+	vm_flags_t vm_flags;
 	int ret;
 
 	vma = find_extend_vma(mm, address);
 	if (!vma || address < vma->vm_start)
+		return -EFAULT;
+
+	vm_flags = (fault_flags & FAULT_FLAG_WRITE) ? VM_WRITE : VM_READ;
+	if (!(vm_flags & vma->vm_flags))
 		return -EFAULT;
 
 	ret = handle_mm_fault(mm, vma, address, fault_flags);
@@ -3192,7 +3199,6 @@ static int do_swap_page(struct mm_struct *mm, struct vm_area_struct *vma,
 	delayacct_set_flag(DELAYACCT_PF_SWAPIN);
 	page = lookup_swap_cache(entry);
 	if (!page) {
-		grab_swap_token(mm); /* Contend for token _before_ read-in */
 		page = swapin_readahead(entry,
 					GFP_HIGHUSER_MOVABLE, vma, address);
 		if (!page) {
@@ -3222,6 +3228,7 @@ static int do_swap_page(struct mm_struct *mm, struct vm_area_struct *vma,
 	}
 
 	locked = lock_page_or_retry(page, mm, flags);
+
 	delayacct_clear_flag(DELAYACCT_PF_SWAPIN);
 	if (!locked) {
 		ret |= VM_FAULT_RETRY;
@@ -4107,7 +4114,7 @@ static int __access_remote_vm(struct task_struct *tsk, struct mm_struct *mm,
 				if (vma->vm_end < addr + len)
 					len = vma->vm_end - addr;
 				if (extmem_in_mspace(vma)) {
-					void *extmem_va = (void *)get_virt_from_mspace(vma->vm_pgoff << PAGE_SHIFT) + (addr - vma->vm_start);
+					void *extmem_va = get_virt_from_mspace(vma->vm_pgoff << PAGE_SHIFT) + (addr - vma->vm_start);
 					memcpy(buf, extmem_va, len);
 					buf += len;
 					break;

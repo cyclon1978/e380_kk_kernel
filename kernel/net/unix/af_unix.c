@@ -133,15 +133,24 @@
 #include <asm/kmap_types.h>
 #include <linux/device.h>
 
-struct hlist_head unix_socket_table[UNIX_HASH_SIZE + 1];
+struct hlist_head unix_socket_table[2 * UNIX_HASH_SIZE];
 EXPORT_SYMBOL_GPL(unix_socket_table);
 DEFINE_SPINLOCK(unix_table_lock);
 EXPORT_SYMBOL_GPL(unix_table_lock);
 static atomic_long_t unix_nr_socks;
 
-#define unix_sockets_unbound	(&unix_socket_table[UNIX_HASH_SIZE])
 
-#define UNIX_ABSTRACT(sk)	(unix_sk(sk)->addr->hash != UNIX_HASH_SIZE)
+static struct hlist_head *unix_sockets_unbound(void *addr)
+{
+	unsigned long hash = (unsigned long)addr;
+
+	hash ^= hash >> 16;
+	hash ^= hash >> 8;
+	hash %= UNIX_HASH_SIZE;
+	return &unix_socket_table[UNIX_HASH_SIZE + hash];
+}
+
+#define UNIX_ABSTRACT(sk)	(unix_sk(sk)->addr->hash < UNIX_HASH_SIZE)
 
 #ifdef CONFIG_UNIX_SOCKET_TRACK_TOOL
 //unix_sock_track_blc½á¹¹ description:
@@ -268,7 +277,6 @@ static struct proc_dir_entry *gunix_socket_track_aee_entry = NULL;
 #define UNIX_SOCK_TRACK_PROC_AEE_SIZE 3072
 
 static volatile unsigned int unix_sock_track_stop_flag = 0;
-#define unix_peer(sk) (unix_sk(sk)->peer)
 
 #ifdef CONFIG_UNIX_SOCKET_TRACK_TOOL
 static unsigned int g_buf_len = 0;
@@ -281,7 +289,6 @@ static void unix_sock_track_dump_socket_info(void)
 {
     unsigned char *tmp = 0;
     unsigned long flags;
-
     #ifdef CONFIG_MTK_NET_LOGGING 
     printk("[mtk_net][af_unix] stop socket record, start output infor \n");   
     #endif    
@@ -294,7 +301,6 @@ static void unix_sock_track_dump_socket_info(void)
     #ifdef CONFIG_MTK_NET_LOGGING 
     printk("[mtk_net][unix] dump_socket_info unix_sock_track_stop_flag=%d\n", unix_sock_track_stop_flag);  
     #endif
-
     memset(unix_sock_track_out_buf, 0, __UNIX_SOCKET_OUTPUT_BUF_SIZE__);
 
 unix_sock_track_dump_next_list:    
@@ -378,7 +384,6 @@ static int unix_sock_track_dev_proc_for_aee_read(char *page, char **start, off_t
     #endif
     
     unix_sock_track_dump_socket_info();
-    
     #ifdef CONFIG_MTK_NET_LOGGING 
     printk("[mtk_net][unix] unix_sock_track_dev_proc_for_aee_read g_buf_len=%d\n", g_buf_len);
     #endif
@@ -462,7 +467,6 @@ static int unix_sock_track_close(struct inode *inode, struct file *file)
 	#ifdef CONFIG_MTK_NET_LOGGING 
     printk("[mtk_net][unix] unix_sock_track\n");
     #endif
-
     return 0;
 }
 
@@ -525,20 +529,16 @@ static int unix_sock_track_init(void)
     #ifdef CONFIG_MTK_NET_LOGGING 
     printk("[mtk_net][unix] driver(major %d) installed \n", gusktrkMajor);
     #endif
-
     unix_sock_track_dev_proc_for_aee_setup();
-
     #ifdef CONFIG_MTK_NET_LOGGING 
     printk("[mtk_net][unix] dev register success \n");
     #endif
     return 0;
 
 error:
-
     #ifdef CONFIG_MTK_NET_LOGGING 
     printk("[mtk_net][unix] dev register fail \n");
     #endif
-
     return -1;
 }
 
@@ -551,7 +551,6 @@ static void unix_sock_track_exit (void)
     cdev_del(&gusktrkCdev);
     unregister_chrdev_region(dev, USKTRK_DEV_NUM);
     gusktrkMajor = -1;
-
     #ifdef CONFIG_MTK_NET_LOGGING 
     printk("[mtk_net][unix] exit done\n");
     #endif
@@ -910,7 +909,6 @@ unix_sock_track_blc* unix_sock_track_socket_create1(unsigned long ino, unsigned 
             	#ifdef CONFIG_MTK_NET_LOGGING 
                 printk("[mtk_net][unix] alloc unix_sock_blc fail\n");
                 #endif
-
                 kfree(sock_infor);
             }              
         }
@@ -1225,6 +1223,8 @@ static inline unsigned unix_hash_fold(__wsum n)
 	hash ^= hash>>8;
 	return hash&(UNIX_HASH_SIZE-1);
 }
+
+#define unix_peer(sk) (unix_sk(sk)->peer)
 
 static inline int unix_our_peer(struct sock *sk, struct sock *osk)
 {
@@ -1639,13 +1639,17 @@ static int unix_seqpacket_sendmsg(struct kiocb *, struct socket *,
 static int unix_seqpacket_recvmsg(struct kiocb *, struct socket *,
 				  struct msghdr *, size_t, int);
 
-static void unix_set_peek_off(struct sock *sk, int val)
+static int unix_set_peek_off(struct sock *sk, int val)
 {
 	struct unix_sock *u = unix_sk(sk);
 
-	mutex_lock(&u->readlock);
+	if (mutex_lock_interruptible(&u->readlock))
+		return -EINTR;
+
 	sk->sk_peek_off = val;
 	mutex_unlock(&u->readlock);
+
+	return 0;
 }
 
 
@@ -1771,7 +1775,7 @@ static struct sock *unix_create1(struct net *net, struct socket *sock)
 	INIT_LIST_HEAD(&u->link);
 	mutex_init(&u->readlock); /* single task reading lock */
 	init_waitqueue_head(&u->peer_wait);
-	unix_insert_socket(unix_sockets_unbound, sk);
+	unix_insert_socket(unix_sockets_unbound(sk), sk);
 out:
   
 	if (sk == NULL)
@@ -1876,7 +1880,9 @@ static int unix_autobind(struct socket *sock)
 	int err;
 	unsigned int retries = 0;
 
-	mutex_lock(&u->readlock);
+	err = mutex_lock_interruptible(&u->readlock);
+	if (err)
+		return err;
 
 	err = 0;
 	if (u->addr)
@@ -2030,7 +2036,9 @@ static int unix_bind(struct socket *sock, struct sockaddr *uaddr, int addr_len)
 		goto out;
 	addr_len = err;
 
-	mutex_lock(&u->readlock);
+	err = mutex_lock_interruptible(&u->readlock);
+	if (err)
+		goto out;
 
 	err = -EINVAL;
 	if (u->addr)
@@ -2574,6 +2582,15 @@ static int unix_socketpair(struct socket *socka, struct socket *sockb)
 	return 0;
 }
 
+static void unix_sock_inherit_flags(const struct socket *old,
+				    struct socket *new)
+{
+	if (test_bit(SOCK_PASSCRED, &old->flags))
+		set_bit(SOCK_PASSCRED, &new->flags);
+	if (test_bit(SOCK_PASSSEC, &old->flags))
+		set_bit(SOCK_PASSSEC, &new->flags);
+}
+
 static int unix_accept(struct socket *sock, struct socket *newsock, int flags)
 {
 	struct sock *sk = sock->sk;
@@ -2627,6 +2644,7 @@ static int unix_accept(struct socket *sock, struct socket *newsock, int flags)
 	/* attach accepted sock to socket */
 	unix_state_lock(tsk);
 	newsock->state = SS_CONNECTED;
+	unix_sock_inherit_flags(sock, newsock);
 	sock_graft(tsk, newsock);
 	unix_state_unlock(tsk);
 #ifdef CONFIG_UNIX_SOCKET_TRACK_TOOL	
@@ -3245,7 +3263,6 @@ static void unix_copy_addr(struct msghdr *msg, struct sock *sk)
 {
 	struct unix_sock *u = unix_sk(sk);
 
-	msg->msg_namelen = 0;
 	if (u->addr) {
 		msg->msg_namelen = u->addr->len;
 		memcpy(msg->msg_name, u->addr->name, u->addr->len);
@@ -3293,11 +3310,12 @@ static int unix_dgram_recvmsg(struct kiocb *iocb, struct socket *sock,
 	if (flags&MSG_OOB)
 		goto out;
 
-	msg->msg_namelen = 0;
-
 	err = mutex_lock_interruptible(&u->readlock);
-	if (err) {
-		err = sock_intr_errno(sock_rcvtimeo(sk, noblock));
+	if (unlikely(err)) {
+		/* recvmsg() in non blocking mode is supposed to return -EAGAIN
+		 * sk_rcvtimeo is not honored by mutex_lock_interruptible()
+		 */
+		err = noblock ? -EAGAIN : -ERESTARTSYS;
 		goto out;
 	}
 
@@ -3459,6 +3477,7 @@ static int unix_stream_recvmsg(struct kiocb *iocb, struct socket *sock,
 	struct unix_sock *u = unix_sk(sk);
 	struct sockaddr_un *sunaddr = msg->msg_name;
 	int copied = 0;
+	int noblock = flags & MSG_DONTWAIT;
 	int check_creds = 0;
 	int target;
 	int err = 0;
@@ -3500,9 +3519,7 @@ static int unix_stream_recvmsg(struct kiocb *iocb, struct socket *sock,
 		goto out;
 
 	target = sock_rcvlowat(sk, flags&MSG_WAITALL, size);
-	timeo = sock_rcvtimeo(sk, flags&MSG_DONTWAIT);
-
-	msg->msg_namelen = 0;
+	timeo = sock_rcvtimeo(sk, noblock);
 
 	/* Lock the socket to prevent queue disordering
 	 * while sleeps in memcpy_tomsg
@@ -3514,8 +3531,11 @@ static int unix_stream_recvmsg(struct kiocb *iocb, struct socket *sock,
 	}
 
 	err = mutex_lock_interruptible(&u->readlock);
-	if (err) {
-		err = sock_intr_errno(timeo);
+	if (unlikely(err)) {
+		/* recvmsg() in non blocking mode is supposed to return -EAGAIN
+		 * sk_rcvtimeo is not honored by mutex_lock_interruptible()
+		 */
+		err = noblock ? -EAGAIN : -ERESTARTSYS;
 		goto out;
 	}
 
@@ -3549,7 +3569,6 @@ again:
 				   	
                      printk(KERN_INFO " [mtk_net][unix]: recvmsg[%lu:%lu]:exit read due to peer shutdown  \n" ,SOCK_INODE(sk->sk_socket)->i_ino,SOCK_INODE(other->sk_socket)->i_ino);
 				   #endif
-				   
 				   }else{				   
 				   	#ifdef CONFIG_MTK_NET_LOGGING 				   
                      printk(KERN_INFO "[mtk_net][unix]: recvmsg[%lu:null]:exit read due to peer shutdown  \n" ,SOCK_INODE(sk->sk_socket)->i_ino);
@@ -3575,11 +3594,9 @@ again:
                 if(sk && sk->sk_socket )
                 {
                      if(other && other->sk_socket ){
-				   	
 				   	#ifdef CONFIG_MTK_NET_LOGGING 
                      printk(KERN_INFO " [mtk_net][unix]: recvmsg[%lu:%lu]:exit read due to timeout  \n" ,SOCK_INODE(sk->sk_socket)->i_ino,SOCK_INODE(other->sk_socket)->i_ino);
 				   #endif
-				   
 				   }else{				   
 				   	#ifdef CONFIG_MTK_NET_LOGGING 				   
                      printk(KERN_INFO " [mtk_net][unix]: recvmsg[%lu:null]:exit read due to timeout  \n" ,SOCK_INODE(sk->sk_socket)->i_ino);
@@ -4014,47 +4031,58 @@ static unsigned int unix_dgram_poll(struct file *file, struct socket *sock,
 }
 
 #ifdef CONFIG_PROC_FS
-static struct sock *first_unix_socket(int *i)
-{
-	for (*i = 0; *i <= UNIX_HASH_SIZE; (*i)++) {
-		if (!hlist_empty(&unix_socket_table[*i]))
-			return __sk_head(&unix_socket_table[*i]);
-	}
-	return NULL;
-}
 
-static struct sock *next_unix_socket(int *i, struct sock *s)
-{
-	struct sock *next = sk_next(s);
-	/* More in this chain? */
-	if (next)
-		return next;
-	/* Look for next non-empty chain. */
-	for ((*i)++; *i <= UNIX_HASH_SIZE; (*i)++) {
-		if (!hlist_empty(&unix_socket_table[*i]))
-			return __sk_head(&unix_socket_table[*i]);
-	}
-	return NULL;
-}
+#define BUCKET_SPACE (BITS_PER_LONG - (UNIX_HASH_BITS + 1) - 1)
+
+#define get_bucket(x) ((x) >> BUCKET_SPACE)
+#define get_offset(x) ((x) & ((1L << BUCKET_SPACE) - 1))
+#define set_bucket_offset(b, o) ((b) << BUCKET_SPACE | (o))
 
 struct unix_iter_state {
 	struct seq_net_private p;
-	int i;
 };
 
-static struct sock *unix_seq_idx(struct seq_file *seq, loff_t pos)
+static struct sock *unix_from_bucket(struct seq_file *seq, loff_t *pos)
 {
-	struct unix_iter_state *iter = seq->private;
-	loff_t off = 0;
-	struct sock *s;
+	unsigned long offset = get_offset(*pos);
+	unsigned long bucket = get_bucket(*pos);
+	struct sock *sk;
+	unsigned long count = 0;
 
-	for (s = first_unix_socket(&iter->i); s; s = next_unix_socket(&iter->i, s)) {
-		if (sock_net(s) != seq_file_net(seq))
+	for (sk = sk_head(&unix_socket_table[bucket]); sk; sk = sk_next(sk)) {
+		if (sock_net(sk) != seq_file_net(seq))
 			continue;
-		if (off == pos)
-			return s;
-		++off;
+		if (++count == offset)
+			break;
 	}
+
+	return sk;
+}
+
+static struct sock *unix_next_socket(struct seq_file *seq,
+				     struct sock *sk,
+				     loff_t *pos)
+{
+	unsigned long bucket;
+
+	while (sk > (struct sock *)SEQ_START_TOKEN) {
+		sk = sk_next(sk);
+		if (!sk)
+			goto next_bucket;
+		if (sock_net(sk) == seq_file_net(seq))
+			return sk;
+	}
+
+	do {
+		sk = unix_from_bucket(seq, pos);
+		if (sk)
+			return sk;
+
+next_bucket:
+		bucket = get_bucket(*pos) + 1;
+		*pos = set_bucket_offset(bucket, 1);
+	} while (bucket < ARRAY_SIZE(unix_socket_table));
+
 	return NULL;
 }
 
@@ -4062,22 +4090,20 @@ static void *unix_seq_start(struct seq_file *seq, loff_t *pos)
 	__acquires(unix_table_lock)
 {
 	spin_lock(&unix_table_lock);
-	return *pos ? unix_seq_idx(seq, *pos - 1) : SEQ_START_TOKEN;
+
+	if (!*pos)
+		return SEQ_START_TOKEN;
+
+	if (get_bucket(*pos) >= ARRAY_SIZE(unix_socket_table))
+		return NULL;
+
+	return unix_next_socket(seq, NULL, pos);
 }
 
 static void *unix_seq_next(struct seq_file *seq, void *v, loff_t *pos)
 {
-	struct unix_iter_state *iter = seq->private;
-	struct sock *sk = v;
 	++*pos;
-
-	if (v == SEQ_START_TOKEN)
-		sk = first_unix_socket(&iter->i);
-	else
-		sk = next_unix_socket(&iter->i, sk);
-	while (sk && (sock_net(sk) != seq_file_net(seq)))
-		sk = next_unix_socket(&iter->i, sk);
-	return sk;
+	return unix_next_socket(seq, v, pos);
 }
 
 static void unix_seq_stop(struct seq_file *seq, void *v)

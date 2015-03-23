@@ -468,7 +468,6 @@ static void tcp_write_timer(unsigned long data)
 		    printk(KERN_DEBUG "[mtk_net][mmspb] tcp_write_timer user owner sock\n");
 		    #endif
 	    }
-		
 		goto out_unlock;
 	}
 

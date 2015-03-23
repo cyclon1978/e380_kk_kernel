@@ -14,6 +14,8 @@
  *
  *  v1.4 - add a hybrid-kernel mode, accepting both kernel hooks (first wins)
  *
+ *  v1.5 - fix hybrid-kernel mode cannot be set through sysfs
+ *
  * This software is licensed under the terms of the GNU General Public
  * License version 2, as published by the Free Software Foundation, and
  * may be copied, distributed, and modified under those terms.
@@ -160,7 +162,7 @@ void set_power_suspend_state(int new_state)
 void set_power_suspend_state_autosleep_hook(int new_state)
 {
 	#ifdef POWER_SUSPEND_DEBUG
-	pr_info("[POWERSUSPEND] autosleep requests %s.\n", new_state == POWER_SUSPEND_ACTIVE ? "sleep" : "wakeup");
+	pr_info("[POWERSUSPEND] autosleep resquests %s.\n", new_state == POWER_SUSPEND_ACTIVE ? "sleep" : "wakeup");
 	#endif
 	// Yank555.lu : Only allow autosleep hook changes in autosleep & hybrid mode
 	if (mode == POWER_SUSPEND_AUTOSLEEP || mode == POWER_SUSPEND_HYBRID)
@@ -172,7 +174,7 @@ EXPORT_SYMBOL(set_power_suspend_state_autosleep_hook);
 void set_power_suspend_state_panel_hook(int new_state)
 {
 	#ifdef POWER_SUSPEND_DEBUG
-	pr_info("[POWERSUSPEND] panel requests %s.\n", new_state == POWER_SUSPEND_ACTIVE ? "sleep" : "wakeup");
+	pr_info("[POWERSUSPEND] panel resquests %s.\n", new_state == POWER_SUSPEND_ACTIVE ? "sleep" : "wakeup");
 	#endif
 	// Yank555.lu : Only allow autosleep hook changes in autosleep & hybrid mode
 	if (mode == POWER_SUSPEND_PANEL || mode == POWER_SUSPEND_HYBRID)
@@ -201,7 +203,7 @@ static ssize_t power_suspend_state_store(struct kobject *kobj,
 	sscanf(buf, "%d\n", &new_state);
 
 	#ifdef POWER_SUSPEND_DEBUG
-	pr_info("[POWERSUSPEND] userspace requests %s.\n", new_state == POWER_SUSPEND_ACTIVE ? "sleep" : "wakeup");
+	pr_info("[POWERSUSPEND] userspace resquests %s.\n", new_state == POWER_SUSPEND_ACTIVE ? "sleep" : "wakeup");
 	#endif
 	if(new_state == POWER_SUSPEND_ACTIVE || new_state == POWER_SUSPEND_INACTIVE)
 		set_power_suspend_state(new_state);
@@ -270,7 +272,7 @@ static struct attribute_group power_suspend_attr_group =
 
 static struct kobject *power_suspend_kobj;
 
-// ------------------------------------------ sysfs interface ------------------------------------------
+// ------------------ sysfs interface -----------------------
 static int __init power_suspend_init(void)
 {
 

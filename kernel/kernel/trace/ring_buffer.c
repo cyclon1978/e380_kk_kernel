@@ -980,9 +980,7 @@ static int __rb_allocate_pages(int nr_pages, struct list_head *pages, int cpu)
 	struct buffer_page *bpage, *tmp;
 
 	for (i = 0; i < nr_pages; i++) {
-#ifndef CONFIG_MTK_EXTMEM
 		struct page *page;
-#endif
 		/*
 		 * __GFP_NORETRY flag makes sure that the allocation fails
 		 * gracefully without invoking oom-killer and the system is
@@ -1050,9 +1048,7 @@ rb_allocate_cpu_buffer(struct ring_buffer *buffer, int nr_pages, int cpu)
 {
 	struct ring_buffer_per_cpu *cpu_buffer;
 	struct buffer_page *bpage;
-#ifndef CONFIG_MTK_EXTMEM
 	struct page *page;
-#endif
 	int ret;
 
 	cpu_buffer = kzalloc_node(ALIGN(sizeof(*cpu_buffer), cache_line_size()),
@@ -2037,6 +2033,13 @@ __rb_reserve_next(struct ring_buffer_per_cpu *cpu_buffer,
 	/* set write to only the index of the write */
 	write &= RB_WRITE_MASK;
 	tail = write - length;
+
+	/*
+	 * If this is the first commit on the page, then it has the same
+	 * timestamp as the page itself.
+	 */
+	if (!tail)
+		delta = 0;
 
 	/* See if we shot pass the end of this buffer page */
 	if (unlikely(write > BUF_PAGE_SIZE))

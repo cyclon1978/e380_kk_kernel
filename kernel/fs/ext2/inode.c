@@ -90,7 +90,7 @@ void ext2_evict_inode(struct inode * inode)
 	}
 
 	invalidate_inode_buffers(inode);
-	end_writeback(inode);
+	clear_inode(inode);
 
 	ext2_discard_reservation(inode);
 	rsv = EXT2_I(inode)->i_block_alloc_info;
@@ -613,6 +613,8 @@ static int ext2_get_blocks(struct inode *inode,
 	struct ext2_inode_info *ei = EXT2_I(inode);
 	int count = 0;
 	ext2_fsblk_t first_block = 0;
+
+	BUG_ON(maxblocks == 0);
 
 	depth = ext2_block_to_path(inode,iblock,offsets,&blocks_to_boundary);
 

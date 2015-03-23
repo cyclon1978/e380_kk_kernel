@@ -207,9 +207,6 @@ struct fsg_lun {
 	unsigned int	blkbits;	/* Bits of logical block size of bound block device */
 	unsigned int	blksize;	/* logical block size of bound block device */
 	struct device	dev;
-#ifdef MTK_ICUSB_SUPPORT
-	char isICUSB;
-#endif
 };
 
 #define fsg_lun_is_open(curlun)	((curlun)->filp != NULL)
@@ -640,21 +637,6 @@ static int fsg_lun_open(struct fsg_lun *curlun, const char *filename)
 	loff_t				num_sectors;
 	loff_t				min_sectors;
 
-
-#ifdef MTK_ICUSB_SUPPORT
-#define ICUSB_STORAGE_LABEL	"/dev/block/vold/8:"
-	if(strstr(filename, ICUSB_STORAGE_LABEL))
-	{
-		printk(KERN_WARNING "filename : %s, set isICUSB to 0\n", filename);
-		curlun->isICUSB = 1;
-	}
-	else
-	{
-		printk(KERN_WARNING "filename : %s, set isICUSB to 1\n", filename);
-		curlun->isICUSB = 0;
-	}
-#endif
-
 	/* R/W if we can, R/O if we must */
 	ro = curlun->initially_ro;
 	if (!ro) {
@@ -870,6 +852,14 @@ static ssize_t fsg_show_nofua(struct device *dev, struct device_attribute *attr,
 	return sprintf(buf, "%u\n", curlun->nofua);
 }
 
+static ssize_t fsg_show_cdrom (struct device *dev, struct device_attribute *attr,
+			   char *buf)
+{
+	struct fsg_lun  *curlun = fsg_lun_from_dev(dev);
+
+	return sprintf(buf, "%d\n", curlun->cdrom);
+}
+
 static ssize_t fsg_show_file(struct device *dev, struct device_attribute *attr,
 			     char *buf)
 {
@@ -996,4 +986,33 @@ static ssize_t fsg_store_file(struct device *dev, struct device_attribute *attr,
 	}
 	up_write(filesem);
 	return (rc < 0 ? rc : count);
+}
+
+static ssize_t fsg_store_cdrom(struct device *dev, struct device_attribute *attr,
+				  const char *buf, size_t count)
+{
+	ssize_t    rc;
+	struct fsg_lun  *curlun = fsg_lun_from_dev(dev);
+	struct rw_semaphore  *filesem = dev_get_drvdata(dev);
+	unsigned  cdrom;
+
+	rc = kstrtouint(buf, 2, &cdrom);
+	if (rc)
+		return rc;
+
+	/*
+	 * Allow the cdrom status to change only while the
+	 * backing file is closed.
+	 */
+	down_read(filesem);
+	if (fsg_lun_is_open(curlun)) {
+		LDBG(curlun, "cdrom status change prevented\n");
+		rc = -EBUSY;
+	} else {
+		curlun->cdrom = cdrom;
+		LDBG(curlun, "cdrom status set to %d\n", curlun->cdrom);
+		rc = count;
+	}
+	up_read(filesem);
+	return rc;
 }

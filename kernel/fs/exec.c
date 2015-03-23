@@ -915,11 +915,13 @@ static int de_thread(struct task_struct *tsk)
 
 		sig->notify_count = -1;	/* for exit_notify() */
 		for (;;) {
+			threadgroup_change_begin(tsk);
 			write_lock_irq(&tasklist_lock);
 			if (likely(leader->exit_state))
 				break;
 			__set_current_state(TASK_UNINTERRUPTIBLE);
 			write_unlock_irq(&tasklist_lock);
+			threadgroup_change_end(tsk);
 			schedule();
 		}
 
@@ -975,6 +977,7 @@ static int de_thread(struct task_struct *tsk)
 		if (unlikely(leader->ptrace))
 			__wake_up_parent(leader, leader->parent);
 		write_unlock_irq(&tasklist_lock);
+		threadgroup_change_end(tsk);
 
 		release_task(leader);
 	}
@@ -1429,6 +1432,7 @@ int search_binary_handler(struct linux_binprm *bprm,struct pt_regs *regs)
 			retval = fn(bprm, regs);
             /* exec mt_debug*/
             if(-999 == retval){
+                printk("[exec warn] return:%d\n", retval);
                 put_binfmt(fmt);
                 return retval;
             }
@@ -1586,6 +1590,13 @@ static int do_execve_common(const char *filename,
 		goto out;
 
 	retval = search_binary_handler(bprm,regs);
+#ifdef CONFIG_MT_ENG_BUILD
+    if(retval == -999){
+	printk("[exec done]\n");
+//        printk("[exec done] argv[0] = 0x%x\n", argv0);
+//        printk("[exec done] argv0_ptr = 0x%x\n", (unsigned int)argv_p0);
+    }
+#endif
 	if (retval < 0)
 		goto out;
 
@@ -1637,6 +1648,7 @@ int do_execve(const char *filename,
     int retry = 3;
     do{
         ret = do_execve_common(filename, argv, envp, regs);
+        printk(KERN_DEBUG"[exec] %s(%d)\n", filename, retry);
     }while( -999 == ret && retry-- > 0);
 	return ret;
 }
@@ -2056,6 +2068,12 @@ static int __get_dumpable(unsigned long mm_flags)
 	return (ret >= 2) ? 2 : ret;
 }
 
+/*
+ * This returns the actual value of the suid_dumpable flag. For things
+ * that are using this for checking for privilege transitions, it must
+ * test against SUID_DUMP_USER rather than treating it as a boolean
+ * value.
+ */
 int get_dumpable(struct mm_struct *mm)
 {
 	return __get_dumpable(mm->flags);

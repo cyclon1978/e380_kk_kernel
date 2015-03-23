@@ -363,7 +363,6 @@ static int rtentry_to_fib_config(struct net *net, int cmd, struct rtentry *rt,
 		colon = strchr(devname, ':');
 		if (colon)
 			*colon = 0;
-
         #ifdef CONFIG_MTK_NET_LOGGING  
 		printk(KERN_INFO "[mtk_net][RTlog info]  ip_rt_ioctl   rt.dev =%s \n",devname);	
 		#endif  	
@@ -445,7 +444,6 @@ int ip_rt_ioctl(struct net *net, unsigned int cmd, void __user *arg)
 
 		if (copy_from_user(&rt, arg, sizeof(rt)))
 			return -EFAULT;
-		
 		#ifdef CONFIG_MTK_NET_LOGGING  
 		printk(KERN_INFO "[mtk_net][RTlog info]ip_rt_ioctl rt.flags =%08x, rt.rt_dst =%08x rt.rt_gateway =%08x \n",rt.rt_flags,sk_extract_addr(&(rt.rt_dst)),sk_extract_addr(&(rt.rt_gateway)));
 		#endif
@@ -575,7 +573,6 @@ static int inet_rtm_delroute(struct sk_buff *skb, struct nlmsghdr *nlh, void *ar
 	struct fib_config cfg;
 	struct fib_table *tb;
 	int err;
-
     #ifdef CONFIG_MTK_NET_LOGGING 
 	printk(KERN_INFO "[mtk_net][RTlog delete] inet_rtm_delroute !\n");
 	#endif
@@ -585,7 +582,6 @@ static int inet_rtm_delroute(struct sk_buff *skb, struct nlmsghdr *nlh, void *ar
 	#ifdef CONFIG_MTK_NET_LOGGING 
 	printk(KERN_INFO "[mtk_net][RTlog info]  inet_rtm_delroute  cfg.fc_dst =%08x, cfg.fc_gw =%08x\n",cfg.fc_dst,cfg.fc_gw);
     #endif
-
 	tb = fib_get_table(net, cfg.fc_table);
 	if (tb == NULL) {
 		err = -ESRCH;
