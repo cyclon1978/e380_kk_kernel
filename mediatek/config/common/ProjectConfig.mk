@@ -4,7 +4,7 @@
 MTK_BRANCH = KK1.MP5
 	# Depend on branch
 
-MTK_BUILD_VERNO = ALPS.KK1.MP5.V1.1
+MTK_BUILD_VERNO = ALPS.KK1.MP5.V1.3
 	# Depend on release week
 
 MTK_WEEK_NO =  
