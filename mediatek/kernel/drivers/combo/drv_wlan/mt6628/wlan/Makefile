@@ -24,12 +24,6 @@ else
     ccflags-y += -DCFG_SUPPORT_XLOG=0
 endif
 
-ifeq ($(HAVE_AEE_FEATURE), yes)
-    ccflags-y += -DCFG_SUPPORT_AEE=1
-else
-    ccflags-y += -DCFG_SUPPORT_AEE=0
-endif
-
 #ifeq ($(CONFIG_MTK_COMBO_WIFI_HIF_SDIO1), y)
 #    ccflags-y += -D_HIF_SDIO=1
 #endif

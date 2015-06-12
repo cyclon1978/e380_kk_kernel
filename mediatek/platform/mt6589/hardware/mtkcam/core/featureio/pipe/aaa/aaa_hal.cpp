@@ -127,20 +127,8 @@ using namespace NSIspTuning;
        return MFALSE;\
    }}\
 
-#if defined(HAVE_AEE_FEATURE)
-#include <aee.h>
-#define AEE_ASSERT_3A_HAL(String) \
-		  do { \
-			  aee_system_exception( \
-				  "Hal3A", \
-				  NULL, \
-				  DB_OPT_DEFAULT, \
-				  String); \
-		  } while(0)
-#else
+// no aee feature
 #define AEE_ASSERT_3A_HAL(String)
-#endif
-
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //

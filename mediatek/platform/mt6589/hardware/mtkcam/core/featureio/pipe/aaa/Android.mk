@@ -137,15 +137,10 @@ LOCAL_C_INCLUDES += \
     $(MTK_PATH_CUSTOM)/hal/inc \
     $(MTK_PATH_CUSTOM)/hal/camera \
 
-LOCAL_C_INCLUDES += $(TOP)/$(MTK_PATH_SOURCE)/external/aee/binary/inc
 LOCAL_C_INCLUDES += $(TOP)/$(MTK_PATH_SOURCE)/external
 
 #-----------------------------------------------------------
 LOCAL_CFLAGS += $(MTKCAM_CFLAGS)
-
-ifeq ($(HAVE_AEE_FEATURE),yes)
-    LOCAL_CFLAGS += -DHAVE_AEE_FEATURE
-endif
 
 #
 ifeq ($(BUILD_MTK_LDVT),true)

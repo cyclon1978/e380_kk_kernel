@@ -56,13 +56,6 @@ LOCAL_C_INCLUDES += ./$(TOPDIR)/mediatek/frameworks-ext/av \
 
 LOCAL_SHARED_LIBRARIES := libft
 
-ifeq ($(HAVE_AEE_FEATURE),yes)
-    LOCAL_SHARED_LIBRARIES += libaed
-    LOCAL_C_INCLUDES += \
-    $(MTK_PATH_SOURCE)/external/aee/binary/inc
-    LOCAL_CFLAGS += -DHAVE_AEE_FEATURE
-endif
-
 LOCAL_MODULE := libmeta_audio
 LOCAL_PRELINK_MODULE := false
 include $(BUILD_STATIC_LIBRARY)
@@ -79,13 +72,6 @@ LOCAL_C_INCLUDES := $(MTK_PATH_SOURCE)/external/meta/common/inc
 LOCAL_MODULE := meta_battery_test
 LOCAL_ALLOW_UNDEFINED_SYMBOLS := true
 LOCAL_SHARED_LIBRARIES := libmeta_battery libft
-
-ifeq ($(HAVE_AEE_FEATURE),yes)
-    LOCAL_SHARED_LIBRARIES += libaed
-    LOCAL_C_INCLUDES += \
-    $(MTK_PATH_SOURCE)/external/aee/binary/inc
-    LOCAL_CFLAGS += -DHAVE_AEE_FEATURE
-endif
 
 LOCAL_MODULE_PATH := $(TARGET_OUT_OPTIONAL_EXECUTABLES)
 LOCAL_UNSTRIPPED_PATH := $(TARGET_ROOT_OUT_SBIN_UNSTRIPPED)

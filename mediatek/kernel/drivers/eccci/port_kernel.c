@@ -1012,10 +1012,6 @@ static void ccci_aed(struct ccci_modem *md, unsigned int dump_flag, char *aed_st
 		ex_log_addr = md->smem_layout.ccci_exp_smem_base_vir;
 		ex_log_len = md->smem_layout.ccci_exp_smem_size;
 	}
-
-#if defined (CONFIG_MTK_AEE_FEATURE)
-	aed_md_exception(ex_log_addr, ex_log_len, md_img_addr, md_img_len, buff);
-#endif
 }
 
 static void ccci_ee_info_dump(struct ccci_modem *md, DEBUG_INFO_T *debug_info)
@@ -1401,9 +1397,6 @@ void md_bootup_timeout_func(unsigned long data)
 		ccci_aed(md, CCCI_AED_DUMP_CCIF_REG, ex_info);
 	} else if(md->boot_stage == MD_BOOT_STAGE_1) {
 		// Handshake 2 fail
-#if defined (CONFIG_MTK_AEE_FEATURE)
-		aee_kernel_warning_api(__FILE__, __LINE__, DB_OPT_FTRACE, "CCCI", "modem boot up timeout");
-#endif
 		ccci_aed(md, CCCI_AED_DUMP_CCIF_REG, ex_info);
 	}
 }

@@ -36,9 +36,6 @@
 #include "partition_define.h"
 #include <mach/emi_mpu.h>
 #include <mach/memory.h>
-#ifdef CONFIG_MTK_AEE_FEATURE
-#include <linux/aee.h>
-#endif  
 #ifdef CONFIG_MTK_HIBERNATION
 #include "mach/mtk_hibernate_dpm.h"
 #endif
@@ -5639,11 +5636,7 @@ static void msdc_tune_async_request(struct mmc_host *mmc, struct mmc_request *mr
 	unsigned long flags;
     //msdc_reset_tune_counter(host,all_counter);      
     if(host->mrq){
-		#ifdef CONFIG_MTK_AEE_FEATURE
-	    aee_kernel_warning("MSDC","MSDC request not clear.\n host attached<0x%.8x> current<0x%.8x>.\n",(int)host->mrq,(int)mrq);
-		#else
 		WARN_ON(host->mrq);
-		#endif
         ERR_MSG("XXX host->mrq<0x%.8x> cmd<%d>arg<0x%x>", (int)host->mrq,host->mrq->cmd->opcode,host->mrq->cmd->arg); 
 		if(host->mrq->data){
 			ERR_MSG("XXX request data size<%d>",host->mrq->data->blocks * host->mrq->data->blksz); 

@@ -32,16 +32,6 @@
 #include "../ipanic/ipanic.h"
 #include <mach/mt_boot.h>
 
-
-#ifdef CONFIG_MTK_AEE_POWERKEY_HANG_DETECT
-static DEFINE_SPINLOCK(pwk_hang_lock);
-static int wdt_kick_status=0;
-static int hwt_kick_times=0;
-static int pwk_start_monitor=0;
-#endif
-
-
-
 /******************************************************************************
  * FUNCTION PROTOTYPES
  *****************************************************************************/
@@ -102,29 +92,7 @@ static long monitor_hang_ioctl(struct file *file, unsigned int cmd, unsigned lon
 	int ret = 0;
 	if(cmd == AEEIOCTL_WDT_KICK_POWERKEY)
 	{
-		#ifdef CONFIG_MTK_AEE_POWERKEY_HANG_DETECT
-		if((int)arg==WDT_SETBY_WMS_DISABLE_PWK_MONITOR)
-		{
-			//pwk_start_monitor=0;
-			//wdt_kick_status=0;
-			//hwt_kick_times=0;
-		}
-		else if((int)arg==WDT_SETBY_WMS_ENABLE_PWK_MONITOR)
-		{
-			//pwk_start_monitor=1;
-			//wdt_kick_status=0;
-			//hwt_kick_times=0;
-		}
-		else if( (int)arg < 0xf )
-		{
-			aee_kernel_wdt_kick_Powkey_api("Powerkey ioctl",(int)arg);
-		}
-		
-		//xlog_printk(ANDROID_LOG_DEBUG, AEK_LOG_TAG, "AEEIOCTL_WDT_Kick_Powerkey ( 0x%x)\n", (int)arg);
-		#endif
-		
 		return ret;
-
 	}	
 	
 // QHQ RT Monitor    
@@ -152,30 +120,6 @@ static struct file_operations aed_wdt_RT_Monitor_fops = {
 	.unlocked_ioctl   = monitor_hang_ioctl,
 };
 
-#ifdef CONFIG_MTK_AEE_POWERKEY_HANG_DETECT
-static struct file_operations aed_wdt_tick_PowKey_fops = {
-	.owner   = THIS_MODULE,
-	.open	 = monitor_hang_open,
-	.release = monitor_hang_release,
-	.poll	 = monitor_hang_poll,
-	.read	 = monitor_hang_read,
-	.write	 = monitor_hang_write,
-	.unlocked_ioctl   = monitor_hang_ioctl,
-
-};
-#endif
-
-
-
-#ifdef CONFIG_MTK_AEE_POWERKEY_HANG_DETECT
-static struct miscdevice aed_wdt_tick_PowKey_dev = {
-    .minor   = MISC_DYNAMIC_MINOR,
-    .name    = "kick_powerkey",
-    .fops    = &aed_wdt_tick_PowKey_fops,
-};
-#endif
-
-   
 static struct miscdevice aed_wdt_RT_Monitor_dev = {
 	.minor   = MISC_DYNAMIC_MINOR,
 	.name    = "RT_Monitor",
@@ -202,14 +146,6 @@ static int __init monitor_hang_init(void)
 		xlog_printk(ANDROID_LOG_ERROR, AEK_LOG_TAG, "aee: failed to register aed_wdt_RT_Monitor_dev device!\n");
 		return err;
 	}
-	
-	#ifdef CONFIG_MTK_AEE_POWERKEY_HANG_DETECT
-	err = misc_register(&aed_wdt_tick_PowKey_dev);
-	if(unlikely(err)) {
-		xlog_printk(ANDROID_LOG_ERROR, AEK_LOG_TAG, "aee: failed to register aed_wdt_tick_PowKey_dev device!\n");
-	return err;
-	}
-	#endif
 
 	hang_detect_init () ;
 // bleow code is added by QHQ  for hang detect
@@ -224,11 +160,6 @@ static void __exit monitor_hang_exit(void)
 	err = misc_deregister(&aed_wdt_RT_Monitor_dev);
 	if (unlikely(err))
 		xlog_printk(ANDROID_LOG_ERROR, AEK_LOG_TAG, "xLog: failed to unregister RT_Monitor device!\n");
-	#ifdef CONFIG_MTK_AEE_POWERKEY_HANG_DETECT
-	err = misc_deregister(&aed_wdt_tick_PowKey_dev);
-	if (unlikely(err))
-		xlog_printk(ANDROID_LOG_ERROR, AEK_LOG_TAG, "xLog: failed to unregister kick_powerkey device!\n");
-	#endif
 }
 
 
@@ -414,37 +345,18 @@ int hang_detect_init(void) {
 int aee_kernel_Powerkey_is_press(void)
 {
 	int ret=0;
-	#ifdef CONFIG_MTK_AEE_POWERKEY_HANG_DETECT
-		ret=pwk_start_monitor;
-	#endif
 	return ret;
 }
 EXPORT_SYMBOL(aee_kernel_Powerkey_is_press);
 
-void aee_kernel_wdt_kick_Powkey_api(const char *module,  int msg)
+/*void aee_kernel_wdt_kick_Powkey_api(const char *module,  int msg)
 {
-	#ifdef CONFIG_MTK_AEE_POWERKEY_HANG_DETECT
-	spin_lock(&pwk_hang_lock);	
-	wdt_kick_status|= msg ;
-	spin_unlock(&pwk_hang_lock);
-	//printk("powerkey_kick:%s:%x,%x\r", module,msg,wdt_kick_status);
-	#endif
-	
 }
-EXPORT_SYMBOL(aee_kernel_wdt_kick_Powkey_api);
+EXPORT_SYMBOL(aee_kernel_wdt_kick_Powkey_api);*/
 
 
 void aee_powerkey_notify_press(unsigned long pressed)
 {
-	#ifdef CONFIG_MTK_AEE_POWERKEY_HANG_DETECT
-	if(pressed) //pwk down or up ???? need to check
-	{
-		wdt_kick_status=0;
-		hwt_kick_times=0;
-		pwk_start_monitor=1;
-		printk("(%s) HW keycode powerkey \n", pressed ? "pressed" : "released");
-	}	
-	#endif
 }
 EXPORT_SYMBOL(aee_powerkey_notify_press);
 
@@ -452,37 +364,6 @@ EXPORT_SYMBOL(aee_powerkey_notify_press);
 int aee_kernel_wdt_kick_api(int kinterval)
 {
 	int ret=0;		
-#ifdef CONFIG_MTK_AEE_POWERKEY_HANG_DETECT
-	if(pwk_start_monitor &&(get_boot_mode()==NORMAL_BOOT)&&(FindTaskByName("system_server")!=-1) )
-	{
-		//Only in normal_boot!
-		printk_deferred("Press powerkey!!	g_boot_mode=%d,wdt_kick_status=0x%x,tickTimes=0x%x,g_kinterval=%d,RT[%lld]\n",get_boot_mode(),wdt_kick_status,hwt_kick_times,kinterval,sched_clock());
-		hwt_kick_times++;	
-		if((kinterval*hwt_kick_times	> 180))//only monitor 3 min
-		{
-			pwk_start_monitor=0;
-			//check all modules is ok~~~
-			if( (wdt_kick_status& (WDT_SETBY_Display|WDT_SETBY_SF))!= (WDT_SETBY_Display|WDT_SETBY_SF))
-			{	
-				#ifdef CONFIG_MT_ENG_BUILD
-					ShowStatus() ;//catch task kernel bt
-					printk_deferred("[WDK] Powerkey Tick fail,kick_status 0x%08x,RT[%lld]\n ", wdt_kick_status,sched_clock());
-					aee_kernel_warning("\nCR_DISPATCH_KEY:UI Hang(Powerkey)\n", "Powerkey Monitor");
-				#else
-					ShowStatus() ;//catch task kernel bt
-					printk_deferred("[WDK] Powerkey Tick fail,kick_status 0x%08x,RT[%lld]\n ", wdt_kick_status,sched_clock());
-					ret=WDT_PWK_HANG_FORCE_HWT;    //trigger HWT
-				#endif
-			}			
-		}
-		if( (wdt_kick_status& (WDT_SETBY_Display|WDT_SETBY_SF))== (WDT_SETBY_Display|WDT_SETBY_SF))
-		{
-			pwk_start_monitor=0;
-			printk_deferred("[WDK] Powerkey Tick ok,kick_status 0x%08x,RT[%lld]\n ", wdt_kick_status,sched_clock());
-		}
-			
-	}
-#endif
 	return ret;
 }
 EXPORT_SYMBOL(aee_kernel_wdt_kick_api);

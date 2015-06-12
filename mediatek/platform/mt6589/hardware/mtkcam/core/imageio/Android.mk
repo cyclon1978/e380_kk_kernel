@@ -55,9 +55,6 @@ LOCAL_C_INCLUDES += $(TOP)/$(MTK_PATH_PLATFORM)/hardware/include
 #-----------------------------------------------------------
 LOCAL_CFLAGS += $(MTKCAM_CFLAGS)
 #
-ifeq ($(HAVE_AEE_FEATURE),yes)
-	LOCAL_CFLAGS += -DHAVE_AEE_FEATURE
-endif
 
 #-----------------------------------------------------------
 LOCAL_WHOLE_STATIC_LIBRARIES += libimageio_plat_pipe
@@ -77,9 +74,6 @@ ifneq ($(BUILD_MTK_LDVT),true)
     LOCAL_SHARED_LIBRARIES += libcam_mmp
 endif
 #
-ifeq ($(HAVE_AEE_FEATURE),yes)
-    LOCAL_SHARED_LIBRARIES += libaed
-endif
 
 #-----------------------------------------------------------
 LOCAL_PRELINK_MODULE := false

@@ -78,9 +78,6 @@ static struct task_struct *detect_alive_task = NULL;
 unsigned long long disp_thread_start_time,disp_thread_cost_time;
 #define DISP_THREAD_TIMEOUT (1000 * 1000)
 unsigned int disp_memout_timeout_cnt = 0;
-#ifdef CONFIG_MTK_AEE_POWERKEY_HANG_DETECT
-extern unsigned int screen_update_cnt;
-#endif
 static int config_update_task_wakeup = 0;
 extern atomic_t OverlaySettingDirtyFlag;
 extern atomic_t OverlaySettingApplied;
@@ -2106,16 +2103,7 @@ static int _DISP_DetectAliveKThread(void *data)
 	while(1)
 	{
 		msleep(5000);
-		if (!is_early_suspended){
-			//return update cnt to power monitor
-#ifdef CONFIG_MTK_AEE_POWERKEY_HANG_DETECT
-			if(screen_update_cnt > 0){
-				if(aee_kernel_Powerkey_is_press())
-					aee_kernel_wdt_kick_Powkey_api("DISP_StartOverlayTransfer",WDT_SETBY_Display); 
-				screen_update_cnt = 0;
-		}
-#endif
-			
+		if (!is_early_suspended){		
 			////get merge&trigger cost time to check if display SW thread is running normal?
 			disp_thread_cost_time = sched_clock() - disp_thread_start_time;
 			if(DISP_THREAD_TIMEOUT < ((unsigned int)disp_thread_cost_time/1000)){

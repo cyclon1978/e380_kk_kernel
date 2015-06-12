@@ -594,10 +594,6 @@
 #include "wlan_lib.h"
 #include "wlan_oid.h"
 
-#if CFG_ENABLE_AEE_MSG
-#include <linux/aee.h>
-#endif
-
 extern BOOLEAN fgIsBusAccessFailed;
 
 /*******************************************************************************

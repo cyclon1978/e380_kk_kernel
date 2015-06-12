@@ -54,12 +54,6 @@ typedef struct dump_debug_info {
 	void (*platform_call)(void *data);
 }DEBUG_INFO_T;
 
-#if defined (CONFIG_MTK_AEE_FEATURE)
-extern void aed_md_exception(const int *log, int log_size, const int *phy, int phy_size, const char* detail);
-extern __weak void aee_kernel_warning_api(const char *file, const int line, const int db_opt, const char *module, const char *msg, ...);
-#define DB_OPT_FTRACE		(1<<0)
-#endif
-
 #define CCCI_AED_DUMP_EX_MEM		(1<<0)
 #define CCCI_AED_DUMP_MD_IMG_MEM	(1<<1)
 #define CCCI_AED_DUMP_CCIF_REG		(1<<2)

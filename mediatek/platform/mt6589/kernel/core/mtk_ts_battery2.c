@@ -4,7 +4,6 @@
 #include <linux/acpi.h>
 #include <linux/thermal.h>
 #include <linux/platform_device.h>
-#include <linux/aee.h>
 #include <linux/xlog.h>
 #include <linux/types.h>
 #include <linux/delay.h>

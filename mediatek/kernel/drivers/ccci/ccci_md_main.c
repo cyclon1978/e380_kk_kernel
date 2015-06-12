@@ -1626,12 +1626,6 @@ int ack_md_sleep(char *buf, unsigned int len)
 	return flag;
 }
 
-
-#ifdef CONFIG_MTK_AEE_FEATURE
-extern void aed_md_exception(int *, int, int *, int, char *);
-
-#endif
-
 void ccci_aed(unsigned int dump_flag, char *aed_str)
 {
 	#define AED_STR_LEN		(512)
@@ -1660,10 +1654,6 @@ void ccci_aed(unsigned int dump_flag, char *aed_str)
 		md_img_addr = md_img_vir;
 		md_img_len = MD_IMG_DUMP_SIZE;
 	}
-
-	#ifdef CONFIG_MTK_AEE_FEATURE
-	aed_md_exception(ex_log_addr, ex_log_len, md_img_addr, md_img_len, buff);
-	#endif
 }
 
 extern void ccci_aed_cb_register(ccci_aed_cb_t funcp);

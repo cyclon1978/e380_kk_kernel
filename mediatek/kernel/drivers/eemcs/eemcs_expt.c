@@ -654,11 +654,6 @@ void eemcs_aed(char* ex_log_addr, unsigned int ex_log_len, char *aed_str)
 	}
 
 	snprintf(buff, AED_STR_LEN, "\n%s%s\n", aed_str, img_inf);
-
-	#if defined (CONFIG_MTK_AEE_FEATURE) && defined (ENABLE_AEE_MD_EE)
-    DBGLOG(EXPT, DBG, "aed_md_exception");
-	aed_md_exception((int const *)ex_log_addr, ex_log_len, md_img_addr, md_img_len, buff);
-	#endif
 }
 
 void md_emi_check(CCCI_BUFF_T *buff, DEBUG_INFO_T *debug_info)

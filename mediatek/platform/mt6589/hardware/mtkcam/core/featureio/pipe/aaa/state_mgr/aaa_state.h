@@ -107,19 +107,8 @@ typedef enum
 } EState_T;
 
 
-#if defined(HAVE_AEE_FEATURE)
-#include <aee.h>
-#define AEE_ASSERT_3A_STATE(String) \
-	   do { \
-		   aee_system_exception( \
-			   "3A State", \
-			   NULL, \
-			   DB_OPT_DEFAULT, \
-			   String); \
-	   } while(0)
-#else
+// no aee feature
 #define AEE_ASSERT_3A_STATE(String)
-#endif
 
 template<EIntent_T eIntent> struct intent2type { enum {v=eIntent}; };
 

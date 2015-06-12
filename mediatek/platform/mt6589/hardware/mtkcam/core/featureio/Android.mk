@@ -55,9 +55,6 @@ LOCAL_C_INCLUDES += $(TOP)/$(MTK_PATH_PLATFORM)/hardware/include
 #-----------------------------------------------------------
 LOCAL_CFLAGS += $(MTKCAM_CFLAGS)
 #
-ifeq ($(HAVE_AEE_FEATURE),yes)
-	LOCAL_CFLAGS += -DHAVE_AEE_FEATURE
-endif
 
 LOCAL_SHARED_LIBRARIES := \
     libstlport \
@@ -67,10 +64,6 @@ LOCAL_SHARED_LIBRARIES := \
     libcamalgo
 
 LOCAL_SHARED_LIBRARIES += libcam.utils.sensorlistener 
-
-ifeq ($(HAVE_AEE_FEATURE),yes)
-	LOCAL_SHARED_LIBRARIES += libaed
-endif
 
 ifneq ($(BUILD_MTK_LDVT),true)    
     LOCAL_SHARED_LIBRARIES += lib3a
