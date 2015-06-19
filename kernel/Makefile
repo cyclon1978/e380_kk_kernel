@@ -353,8 +353,8 @@ CHECK		= sparse
 		  
 OPTFLAGS	=  -march=armv7-a -mtune=cortex-a7 -mfpu=neon-vfpv4 \
 		   -ffast-math -fsingle-precision-constant \
-		   -fgcse-lm -fgcse-sm -fsched-spec-load -fforce-addr
-                   -mfloat-abi=hard -funsafe-math-optimizations
+		   -fgcse-lm -fgcse-sm -fsched-spec-load -fforce-addr \
+                   -funsafe-math-optimizations \
                    -marm -std=gnu89 -fstrict-aliasing
 
 CHECKFLAGS     := -D__linux__ -Dlinux -D__STDC__ -Dunix -D__unix__ \
@@ -383,8 +383,9 @@ KBUILD_CFLAGS   := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
 		   -fno-delete-null-pointer-checks \
 		   -march=armv7-a -mtune=cortex-a7 -mfpu=neon-vfpv4 \
 		   -ffast-math -fsingle-precision-constant \
-		   -fgcse-lm -fgcse-sm -fsched-spec-load -fforce-addr
-                   -mfloat-abi=hard -funsafe-math-optimizations
+		   -fgcse-lm -fgcse-sm -fsched-spec-load -fforce-addr \
+                   -funsafe-math-optimizations \
+                   -marm -std=gnu89 -fstrict-aliasing
 
 KBUILD_AFLAGS_KERNEL :=
 KBUILD_CFLAGS_KERNEL :=
