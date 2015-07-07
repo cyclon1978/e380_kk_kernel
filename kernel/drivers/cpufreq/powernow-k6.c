@@ -195,6 +195,7 @@ static int powernow_k6_target(struct cpufreq_policy *policy,
 	return 0;
 }
 
+
 static int powernow_k6_cpu_init(struct cpufreq_policy *policy)
 {
 	unsigned int i, f;
