@@ -195,9 +195,6 @@ static struct device_attribute power_supply_attrs[] = {
 	POWER_SUPPLY_ATTR(status_2nd),
 	POWER_SUPPLY_ATTR(capacity_2nd),
 	POWER_SUPPLY_ATTR(present_2nd),
- #if defined(ACER_C17)//for run in test    
-    POWER_SUPPLY_ATTR(ChargerTest),
-  #endif	
 	/* Properties of type `const char *' */
 	POWER_SUPPLY_ATTR(model_name),
 	POWER_SUPPLY_ATTR(manufacturer),

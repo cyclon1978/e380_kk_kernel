@@ -424,9 +424,6 @@ typedef struct
     INT32       ADC_BAT_SENSE;
     INT32       ADC_I_SENSE;
 	UINT32   	bat_temperature_status;
-#if defined(ACER_C17)  //for run in test
-    UINT32   	bat_charger_test;
-#endif	
 } PMU_ChargerStruct;
 
 typedef enum 
@@ -686,9 +683,6 @@ struct mt6320_battery_data {
     int present_2nd;
 };
 
-#if defined(ACER_C17)  //for run in test
-     int  g_BAT_ChargerTest = 0;
-#endif 
 static enum power_supply_property mt6320_ac_props[] = {
     POWER_SUPPLY_PROP_ONLINE,
 };
@@ -718,9 +712,6 @@ static enum power_supply_property mt6320_battery_props[] = {
     POWER_SUPPLY_PROP_status_2nd,
     POWER_SUPPLY_PROP_capacity_2nd,
     POWER_SUPPLY_PROP_present_2nd,
-#if defined(ACER_C17)  //for run in test
-    POWER_SUPPLY_PROP_ChargerTest,
-#endif    
 };
 
 static int mt6320_ac_get_property(struct power_supply *psy,
@@ -825,11 +816,6 @@ static int mt6320_battery_get_property(struct power_supply *psy,
     case POWER_SUPPLY_PROP_present_2nd :
         val->intval = data->present_2nd;
         break;
-#if defined(ACER_C17)  //for run in test		
-    case POWER_SUPPLY_PROP_ChargerTest:
-	    val->intval = g_BAT_ChargerTest;
-	    break;
-#endif
 
     default:
         ret = -EINVAL;
@@ -845,41 +831,13 @@ static int mt6320_battery_set_property(struct power_supply *psy,
 	union power_supply_propval *val)
 {
     int ret = 0;     
-    struct mt6320_battery_data *data = container_of(psy, struct mt6320_battery_data, psy);
-
-    switch (psp) {
-	case POWER_SUPPLY_PROP_ChargerTest:
-          //if (val->intval == 1)//LK@mask,run in app will close this value when exit 	
-          {
-              printk("c11m run in set ");
-              g_BAT_ChargerTest = val->intval;
-			  printk("c11m run in set: g_BAT_ChargerTest=%d \n",g_BAT_ChargerTest);
-		  }
-	      
-	    break;
-	
-	default:
-	    ret = -EINVAL;
-	    break;
-    }
-
+    ret = -EINVAL;
     return ret;
 }	
 
 static int  mt6320_battery_property_is_writeable(struct power_supply *psy,enum power_supply_property psp)
 {
     int ret = 0;     
-	
-    switch (psp) {
-	case POWER_SUPPLY_PROP_ChargerTest:
-	      ret = 1;
-	    break;
-	
-	default:
-	    ret = 0;
-	    break;
-    }
-
     return ret;
 }
 #endif
@@ -916,10 +874,6 @@ static struct mt6320_battery_data mt6320_battery_main = {
     .properties = mt6320_battery_props,
     .num_properties = ARRAY_SIZE(mt6320_battery_props),
     .get_property = mt6320_battery_get_property,     
-  #if defined(ACER_C17)  //for run in test
-    .set_property = mt6320_battery_set_property,  
-    .property_is_writeable = mt6320_battery_property_is_writeable, 
-  #endif    
     },
 /* CC: modify to have a full power supply status */
 #if defined(CONFIG_POWER_EXT)
@@ -3091,38 +3045,6 @@ int BAT_CheckBatteryStatus_bq24158(void)
 				}
 			}				
         #endif
-		
-    #if defined(ACER_C11)  //for run in test      
-          if(g_BAT_ChargerTest == 1)
-          {
-            if (BMT_status.SOC >= 50)
-            {   
-              printk("Acer run in test: BMT_status.SOC >= 50 \n");
-              BMT_status.bat_charger_test = BATTERY_TEST_STOP_CHARGING;
-              BMT_status.bat_charging_state = CHR_ERROR;
-              return PMU_STATUS_FAIL;  
-            }
-            else if (BMT_status.SOC <= 30)
-            { 
-              if (BMT_status.bat_charger_test == BATTERY_TEST_STOP_CHARGING)
-              {
-                printk("Acer run in test: BMT_status.SOC <= 30 \n");
-                BMT_status.bat_charger_test = 0;
-                BMT_status.bat_charging_state = CHR_PRE;
-              }
-            }
-          }
-          else
-          {
-            if (BMT_status.bat_charger_test == BATTERY_TEST_STOP_CHARGING)//LK@add
-            {
-              printk("LK ADD Acer run in test: BMT_status.SOC <= 30 \n");
-              BMT_status.bat_charger_test = 0;
-              BMT_status.bat_charging_state = CHR_PRE;
-            }
-          }
-    #endif
-
 		
 		if ( BMT_status.charger_vol >= V_CHARGER_MAX )
 	    {
