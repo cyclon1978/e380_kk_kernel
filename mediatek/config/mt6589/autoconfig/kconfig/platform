@@ -59,7 +59,8 @@ CONFIG_SWAP=y
 # CONFIG_FHANDLE is not set
 # CONFIG_TASKSTATS is not set
 CONFIG_AUDIT=y
-CONFIG_AUDITSYSCALL=y
+# no or maybe a positive perfomance effect
+CONFIG_AUDITSYSCALL=n
 CONFIG_AUDIT_WATCH=y
 CONFIG_AUDIT_TREE=y
 # CONFIG_AUDIT_LOGINUID_IMMUTABLE is not set
@@ -359,6 +360,7 @@ CONFIG_DEFAULT_MMAP_MIN_ADDR=4096
 # CONFIG_CLEANCACHE is not set
 CONFIG_FORCE_MAX_ZONEORDER=11
 CONFIG_ALIGNMENT_TRAP=y
+# Empirically there seems to be an improvement not in snappiness but when heavier i/o is involved
 CONFIG_UACCESS_WITH_MEMCPY=y
 # CONFIG_SECCOMP is not set
 
@@ -855,7 +857,8 @@ CONFIG_HAVE_BPF_JIT=y
 
 # Kernel Net Logging
 #
-CONFIG_MTK_NET_LOGGING=y
+# we should not need this
+CONFIG_MTK_NET_LOGGING=n
 #
 #
 # Network testing
@@ -1039,6 +1042,7 @@ CONFIG_BLK_DEV_LOOP_MIN_COUNT=8
 #
 # CONFIG_SENSORS_LIS3LV02D is not set
 # CONFIG_AD525X_DPOT is not set
+# TODO-PMEM is deprecated but disabling it has a negative performance impact?
 CONFIG_ANDROID_PMEM=y
 # CONFIG_ICS932S401 is not set
 # CONFIG_ENCLOSURE_SERVICES is not set
@@ -2568,9 +2572,10 @@ CONFIG_ISR_MONITOR=y
 CONFIG_MT_SCHED_MONITOR=y
 CONFIG_MT_CHRDEV_REG=y
 # CONFIG_MT_LOCK_DEBUG is not set
-CONFIG_MT_DEBUG_MUTEXES=y
+# seems to have no effect or slightly increase performance
+CONFIG_MT_DEBUG_MUTEXES=n
 CONFIG_PRINTK_PROCESS_INFO=y
-CONFIG_MT_ENG_BUILD=y
+# CONFIG_MT_ENG_BUILD is not set
 CONFIG_RAMDISK_OFFSET=0xF00000
 # CONFIG_EARLY_LINUX_PORTING is not set
 # CONFIG_MTK_MCI is not set
@@ -2582,7 +2587,8 @@ CONFIG_MTK_MEMCFG=y
 #
 CONFIG_MT_SCHED=y
 CONFIG_MT_LOAD_BALANCE_ENHANCEMENT=y
-CONFIG_MT_LOAD_BALANCE_PROFILER=y
+# TODO: perfomance goes down? -> anyway we have no SCHEDSTATS enabled so...
+CONFIG_MT_LOAD_BALANCE_PROFILER=n
 # CONFIG_MT_SCHED_DEBUG_ONLY is not set
 CONFIG_MTK_CIRQ=y
 CONFIG_MTK_HIBERNATION=y
