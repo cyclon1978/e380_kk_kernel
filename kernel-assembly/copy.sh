@@ -1,4 +1,4 @@
-MAJOR_VERSION=8
+MAJOR_VERSION=9
 
 while read line; do
      INCREMENT=$line
