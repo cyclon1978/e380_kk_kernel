@@ -84,8 +84,9 @@ extern unsigned int FB_SIZE_EXTERN;
 extern unsigned int get_max_DRAM_size (void);
 static ssize_t ftm_dram_3d_show(struct device_driver *driver, char *buf)
 {
-    unsigned int pa_3d_base = PHYS_OFFSET + get_max_DRAM_size() - RESERVED_MEM_SIZE_FOR_TEST_3D - FB_SIZE_EXTERN;
-    return snprintf(buf, PAGE_SIZE, "%u\n", pa_3d_base);
+    unsigned int max_DRAM_size = get_max_DRAM_size();
+    unsigned int pa_3d_base = PHYS_OFFSET + max_DRAM_size - RESERVED_MEM_SIZE_FOR_TEST_3D - FB_SIZE_EXTERN;
+    return snprintf(buf, PAGE_SIZE, "pa_3d_base=%u max_DRAM_size=%u RESERVED_MEM_SIZE_FOR_TEST_3D=%u FB_SIZE_EXTERN=%u\n", pa_3d_base, max_DRAM_size, RESERVED_MEM_SIZE_FOR_TEST_3D, FB_SIZE_EXTERN);
 }
 static ssize_t ftm_dram_3d_store(struct device_driver *driver, const char *buf, size_t count)
 {

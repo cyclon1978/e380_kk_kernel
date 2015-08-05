@@ -55,7 +55,7 @@ extern LCM_PARAMS *lcm_params;
 
 static volatile int direct_link_layer = -1;
 static UINT32 disp_fb_bpp = 32;     ///ARGB8888
-static UINT32 disp_fb_pages = 3;     ///double buffer
+static UINT32 disp_fb_pages = 3;     ///triple buffer
 
 BOOL is_engine_in_suspend_mode = FALSE;
 BOOL is_lcm_in_suspend_mode    = FALSE;
@@ -78,6 +78,9 @@ static struct task_struct *detect_alive_task = NULL;
 unsigned long long disp_thread_start_time,disp_thread_cost_time;
 #define DISP_THREAD_TIMEOUT (1000 * 1000)
 unsigned int disp_memout_timeout_cnt = 0;
+#ifdef CONFIG_MTK_AEE_POWERKEY_HANG_DETECT
+extern unsigned int screen_update_cnt;
+#endif
 static int config_update_task_wakeup = 0;
 extern atomic_t OverlaySettingDirtyFlag;
 extern atomic_t OverlaySettingApplied;
@@ -104,7 +107,7 @@ extern wait_queue_head_t esd_check_wq;
 extern BOOL esd_kthread_pause;
 
 DEFINE_MUTEX(MemOutSettingMutex);
-static struct disp_path_config_mem_out_struct MemOutConfig;
+struct disp_path_config_mem_out_struct MemOutConfig;
 static BOOL is_immediateupdate = false;
 
 DEFINE_MUTEX(LcmCmdMutex);
@@ -193,7 +196,7 @@ static size_t disp_log_on = false;
 
 #define DISP_LOG_D(fmt, arg...) \
 	do { \
-	   DISP_LOG_PRINT(ANDROID_LOG_DEBUG, "COMMON", fmt, ##arg); \
+	    if (disp_log_on) DISP_LOG_PRINT(ANDROID_LOG_DEBUG, "COMMON", fmt, ##arg); \
 	}while (0)
 
 void disp_log_enable(int enable)
@@ -260,7 +263,7 @@ static DEFINE_SPINLOCK(buf_usage_lock);
 static int _DISP_CleanUpKThread(void *data) 
 {
 	int i = 0, j;
-	int layerId = 0;
+	//int layerId = 0;
 	int fence = 0 ;
 	int ret = 0;
 
@@ -277,7 +280,6 @@ static int _DISP_CleanUpKThread(void *data)
 
 			if(isAEEEnabled && (i == DISP_DEFAULT_UI_LAYER_ID)) 
             {
-				DISP_LOG("aee on\n");
                 disp_sync_release(i);
                 continue;
 			}
@@ -326,8 +328,8 @@ static int _DISP_CleanUpKThread(void *data)
 MTK_DISP_MODE disp_mode = DISP_DECOUPLE_MODE;
 
 static DEFINE_SPINLOCK(mem_rw_lock);
-static unsigned int write_buffer_index;
-static unsigned int read_buffer_index;
+static unsigned int write_buffer_index = 1;
+static unsigned int read_buffer_index = 0;
 static unsigned int wr_buffer_num = 0;
 
 static BOOL write_mem_running = 0;
@@ -341,7 +343,6 @@ static struct task_struct *decouple_write_task = NULL;
 
 extern unsigned int decouple_addr;
 
-extern void disp_path_wait_mem_out_done(void);
 DISP_STATUS _DISP_ConfigUpdateScreen(UINT32 x, UINT32 y, UINT32 width, UINT32 height);
 static int _DISP_MergeOVLDirty(disp_path_config_dirty *dirty_flag);
 static void DISP_SwapBuffer (BOOL read);
@@ -360,7 +361,8 @@ UINT32 DISP_GetOVLRamSize(void)
 static void _DISP_ConfigMemWriteDatapath (disp_path_config_dirty *dirty_flag) 
 {
 	int i;
-
+	unsigned long flags;
+    struct disp_path_config_mem_out_struct config;
     mutex_lock(&MemWriteMutex);
 
 	MMProfileLog(MTKFB_MMP_Events.TrigOverlayOut, MMProfileFlagPulse);
@@ -373,8 +375,6 @@ static void _DISP_ConfigMemWriteDatapath (disp_path_config_dirty *dirty_flag)
         {
             if (captured_layer_config[i].isDirty) 
             {
-                unsigned long flags;
-
                 spin_lock_irqsave(&buf_usage_lock, flags);
                 //ovl is about to use this layer
                 //pandisplay will set idx to -1
@@ -389,8 +389,6 @@ static void _DISP_ConfigMemWriteDatapath (disp_path_config_dirty *dirty_flag)
 			}
 		}
     
-		struct disp_path_config_mem_out_struct config;
-
 		memset(&config, 0, sizeof(struct disp_path_config_mem_out_struct));
 		config.dstAddr = DISP_GetBufferAddress(false);
 		disp_path_config_wdma(&config);
@@ -404,16 +402,25 @@ static void _DISP_WaitMemWriteDone (void)
 {
 	///FIXME: Waiting for frame done.
 	int i;
+    int ret;
+    unsigned long flags;
 
-	disp_path_wait_mem_out_done();
+	ret = disp_path_wait_frame_done();
+    if (ret > 0)
+    {
+        disp_memout_timeout_cnt = 0;
+    }
+    else if (ret == 0)
+    {
+        disp_memout_timeout_cnt++;
+    }
+    
 	MMProfileLog(MTKFB_MMP_Events.OverlayOutDone, MMProfileFlagPulse);
 	DISP_LOG("========= captured --> realtime ===========\n");
 	realtime_layer_config = captured_layer_config;
 
     //ovl is done with its buffers
     {
-        unsigned long flags;
-
         spin_lock_irqsave(&buf_usage_lock, flags);
 
         for(i=0; i<DDP_OVL_LAYER_MUN; i++)
@@ -446,7 +453,7 @@ static void _DISP_WaitMemWriteDone (void)
 static int _DISP_DecoupleWriteKThread(void *data) 
 {
     int dirty;
-    unsigned long long flag;
+    unsigned long flag;
     disp_path_config_dirty dirty_flag;
     struct sched_param param = { .sched_priority = RTPM_PRIO_SCRN_UPDATE };
 
@@ -495,7 +502,7 @@ static unsigned int DISP_GetBufferAddress(BOOL read)
 {
 	unsigned int address = 0;
 #if defined(MTK_OVL_DECOUPLE_SUPPORT)
-	unsigned long long flag;
+	unsigned long flag;
 	unsigned int offset;
 
 	spin_lock_irqsave(&mem_rw_lock, flag);
@@ -517,14 +524,14 @@ static void DISP_SwapBuffer (BOOL read)
 {
 #if defined(MTK_OVL_DECOUPLE_SUPPORT)
 	unsigned int offset = 0;
-	unsigned long long flag;
+	unsigned long flag;
 
 	spin_lock_irqsave(&mem_rw_lock, flag);
 
     if (read) 
     {
 		offset = read_buffer_index;
-		offset = (++offset) % MAX_BUFFER_COUNT;
+		offset = (offset+1) % MAX_BUFFER_COUNT;
         if (offset != write_buffer_index) 
         {
 			read_buffer_index = offset;
@@ -534,14 +541,14 @@ static void DISP_SwapBuffer (BOOL read)
     {
 		wr_buffer_num++;
 		offset = write_buffer_index;
-		offset = (++offset) % MAX_BUFFER_COUNT;
+		offset = (offset+1) % MAX_BUFFER_COUNT;
         if (offset != read_buffer_index) 
         {
 			write_buffer_index = offset;
 		}
         if(wr_buffer_num == 1) 
         {
-			read_buffer_index = (++read_buffer_index)% MAX_BUFFER_COUNT;
+			read_buffer_index = (read_buffer_index+1)% MAX_BUFFER_COUNT;
 		}
 	}
 	spin_unlock_irqrestore(&mem_rw_lock, flag);
@@ -552,7 +559,7 @@ static BOOL DISP_IsNeedReadBuf (void)
 {
 	BOOL done = 0;
 #if defined(MTK_OVL_DECOUPLE_SUPPORT)
-	unsigned long long flag;
+	unsigned long flag;
 
 	spin_lock_irqsave(&mem_rw_lock, flag);
 
@@ -679,8 +686,9 @@ DISP_STATUS DISP_SwitchDisplayMode (struct fb_overlay_mode *pConfig)
 	int ret = DISP_STATUS_ERROR;
 
 #if defined(MTK_OVL_DECOUPLE_SUPPORT)
-	unsigned long long flag;
-
+	unsigned long flag;
+    struct disp_path_config_ovl_mode_t config;
+    
     if (pConfig->mode == disp_mode) 
     {
 		return DISP_STATUS_OK;
@@ -769,7 +777,6 @@ DISP_STATUS DISP_SwitchDisplayMode (struct fb_overlay_mode *pConfig)
 
     	//disp_path_get_mutex();
 
-    	struct disp_path_config_ovl_mode_t config;
 
     	memset(&config, 0, sizeof(config));
     	config.mode = pConfig->mode;
@@ -926,7 +933,7 @@ BOOL DISP_SelectDeviceBoot(const char* lcm_name)
         // we can't do anything in boot stage if lcm_name is NULL
         return false;
     }
-    lcm_drv = disphal_get_lcm_driver(lcm_name, &u4IndexOfLCMList);
+    lcm_drv = disphal_get_lcm_driver(lcm_name, (unsigned int*)&u4IndexOfLCMList);
 
     if (NULL == lcm_drv)
     {
@@ -1002,13 +1009,6 @@ DISP_STATUS DISP_Init(UINT32 fbVA, UINT32 fbPA, BOOL isLcmInited)
 	#ifndef MTKFB_FPGA_ONLY
     disp_path_clock_on("mtkfb");
     #endif
-
-    //tmp solution, just for KK.p49 sanity fail
-    #if defined(MTK_OVL_DECOUPLE_SUPPORT)
-    if (lcm_params->type == LCM_TYPE_DPI)
-        disp_mode = DISP_DIRECT_LINK_MODE;
-    #endif
-    //End
 
 	//This is for Display Customizaiton Tool to get driver interface.....	  
 	fbconfig_if_drv =(FBCONFIG_DISP_IF *) disphal_fbconfig_get_def_if();
@@ -1183,17 +1183,17 @@ DISP_STATUS DISP_PowerEnable(BOOL enable)
 
     if (enable && lcm_drv && lcm_drv->resume_power)
     {
-		lcm_drv->resume_power();
+        lcm_drv->resume_power();
     }
     // No need for IPO-H reboot, or white screen flash will happen
     if((!is_ipoh_bootup) || 
         (is_ipoh_bootup && ((lcm_params->type == LCM_TYPE_DBI) || (lcm_params->type==LCM_TYPE_DSI && lcm_params->dsi.mode == CMD_MODE))))
     {
-    	ret = (disp_if_drv->enable_power) ?
-    			(disp_if_drv->enable_power(enable)) :
-    			DISP_STATUS_NOT_IMPLEMENTED;
+        ret = (disp_if_drv->enable_power) ?
+                (disp_if_drv->enable_power(enable)) :
+                DISP_STATUS_NOT_IMPLEMENTED;
     }
-    
+
     if (enable) {
         DAL_OnDispPowerOn();
     }
@@ -1201,7 +1201,7 @@ DISP_STATUS DISP_PowerEnable(BOOL enable)
     {
         lcm_drv->suspend_power();
     }
-        
+
     up(&sem_update_screen);
     
     return ret;
@@ -1910,7 +1910,8 @@ static int _DISP_MergeOVLDirty(disp_path_config_dirty *dirty_flag)
 	int dirty = 0;
 	int layer_cnt = 0;
 	int index = 0;
-
+    OVL_CONFIG_STRUCT *pConfig;
+    
     while (!mutex_trylock(&OverlaySettingMutex)) 
     {
 		udelay(1);
@@ -1954,7 +1955,7 @@ static int _DISP_MergeOVLDirty(disp_path_config_dirty *dirty_flag)
 				index = i;
 			}
 		}
-		OVL_CONFIG_STRUCT *pConfig = &captured_layer_config[index];
+		pConfig = &captured_layer_config[index];
 		if ((layer_cnt == 1)
 				&& !atomic_read(&ScreenCaptureFlag)
 				&& _DISP_IsYUVFormat(pConfig->fmt)
@@ -2103,7 +2104,16 @@ static int _DISP_DetectAliveKThread(void *data)
 	while(1)
 	{
 		msleep(5000);
-		if (!is_early_suspended){		
+		if (!is_early_suspended){
+			//return update cnt to power monitor
+#ifdef CONFIG_MTK_AEE_POWERKEY_HANG_DETECT
+			if(screen_update_cnt > 0){
+				if(aee_kernel_Powerkey_is_press())
+					aee_kernel_wdt_kick_Powkey_api("DISP_StartOverlayTransfer",WDT_SETBY_Display); 
+				screen_update_cnt = 0;
+		}
+#endif
+			
 			////get merge&trigger cost time to check if display SW thread is running normal?
 			disp_thread_cost_time = sched_clock() - disp_thread_start_time;
 			if(DISP_THREAD_TIMEOUT < ((unsigned int)disp_thread_cost_time/1000)){
@@ -2139,9 +2149,9 @@ static int _DISP_DetectAliveKThread(void *data)
 }
 static int _DISP_ConfigUpdateKThread(void *data)
 {
-    int i;
+    //int i;
     int dirty = 0;
-    int index = 0;
+    //int index = 0;
     disp_path_config_dirty dirty_flag;
     struct disp_path_config_mem_out_struct mem_out_config;
 
@@ -2329,7 +2339,7 @@ static void _DISP_RegUpdateCallback(void* pParam)
     }
     else
     {
-        int need_clean = 0;
+        //int need_clean = 0;
 
         //check used buffer 
         if(rdma_realtime_layer != -1) 
@@ -2401,7 +2411,7 @@ static void _DISP_RegUpdateCallback(void* pParam)
 
 static void _DISP_TargetLineCallback(void* pParam)
 {
-    if ( LCM_TYPE_DPI == lcm_params->type
+    if ( (LCM_TYPE_DPI == lcm_params->type)
         || (LCM_TYPE_DSI == lcm_params->type && lcm_params->dsi.mode != CMD_MODE)
         || (LCM_TYPE_DSI == lcm_params->type && lcm_params->dsi.mode == CMD_MODE && TARGET_LINE == DISP_Get_MergeTrigger_Mode())
         || (LCM_TYPE_DBI == lcm_params->type && TARGET_LINE == DISP_Get_MergeTrigger_Mode()))
@@ -2484,6 +2494,8 @@ void DISP_InitVSYNC(unsigned int vsync_interval)
     }
     wake_up_process(config_update_task);
 
+#if MTK_HDMI_MAIN_PATH
+#else
     detect_alive_task = kthread_create(
         _DISP_DetectAliveKThread, NULL, "disp_detect_alive_kthread");
 
@@ -2493,6 +2505,8 @@ void DISP_InitVSYNC(unsigned int vsync_interval)
         return;
     }
     wake_up_process(detect_alive_task);
+
+#endif
     // Fence Sync Object
 #if defined (MTK_FB_SYNC_SUPPORT)
     clean_up_task = kthread_create(_DISP_CleanUpKThread, NULL, "disp_clean_up_kthread");
@@ -3181,13 +3195,15 @@ BOOL DISP_EsdRecover(void)
     result = lcm_drv->esd_recover();
     mutex_unlock(&LcmCmdMutex);
 
-	if ((lcm_params->type == LCM_TYPE_DSI) && (lcm_params->dsi.mode != CMD_MODE))
+    if ((lcm_params->type == LCM_TYPE_DPI) ||
+        ((lcm_params->type == LCM_TYPE_DSI) && (lcm_params->dsi.mode != CMD_MODE)))
     {
         is_video_mode_running = false;
-        needStartEngine = true;
     }
+    needStartEngine = true;
+
     up(&sem_update_screen);
-	DISP_UpdateScreen(0, 0, DISP_GetScreenWidth(), DISP_GetScreenHeight());
+    DISP_UpdateScreen(0, 0, DISP_GetScreenWidth(), DISP_GetScreenHeight());
 
     return result;
 }
@@ -3299,7 +3315,7 @@ DISP_STATUS DISP_Auto_Capture_FB( unsigned int pvbuf, unsigned int wdma_out_fmt,
 {
 	printk("DISP_Auto_Capture_FB width %d height %d\n",wdma_width,wdma_height);
 
-    if (DISP_IsDecoupleMode) 
+    if (DISP_IsDecoupleMode()) 
     {
 		UINT32 ovl_buffer_size,i,w,h;
 	    UINT8 *fbv;
