@@ -53,7 +53,7 @@
 #endif
 //
 #include <cutils/properties.h>
-
+#include <cmath>
 
 /******************************************************************************
 *
@@ -74,6 +74,8 @@
 #define MY_LOGA_IF(cond, ...)       do { if ( (cond) ) { MY_LOGA(__VA_ARGS__); } }while(0)
 #define MY_LOGF_IF(cond, ...)       do { if ( (cond) ) { MY_LOGF(__VA_ARGS__); } }while(0)
 
+#define ROUND_TO_2X(x) ((x) & (~0x1))
+#define PI 3.14
 
 /******************************************************************************
 *
@@ -106,7 +108,16 @@ protected:  ////                        Called by updateDefaultParams2().
 
 protected:  ////                        Called by updateDefaultParams3().
     virtual bool                        updateDefaultVideoFormat();
+protected:  ////                        Called by setParameters().
+    virtual bool                        updateFov(Size picSize);
 
+//----------------------------------------------------------------------------
+
+private:
+    int mCapW;
+    int mCapH;
+    int mFovH;
+    int mFovV;
 };
 };
 
@@ -132,6 +143,10 @@ ParamsManagerImp::
 ParamsManagerImp(String8 const& rName, int32_t const i4OpenId)
     : ParamsManager(rName, i4OpenId)
 {
+    mCapW = 0;
+    mCapH = 0;
+    mFovH = 0;
+    mFovV = 0;
 }
 
 
@@ -147,12 +162,12 @@ updateBestFocusStep() const
     FeatureParam_T r3ASupportedParam;
     memset(&r3ASupportedParam, 0, sizeof(r3ASupportedParam));
     Hal3ABase* p3AHal = Hal3ABase::createInstance(DevMetaInfo::queryHalSensorDev(getOpenId()));
-    if ( ! p3AHal )
+    if( ! p3AHal )
     {
         MY_LOGE("Fail to create 3AHal");
         goto lbExit;
     }
-    if ( ! p3AHal->getSupportedParams(r3ASupportedParam) )
+    if( ! p3AHal->getSupportedParams(r3ASupportedParam) )
     {
         MY_LOGE("getSupportedParams fail");
         goto lbExit;
@@ -249,10 +264,13 @@ updateDefaultParams2_ByQuery()
 #if '1'==MTKCAM_HAVE_SENSOR_HAL
     halSensorDev_s halSensorDev = (halSensorDev_s)DevMetaInfo::queryHalSensorDev(mi4OpenId);
     SensorHal* pSensorHal = SensorHal::createInstance();
-    if  ( ! pSensorHal ) {
+    
+    if( ! pSensorHal ) 
+    {
         MY_LOGE("SensorHal::createInstance()");
     }
-    else {
+    else 
+    {
         int iFOV_horizontal = 0, iFOV_vertical = 0;
         if  ( 0 != pSensorHal->sendCommand(halSensorDev, SENSOR_CMD_GET_SENSOR_VIEWANGLE, (int)&iFOV_horizontal, (int)&iFOV_vertical) )
         {
@@ -263,6 +281,8 @@ updateDefaultParams2_ByQuery()
             MY_LOGD("view-angles:%d %d", iFOV_horizontal, iFOV_vertical);
             mParameters.set(CameraParameters::KEY_HORIZONTAL_VIEW_ANGLE, iFOV_horizontal);
             mParameters.set(CameraParameters::KEY_VERTICAL_VIEW_ANGLE, iFOV_vertical);
+            mFovH = iFOV_horizontal;
+            mFovV = iFOV_vertical;
         }
 
         unsigned char uiSensorType;
@@ -393,4 +413,71 @@ updateDefaultVideoFormat()
     mParameters.set(CameraParameters::KEY_VIDEO_FRAME_FORMAT, CameraParameters::PIXEL_FORMAT_YUV420P);
     return  true;
 }
+
+/******************************************************************************
+*
+*******************************************************************************/
+bool ParamsManagerImp::updateFov(Size picSize)
+{ 
+    MY_LOGI("cap(%d,%d)",mCapW,mCapH);
+
+    const int baseW = 400;
+    const int baseH = 300;
+    Size crop_base, crop_new;
+
+    //====== Calcaulate crop_base ======    
+    
+    if (mCapW * baseH < baseW * mCapH)  // srcW/srcH < dstW/dstH 
+    {
+        crop_base.width  = mCapW; 
+        crop_base.height = mCapW * baseH / baseW;     
+    }    
+    else if(mCapW * baseH > baseW * mCapH) //srcW/srcH > dstW/dstH
+    { 
+        crop_base.width  = mCapH * baseW / baseH; 
+        crop_base.height = mCapH; 
+    }
+    else
+    {
+        crop_base.width  = mCapW; 
+        crop_base.height = mCapH; 
+    }
+    
+    crop_base.width  = ROUND_TO_2X(crop_base.width);
+    crop_base.height = ROUND_TO_2X(crop_base.height);
+
+    //====== Calcaulate crop_new ====== 
+
+    if (mCapW * picSize.height < picSize.width * mCapH)  // srcW/srcH < dstW/dstH 
+    {
+        crop_new.width  = mCapW; 
+        crop_new.height = mCapW * picSize.height / picSize.width;     
+    }    
+    else if(mCapW * picSize.height > picSize.width * mCapH) //srcW/srcH > dstW/dstH
+    { 
+        crop_new.width  = mCapH * picSize.width / picSize.height; 
+        crop_new.height = mCapH; 
+    }
+    else
+    {
+        crop_new.width  = mCapW; 
+        crop_new.height = mCapH; 
+    }
+    
+    crop_new.width  = ROUND_TO_2X(crop_new.width);   
+    crop_new.height = ROUND_TO_2X(crop_new.height);
+
+    //====== Calculate New FOV ======   
+    
+    int fov_h = 2 * atan(tan(mFovH * PI / 180.0 / 2.0) / crop_base.width * crop_new.width) * 180.0 / PI;
+    int fov_v = 2 * atan(tan(mFovV * PI / 180.0 / 2.0) / crop_base.height * crop_new.height) * 180.0 / PI;
+
+    MY_LOGI("fov(%d,%d)->(%d,%d)",mFovH,mFovV,fov_h,fov_v);
+    
+    mParameters.set(CameraParameters::KEY_HORIZONTAL_VIEW_ANGLE,fov_h);
+    mParameters.set(CameraParameters::KEY_VERTICAL_VIEW_ANGLE,fov_v);
+    
+    return true;
+}
+
 

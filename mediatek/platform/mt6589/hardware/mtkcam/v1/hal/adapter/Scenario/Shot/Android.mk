@@ -72,8 +72,6 @@ LOCAL_WHOLE_STATIC_LIBRARIES += libcam.camadapter.scenario.shot.bestshot
 LOCAL_WHOLE_STATIC_LIBRARIES += libcam.camadapter.scenario.shot.hdrshot
 LOCAL_WHOLE_STATIC_LIBRARIES += libcam.camadapter.scenario.shot.engshot
 LOCAL_WHOLE_STATIC_LIBRARIES += libcam.camadapter.scenario.shot.zsdshot
-LOCAL_WHOLE_STATIC_LIBRARIES += libcam.camadapter.scenario.shot.brightmagicshot
-
 #
 LOCAL_STATIC_LIBRARIES += 
 

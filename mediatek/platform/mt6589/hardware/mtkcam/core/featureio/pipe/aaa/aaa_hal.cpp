@@ -484,7 +484,6 @@ MBOOL Hal3A::setParams(Param_T const &rNewParam)
    ERROR_CHECK(FlashMgr::getInstance()->setCamMode(rNewParam.u4CamMode))
    ERROR_CHECK(FlashMgr::getInstance()->setEvComp(rNewParam.i4ExpIndex, rNewParam.fExpCompStep))
 
-   FlashMgr::getInstance()->setFocusScroll(rNewParam.i4FocusScroll); //qiaoxiujun,ae/af control UI	
 
 
 

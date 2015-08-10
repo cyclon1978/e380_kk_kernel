@@ -227,21 +227,6 @@ FTABLE_SCENE_INDEP()
     )
 #endif
     //==========================================================================
-#if defined(ACER_C17)	//20131209,qiaoxiujun
-    //  (Shot) Capture Mode
-    FTABLE_CONFIG_AS_TYPE_OF_DEFAULT_VALUES(
-        KEY_AS_(MtkCameraParameters::KEY_CAPTURE_MODE), 
-        SCENE_AS_DEFAULT_SCENE(
-            ITEM_AS_DEFAULT_(MtkCameraParameters::CAPTURE_MODE_NORMAL), 
-            ITEM_AS_VALUES_(
-                MtkCameraParameters::CAPTURE_MODE_NORMAL, 
-                MtkCameraParameters::CAPTURE_MODE_FACE_BEAUTY, 
-                MtkCameraParameters::CAPTURE_MODE_CONTINUOUS_SHOT, 
-				MtkCameraParameters::CAPTURE_MODE_BRIGHT_MAGIC,	//qiaoxiujun,bright magic plus mode  //acer camera 3.2
-            )
-        ), 
-    )
-#else
     //  (Shot) Capture Mode
     FTABLE_CONFIG_AS_TYPE_OF_DEFAULT_VALUES(
         KEY_AS_(MtkCameraParameters::KEY_CAPTURE_MODE), 
@@ -254,7 +239,6 @@ FTABLE_SCENE_INDEP()
             )
         ), 
     )
-#endif
     //==========================================================================
 END_FTABLE_SCENE_INDEP()
 //------------------------------------------------------------------------------

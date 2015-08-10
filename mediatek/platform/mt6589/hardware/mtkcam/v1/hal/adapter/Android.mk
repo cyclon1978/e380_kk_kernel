@@ -56,17 +56,12 @@ LOCAL_C_INCLUDES += $(TOP)/$(MTK_PATH_SOURCE)/hardware/include
 LOCAL_C_INCLUDES += $(TOP)/$(MTK_PATH_PLATFORM)/hardware/include
 #
 LOCAL_C_INCLUDES += $(TOP)/$(MTK_PATH_SOURCE)/frameworks-ext/av/include
-LOCAL_C_INCLUDES += $(TOP)/$(MTK_PATH_PLATFORM)/hardware/mtkcam/v1/hal/inc
-LOCAL_C_INCLUDES += $(TOP)/$(MTK_PATH_PLATFORM)/hardware/mtkcam/v1/hal/adapter/ResourceLock
 LOCAL_C_INCLUDES += $(TOP)/$(MTK_PATH_PLATFORM)/hardware/camera/inc
+LOCAL_C_INCLUDES += $(TOP)/$(MTK_PATH_PLATFORM)/hardware/mtkcam/v1/hal/adapter/ResourceLock
+LOCAL_C_INCLUDES += $(TOP)/$(MTK_PATH_PLATFORM)/hardware/mtkcam/v1/hal/inc
+
 #-----------------------------------------------------------
 LOCAL_CFLAGS += $(MTKCAM_CFLAGS)
-
-LOCAL_LDFLAGS += $(TOP)/$(MTK_PATH_PLATFORM)/hardware/mtkcam/v1/hal/adapter/Arcsoft/Nighthawk/lib/libarcsoft_nighthawk.a
-LOCAL_LDFLAGS += $(TOP)/$(MTK_PATH_PLATFORM)/hardware/mtkcam/v1/hal/adapter/Arcsoft/Denoise/lib/libarcsoft_smart_denoise.a
-LOCAL_LDFLAGS += $(TOP)/$(MTK_PATH_PLATFORM)/hardware/mtkcam/v1/hal/adapter/Arcsoft/Nightshot/lib/libarcsoft_night_shot.a
-LOCAL_LDFLAGS += $(TOP)/$(MTK_PATH_PLATFORM)/hardware/mtkcam/v1/hal/adapter/Arcsoft/Nightshot/lib/libarcsoft_dynamic_light.a
-LOCAL_LDFLAGS += $(TOP)/$(MTK_PATH_PLATFORM)/hardware/mtkcam/v1/hal/adapter/Arcsoft/Platform/lib/mpbase.a
 
 #-----------------------------------------------------------
 LOCAL_WHOLE_STATIC_LIBRARIES += libcam.camadapter.scenario
@@ -105,7 +100,6 @@ LOCAL_SHARED_LIBRARIES += libcam.camshot
 LOCAL_SHARED_LIBRARIES += libJpgEncPipe 
 LOCAL_SHARED_LIBRARIES += libdpframework
 LOCAL_SHARED_LIBRARIES += libcameracustom
-
 #-----------------------------------------------------------
 LOCAL_MODULE_TAGS := optional
 LOCAL_MODULE := libcam.camadapter

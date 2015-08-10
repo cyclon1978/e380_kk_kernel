@@ -825,23 +825,6 @@ static int mt6320_battery_get_property(struct power_supply *psy,
     return ret;
 }
 
-#if defined(ACER_C17)  //for run in test
-static int mt6320_battery_set_property(struct power_supply *psy,
-	enum power_supply_property psp,
-	union power_supply_propval *val)
-{
-    int ret = 0;     
-    ret = -EINVAL;
-    return ret;
-}	
-
-static int  mt6320_battery_property_is_writeable(struct power_supply *psy,enum power_supply_property psp)
-{
-    int ret = 0;     
-    return ret;
-}
-#endif
-
 /* mt6320_ac_data initialization */
 static struct mt6320_ac_data mt6320_ac_main = {
     .psy = {
