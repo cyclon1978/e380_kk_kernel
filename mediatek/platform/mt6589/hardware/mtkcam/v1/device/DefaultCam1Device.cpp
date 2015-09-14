@@ -346,7 +346,6 @@ setParameters(const char* params)
             if  ( ! mp3AHal->setParams(param) ) {
                 MY_LOGW("3A Hal::setParams() fail - err(%x)", mp3AHal->getErrorCode());
             }
-	    	param.i4FocusScroll = mpParamsMgr->getInt(MtkCameraParameters::KEY_FOCUS_SCROLL);	//qiaoxiujun,ae/af control UI
         }
         else
         {

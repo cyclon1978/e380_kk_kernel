@@ -56,9 +56,8 @@ extern int nand_unlock(struct mtd_info *mtd, loff_t ofs, uint64_t len);
  * is supported now. If you add a chip with bigger oobsize/page
  * adjust this accordingly.
  */
-#define NAND_MAX_OOBSIZE	1024
-#define NAND_MAX_PAGESIZE	16384
-#define NAND_MAX_SUBPAGESIZE 1024
+#define NAND_MAX_OOBSIZE	576
+#define NAND_MAX_PAGESIZE	8192
 
 /*
  * Constants for hardware specific CLE/ALE/NCE function
@@ -393,7 +392,6 @@ struct nand_buffers {
 	uint8_t	ecccalc[NAND_MAX_OOBSIZE];
 	uint8_t	ecccode[NAND_MAX_OOBSIZE];
 	uint8_t databuf[NAND_MAX_PAGESIZE + NAND_MAX_OOBSIZE];
-	uint8_t subpagebuf[NAND_MAX_SUBPAGESIZE + 64];
 };
 
 /**
@@ -509,19 +507,6 @@ struct nand_chip {
 #ifdef CONFIG_MTK_MTD_NAND
     	int     (*read_page)(struct mtd_info *mtd, struct nand_chip *chip, u8 *buf, int page);
     	int     (*erase)(struct mtd_info *mtd, int page);
-
-        /*
-         * sub-page read related members
-         */
-
-        // subpage read will be triggered if this API is hooked by driver, otherwise normal page read will only be triggered
-    	int     (*read_subpage)(struct mtd_info *mtd, struct nand_chip *chip, u8 *buf, int page, int sub_page);
-
-    	// indicating the cached subpage (used by MTD only)
-    	int     subpage_buf;
-
-    	// indicating subpage size, must be assigned in driver's initialization stage
-    	int     subpage_size;
 #endif
 
 	int chip_delay;
@@ -692,16 +677,5 @@ struct platform_nand_chip *get_platform_nandchip(struct mtd_info *mtd)
 
 	return chip->priv;
 }
-/* MTK MTD Monitor*/
-#ifdef CONFIG_MTK_MTD_NAND
-struct mtd_perf_log
-{
-    unsigned int read_size_0_512;
-    unsigned int read_size_512_1K;
-    unsigned int read_size_1K_2K;
-    unsigned int read_size_2K_3K;
-    unsigned int read_size_3K_4K;
-    unsigned int read_size_Above_4K;
-};
-#endif
+
 #endif /* __LINUX_MTD_NAND_H */

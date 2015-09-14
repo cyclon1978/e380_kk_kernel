@@ -41,43 +41,14 @@
 #include <linux/sched.h>
 #include <linux/notifier.h>
 
-#if defined(CONFIG_MT_ENG_BUILD) && defined(CONFIG_ION)
-#include <linux/ion_drv.h>
-#endif
-
 #if !defined (MTK_LCA_RAM_OPTIMIZE)
 #ifdef CONFIG_HIGHMEM
 #include <linux/highmem.h>
 #endif
 
-#if defined (CONFIG_MTK_AEE_FEATURE) && defined (CONFIG_MT_ENG_BUILD)
-#include <linux/aee.h>
-#include <linux/disp_assert_layer.h>
-static uint32_t in_lowmem = 0;
-#if defined (MTK_INTERNAL_BUILD)
-static int next_aee_dump = 0;
-#endif
-#endif
-
-#ifdef CONFIG_MT_ENG_BUILD
-void add_kmem_status_lmk_counter(void);
-#endif
-
 extern void show_free_areas_minimum(void);
 
 static uint32_t lowmem_debug_level = 2;
-
-#ifdef CONFIG_ANDROID_LOW_MEMORY_KILLER_AUTODETECT_OOM_ADJ_VALUES
-#define CONVERT_ADJ(x) ((x * OOM_SCORE_ADJ_MAX) / -OOM_DISABLE)
-#define REVERT_ADJ(x) (x * (-OOM_DISABLE + 1) / OOM_SCORE_ADJ_MAX)
-#else
-#define CONVERT_ADJ(x) (x)
-#define REVERT_ADJ(x) (x)
-#endif // CONFIG_ANDROID_LOW_MEMORY_KILLER_AUTODETECT_OOM_ADJ_VALUES
-
-#ifdef CONFIG_MT_ENG_BUILD
-static uint32_t lowmem_debug_adj = 1;
-#endif
 static DEFINE_SPINLOCK(lowmem_shrink_lock);
 
 static int lowmem_adj[6] = {
@@ -142,16 +113,6 @@ static int lowmem_shrink(struct shrinker *s, struct shrink_control *sc)
 	int other_file = global_page_state(NR_FILE_PAGES) -
 						global_page_state(NR_SHMEM);
 
-#ifdef CONFIG_MT_ENG_BUILD
-	int print_extra_info = 0;
-	static unsigned long lowmem_print_extra_info_timeout = 0;
-	
-	/*dump memory info when framework low memory*/
-	int pid_dump = -1; // process which need to be dump
-	int pid_sec_mem = -1;
-	int max_mem = 0;
-#endif // CONFIG_MT_ENG_BUILD
-
 	/*
 	 * If we already have a death outstanding, then
 	 * bail out right away; indicating to vmscan
@@ -163,10 +124,6 @@ static int lowmem_shrink(struct shrinker *s, struct shrink_control *sc)
 		time_before_eq(jiffies, lowmem_deathpending_timeout))
 		return 0;
 		
-#ifdef CONFIG_MT_ENG_BUILD
-	add_kmem_status_lmk_counter();
-#endif
-
 #ifdef CONFIG_SWAP
 	other_file -= total_swapcache_pages;
 #endif
@@ -219,37 +176,10 @@ static int lowmem_shrink(struct shrinker *s, struct shrink_control *sc)
 	if (sc->nr_to_scan <= 0 || min_score_adj == OOM_SCORE_ADJ_MAX + 1) {
 		lowmem_print(5, "lowmem_shrink %lu, %x, return %d\n",
 			     sc->nr_to_scan, sc->gfp_mask, rem);
-		/*
-		 * disable indication if low memory
-		 */
-#if defined (CONFIG_MTK_AEE_FEATURE) && defined (CONFIG_MT_ENG_BUILD)
-		if (in_lowmem) {
-			in_lowmem = 0;
-			//DAL_LowMemoryOff();
-			lowmem_print(1, "LowMemoryOff\n");
-		}
-#endif
 		spin_unlock(&lowmem_shrink_lock);
 		return rem;
 	}
 	selected_oom_score_adj = min_score_adj;
-
-	// add debug log
-#ifdef CONFIG_MT_ENG_BUILD
-	if (min_score_adj <= lowmem_debug_adj) {
-		if (lowmem_print_extra_info_timeout == 0) {
-			lowmem_print_extra_info_timeout = jiffies;
-		}
-        if (time_after_eq(jiffies, lowmem_print_extra_info_timeout)) {
-            lowmem_print_extra_info_timeout = jiffies + HZ;
-            print_extra_info = 1;
-        }
-    }
-	if (print_extra_info) {
-		lowmem_print(1, "======low memory killer=====\n");
-		lowmem_print(1, "Free memory other_free: %d, other_file:%d pages\n", other_free, other_file);
-	}		
-#endif
 
 	rcu_read_lock();
 	for_each_process(tsk) {
@@ -282,19 +212,6 @@ static int lowmem_shrink(struct shrinker *s, struct shrink_control *sc)
 		oom_score_adj = p->signal->oom_adj;
 #endif
 
-#ifdef CONFIG_MT_ENG_BUILD
-		if (print_extra_info) {
-#ifdef CONFIG_SWAP
-			lowmem_print(1, "Candidate %d (%s), oom_score_adj %d, oom_adj %d, rss %lu, rswap %lu, to kill\n",
-				     p->pid, p->comm, oom_score_adj, REVERT_ADJ(oom_score_adj), get_mm_rss(p->mm),
-				     get_mm_counter(p->mm, MM_SWAPENTS));
-#else // CONFIG_SWAP
-			lowmem_print(1, "Candidate %d (%s), oom_score_adj %d, oom_adj %d, rss %lu, to kill\n",
-				     p->pid, p->comm, oom_score_adj, REVERT_ADJ(oom_score_adj), get_mm_rss(p->mm));
-
-#endif // CONFIG_SWAP
-                }
-#endif // CONFIG_MT_ENG_BUILD
 		if (oom_score_adj < min_score_adj) {
 			task_unlock(p);
 			continue;
@@ -307,19 +224,6 @@ static int lowmem_shrink(struct shrinker *s, struct shrink_control *sc)
 		task_unlock(p);
 		if (tasksize <= 0)
 			continue;
-
-#ifdef CONFIG_MT_ENG_BUILD
-		/*
-         	 * dump memory info when framework low memory:
-         	 * record the first two pid which consumed most memory.
-         	 */
-		if (tasksize > max_mem) {
-			max_mem = tasksize;
-			pid_sec_mem = pid_dump;
-			pid_dump = p->pid;			
-		}
-#endif
-
 		if (selected) {
 			if (oom_score_adj < selected_oom_score_adj)
 				continue;
@@ -330,18 +234,17 @@ static int lowmem_shrink(struct shrinker *s, struct shrink_control *sc)
 		selected = p;
 		selected_tasksize = tasksize;
 		selected_oom_score_adj = oom_score_adj;
-		lowmem_print(2, "select '%s' (%d), oom_score_adj %d, oom_adj %d, size %d, to kill\n",
-			     p->comm, p->pid, oom_score_adj, REVERT_ADJ(oom_score_adj), tasksize);
+		lowmem_print(2, "select '%s' (%d), adj %d, size %d, to kill\n",
+			     p->comm, p->pid, oom_score_adj, tasksize);
 	}
 
 	if (selected) {
-		lowmem_print(1, "Killing '%s' (%d), oom_score_adj %d (oom_adj %d),\n" \
+		lowmem_print(1, "Killing '%s' (%d), adj %d,\n" \
 				"   to free %ldkB on behalf of '%s' (%d) because\n" \
 				"   cache %ldkB is below limit %ldkB for oom_score_adj %d\n" \
 				"   Free memory is %ldkB above reserved [gfp(0x%x)]\n",
 			     selected->comm, selected->pid,
 			     selected_oom_score_adj,
-			     REVERT_ADJ(selected_oom_score_adj),
 			     selected_tasksize * (long)(PAGE_SIZE / 1024),
 			     current->comm, current->pid,
 			     other_file * (long)(PAGE_SIZE / 1024),
@@ -375,55 +278,9 @@ static int lowmem_shrink(struct shrinker *s, struct shrink_control *sc)
 			}
 		}
 
-#ifdef CONFIG_MT_ENG_BUILD
-		if (print_extra_info) {
-			lowmem_print(1, "low memory info:\n");
-			show_free_areas_minimum();
-        	}
-#endif
-		/*
-		 * when kill adj=0 process trigger kernel warning, only in MTK internal eng load
-		 */
-#if defined (CONFIG_MTK_AEE_FEATURE) && defined (CONFIG_MT_ENG_BUILD) && \
-		defined (MTK_INTERNAL_BUILD) /* mtk internal */
-		if (selected_oom_score_adj <= 0) { // can set 16 for test
-			lowmem_print(1, "\n\n[LMK] low memory trigger kernel warning!\n\n");
-#if 0
-#ifdef CONFIG_ION
-			/* To fix deadlock */
-			spin_unlock(&lowmem_shrink_lock);
-			/* Show ION status */
-			ion_mm_heap_total_memory();
-			/* To fix deadlock */
-			spin_lock(&lowmem_shrink_lock);
-#endif
-#endif
-			/* To avoid too frequent aee warning! */
-			if ((next_aee_dump--) == 0) {
-#define MSG_SIZE_TO_AEE 70
-				char msg_to_aee[MSG_SIZE_TO_AEE];
-				if (pid_dump == selected->pid)
-					pid_dump = pid_sec_mem;
-				snprintf(msg_to_aee, MSG_SIZE_TO_AEE, "please contact AP/AF memory module owner[pid:%d]\n", pid_dump);
-				aee_kernel_warning_api("LMK", 0, DB_OPT_DEFAULT|DB_OPT_DUMPSYS_ACTIVITY|DB_OPT_LOW_MEMORY_KILLER
-						| DB_OPT_PID_MEMORY_INFO /*for smaps and hprof*/
-						| DB_OPT_PROCESS_COREDUMP,
-						"Framework low memory\nCRDISPATCH_KEY:FLM_APAF", msg_to_aee);
-				next_aee_dump = NR_CPUS << 1;
-			}
-		}
-#endif
 		/*
 		 * show an indication if low memory
 		 */
-#if defined (CONFIG_MTK_AEE_FEATURE) && defined (CONFIG_MT_ENG_BUILD)
-		if (!in_lowmem && selected_oom_score_adj <= lowmem_debug_adj) {
-			in_lowmem = 1;
-			//DAL_LowMemoryOn();
-			lowmem_print(1, "LowMemoryOn\n");
-			//aee_kernel_warning(module_name, lowmem_warning);
-		}
-#endif
 		send_sig(SIGKILL, selected, 0);
 		set_tsk_thread_flag(selected, TIF_MEMDIE);
 		rem -= selected_tasksize;
@@ -508,9 +365,6 @@ static void lowmem_autodetect_oom_adj_values(void)
 			     oom_adj, oom_score_adj);
 	}
 	
-#ifdef CONFIG_MT_ENG_BUILD
-    lowmem_debug_adj = lowmem_oom_adj_to_oom_score_adj(lowmem_debug_adj);
-#endif
 }
 
 static int lowmem_adj_array_set(const char *val, const struct kernel_param *kp)
@@ -635,9 +489,6 @@ module_param_array_named(adj, lowmem_adj, int, &lowmem_adj_size,
 module_param_array_named(minfree, lowmem_minfree, uint, &lowmem_minfree_size,
 			 S_IRUGO | S_IWUSR);
 module_param_named(debug_level, lowmem_debug_level, uint, S_IRUGO | S_IWUSR);
-#ifdef CONFIG_MT_ENG_BUILD
-module_param_named(debug_adj, lowmem_debug_adj, uint, S_IRUGO | S_IWUSR);
-#endif
 
 late_initcall(lowmem_init);
 //module_init(lowmem_init);
@@ -646,14 +497,6 @@ module_exit(lowmem_exit);
 MODULE_LICENSE("GPL");
 
 #else //MTK_LCA_RAM_OPTIMIZE
-
-
-#if defined (CONFIG_MTK_AEE_FEATURE) && defined (CONFIG_MT_ENG_BUILD)
-#include <linux/aee.h>
-#include <linux/disp_assert_layer.h>
-int lowmem_indicator = 1;
-int in_lowmem = 0;
-#endif
 
 extern void show_free_areas_minimum(void);
 
@@ -669,10 +512,6 @@ static uint32_t lowmem_debug_level = 2;
 #define CONVERT_ADJ(x) (x)
 #define REVERT_ADJ(x) (x)
 #endif // CONFIG_ANDROID_LOW_MEMORY_KILLER_AUTODETECT_OOM_ADJ_VALUES
-
-#ifdef CONFIG_MT_ENG_BUILD
-static uint32_t lowmem_debug_adj = CONVERT_ADJ(1);
-#endif
 
 #ifdef CONFIG_ZRAM
 static int lowmem_adj[9] = {
@@ -690,7 +529,7 @@ static int lowmem_adj_size = 9;
 static int lowmem_minfree[9] = {
 	4 * 256,	/*  0 ->  4MB */
 	12 * 256,	/*  1 -> 12MB */
-	20 * 256,	/*  2 -> 16MB */
+	16 * 256,	/*  2 -> 16MB */
 	24 * 256,	/*  4 -> 24MB */
 	28 * 256,	/*  6 -> 28MB */
 	32 * 256,	/*  8 -> 32MB */
@@ -758,11 +597,6 @@ static int lowmem_shrink(struct shrinker *s, struct shrink_control *sc)
 	int other_free = global_page_state(NR_FREE_PAGES) - totalreserve_pages;
 	int other_file = global_page_state(NR_FILE_PAGES) -
 						global_page_state(NR_SHMEM);
-#ifdef CONFIG_MT_ENG_BUILD
-        int print_extra_info = 0;
-        static unsigned long lowmem_print_extra_info_timeout = 0;
-#endif // CONFIG_MT_ENG_BUILD
-
 #ifdef CONFIG_ZRAM
 	int other_anon = global_page_state(NR_INACTIVE_ANON) - global_page_state(NR_ACTIVE_ANON);
         other_file -= total_swapcache_pages;
@@ -809,36 +643,10 @@ static int lowmem_shrink(struct shrinker *s, struct shrink_control *sc)
 	if (sc->nr_to_scan <= 0 || min_score_adj == OOM_SCORE_ADJ_MAX + 1) {
 		lowmem_print(5, "lowmem_shrink %lu, %x, return %d\n",
 			     sc->nr_to_scan, sc->gfp_mask, rem);
-    /*
-     * disable indication if low memory
-     */
-#if defined (CONFIG_MTK_AEE_FEATURE) && defined (CONFIG_MT_ENG_BUILD)
-		if (in_lowmem) {
-			in_lowmem = 0;
-			lowmem_indicator = 1;
-			DAL_LowMemoryOff();
-		}
-#endif
 		return rem;
 	}
 
 	selected_oom_score_adj = min_score_adj;
-	// add debug log
-#ifdef CONFIG_MT_ENG_BUILD
-	if (min_score_adj <= lowmem_debug_adj) {
-		if (lowmem_print_extra_info_timeout == 0) {
-			lowmem_print_extra_info_timeout = jiffies;
-		}
-                if (time_after_eq(jiffies, lowmem_print_extra_info_timeout)) {
-                        lowmem_print_extra_info_timeout = jiffies + HZ;
-                        print_extra_info = 1;
-                }
-        }
-	if (print_extra_info) {
-		lowmem_print(1, "======low memory killer=====\n");
-		lowmem_print(1, "Free memory other_free: %d, other_file:%d pages\n", other_free, other_file);
-	}		
-#endif
 
 	rcu_read_lock();
 	for_each_process(tsk) {
@@ -869,18 +677,6 @@ static int lowmem_shrink(struct shrinker *s, struct shrink_control *sc)
 #else
 		oom_score_adj = p->signal->oom_adj;
 #endif
-#ifdef CONFIG_MT_ENG_BUILD
-		if (print_extra_info) {
-#ifdef CONFIG_ZRAM
-			lowmem_print(1, "Candidate %d (%s), oom_score_adj %d, oom_adj %d, rss %lu, rswap %lu, to kill\n",
-				     p->pid, p->comm, oom_score_adj, REVERT_ADJ(oom_score_adj), get_mm_rss(p->mm),
-				     get_mm_counter(p->mm, MM_SWAPENTS));
-#else // CONFIG_ZRAM
-			lowmem_print(1, "Candidate %d (%s), oom_score_adj %d, oom_adj %d, rss %lu, to kill\n",
-				     p->pid, p->comm, oom_score_adj, REVERT_ADJ(oom_score_adj), get_mm_rss(p->mm));
-#endif // CONFIG_ZRAM
-                }
-#endif // CONFIG_MT_ENG_BUILD
 		if (oom_score_adj < min_score_adj) {
 			task_unlock(p);
 			continue;
@@ -922,42 +718,6 @@ static int lowmem_shrink(struct shrinker *s, struct shrink_control *sc)
 			     other_free * (long)(PAGE_SIZE / 1024));
 		lowmem_deathpending = selected;
 		lowmem_deathpending_timeout = jiffies + HZ;
-#ifdef CONFIG_MT_ENG_BUILD
-		if (print_extra_info) {
-		    lowmem_print(1, "low memory info:\n");
-		    show_free_areas_minimum();
-        }
-#endif
-
-        /*
-		 * when kill adj=0 process trigger kernel warning, only in MTK internal eng load
-		 */
-#if defined (CONFIG_MTK_AEE_FEATURE) && defined (CONFIG_MT_ENG_BUILD) && \
-		!defined (PARTIAL_BUILD) /* mtk internal */
-		if (selected_oom_score_adj <= 0) { // can set 16 for test 
-#if 0
-#ifdef CONFIG_ION
-			/* Show ION status */
-			ion_mm_heap_total_memory();
-#endif
-#endif
-			lowmem_print(1, "low memory trigger kernel warning\n");
-			aee_kernel_warning_api("LMK", 0, DB_OPT_DEFAULT|DB_OPT_DUMPSYS_ACTIVITY|DB_OPT_LOW_MEMORY_KILLER,
-					"Framework low memory\nCRDISPATCH_KEY:FLM_APAF", "please contact AP/AF memory module owner\n");
-		}
-#endif
-		/*
-		 * show an indication if low memory
-		 */
-#if defined (CONFIG_MTK_AEE_FEATURE) && defined (CONFIG_MT_ENG_BUILD)
-		if (lowmem_indicator && selected_oom_score_adj <= 1) {
-			lowmem_print(5, "low memory: raise aee warning\n");
-			in_lowmem = 1;
-			lowmem_indicator = 0;
-			DAL_LowMemoryOn();
-			//aee_kernel_warning(module_name, lowmem_warning);
-		}
-#endif
 
 #ifdef CONFIG_ZRAM
         mlog(1);
@@ -1186,12 +946,6 @@ module_param_array_named(adj, lowmem_adj, int, &lowmem_adj_size,
 module_param_array_named(minfree, lowmem_minfree, uint, &lowmem_minfree_size,
 			 S_IRUGO | S_IWUSR);
 module_param_named(debug_level, lowmem_debug_level, uint, S_IRUGO | S_IWUSR);
-#if defined (CONFIG_MTK_AEE_FEATURE) && defined (CONFIG_MT_ENG_BUILD)
-module_param_named(lowmem_indicator, lowmem_indicator, uint, S_IRUGO | S_IWUSR);
-#endif
-#ifdef CONFIG_MT_ENG_BUILD
-module_param_named(debug_adj, lowmem_debug_adj, uint, S_IRUGO | S_IWUSR);
-#endif
 
 module_init(lowmem_init);
 module_exit(lowmem_exit);

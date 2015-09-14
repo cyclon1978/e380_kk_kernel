@@ -81,13 +81,6 @@ extern unsigned int tty_debug_enable[];
 extern unsigned int fs_tx_debug_enable[]; 
 extern unsigned int fs_rx_debug_enable[]; 
 
-#if defined (CONFIG_MTK_AEE_FEATURE) && defined (ENABLE_AEE_MD_EE)
-extern void aed_md_exception(const int *log, int log_size, const int *phy, int phy_size, const char* detail);
-extern __weak void aee_kernel_warning_api(const char *file, const int line, const int db_opt, const char *module, const char *msg, ...);
-
-#define DB_OPT_FTRACE		(1<<0)
-#endif
-
 extern int get_md_wakeup_src(int md_id, char *buf, unsigned int len);
 
 #ifndef ENABLE_SW_MEM_REMAP
@@ -735,9 +728,6 @@ void ccci_ee_info_dump(int md_id, DEBUG_INFO_T *debug_info)
 		case MD_EE_CASE_AP_MASK_I_BIT_TOO_LONG:
 			strcat(i_bit_ex_info, ex_info);
 			strcpy(ex_info, i_bit_ex_info);
-			#if defined (CONFIG_MTK_AEE_FEATURE) && defined (ENABLE_AEE_MD_EE)
-			aee_kernel_warning_api(__FILE__, __LINE__, DB_OPT_FTRACE, "CCCI", i_bit_ex_info);
-			#endif
 			break;
 		case MD_EE_CASE_TX_TRG:
 		case MD_EE_CASE_ISR_TRG:
@@ -1116,10 +1106,6 @@ void ccci_aed(int md_id, unsigned int dump_flag, char *aed_str)
 		ex_log_len = 68*4;
 		ccci_dump_hw_reg_val(md_id, (unsigned int*)ex_log_addr, ex_log_len);
 	}
-
-	#if defined (CONFIG_MTK_AEE_FEATURE) && defined (ENABLE_AEE_MD_EE)
-	aed_md_exception(ex_log_addr, ex_log_len, md_img_addr, md_img_len, buff);
-	#endif
 }
 
 void md_emi_check(int md_id, ccci_msg_t *buff, DEBUG_INFO_T *debug_info)
@@ -1385,9 +1371,6 @@ static void md_boot_up_timeout_func(unsigned long data)
 	#endif
 		ccci_aed(md_id, CCCI_AED_DUMP_CCIF_REG, ex_info);
 	} else if(ctl_b->md_boot_stage == MD_BOOT_STAGE_1) {
-		#if defined (CONFIG_MTK_AEE_FEATURE) && defined (ENABLE_AEE_MD_EE)
-		aee_kernel_warning_api(__FILE__, __LINE__, DB_OPT_FTRACE, "CCCI", "modem boot up timeout");
-		#endif
 		// Handshake 2 fail
 		snprintf(ex_info, EE_BUF_LEN, "\n[Others] MD_BOOT_UP_FAIL(HS%d)\n", (ctl_b->md_boot_stage+1));
 		CCCI_DBG_MSG(md_id, "cci", "Dump MD%d Image memory\n", md_id+1);

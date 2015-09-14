@@ -205,8 +205,6 @@ setParameters()
     cam3aParam.u4ShotMode   = mpParamsMgr->getShotMode();
     cam3aParam.u4CamMode    = mpParamsMgr->getHalAppMode();   
     cam3aParam.i4RotateDegree = mpParamsMgr->getInt(MtkCameraParameters::KEY_ROTATION);     
-	//
-	cam3aParam.i4FocusScroll = mpParamsMgr->getInt(MtkCameraParameters::KEY_FOCUS_SCROLL);	//qiaoxiujun,ae/af control UI
     //
     if ( ! p3AHal->setParams(cam3aParam) )
     {

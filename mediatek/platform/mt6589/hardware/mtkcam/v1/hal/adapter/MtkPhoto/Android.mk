@@ -70,9 +70,6 @@ LOCAL_C_INCLUDES += $(TOP)/$(MTK_PATH_PLATFORM)/hardware/m4u
 #
 LOCAL_C_INCLUDES += $(TOP)/$(MTK_PATH_CUSTOM)/kernel/imgsensor/inc
 
-LOCAL_C_INCLUDES += $(TOP)/$(MTK_PATH_PLATFORM)/hardware/mtkcam/v1/hal/adapter/Arcsoft/Nighthawk/inc
-LOCAL_C_INCLUDES += $(TOP)/$(MTK_PATH_PLATFORM)/hardware/mtkcam/v1/hal/adapter/Arcsoft/Platform/inc
-
 #-----------------------------------------------------------
 LOCAL_CFLAGS += $(MTKCAM_CFLAGS)
 

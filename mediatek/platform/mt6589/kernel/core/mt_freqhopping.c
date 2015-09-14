@@ -1426,6 +1426,45 @@ static int freqhopping_dramc_proc_write(struct file *file, const char *buffer, u
 	return -EINVAL;
 }
 
+//static int freqhopping_dvfs_proc_read(char *page, char **start, off_t off, int count, int *eof, void *data)
+static int freqhopping_dvfs_proc_read(struct seq_file* m, void* v)
+{
+	//char *p = page;
+	//int len = 0;
+	int 	i=0;
+
+	FH_MSG("EN: %s",__func__);
+
+	seq_printf(m, "DVFS:\r\n");
+	seq_printf(m, "CFG: 0x3 is SSC mode;  0x5 is DVFS mode \r\n");
+//	for(i=0;i<MT_FHPLL_MAX;i++) {		
+//		seq_printf(m, "FHCTL%d:   CFG:0x%08x    DVFS:0x%08x\r\n",i, DRV_Reg32(REG_FHCTL0_CFG+(i*0x14)), DRV_Reg32(REG_FHCTL0_DVFS+(i*0x14)));
+//	}
+
+#if 0
+	*start = page + off;
+
+	len = p - page;
+
+	if (len > off)
+		len -= off;
+	else
+		len = 0;
+
+	return len < count ? len : count;
+#endif
+  return 0;  		
+}
+
+
+static int freqhopping_dvfs_proc_write(struct file *file, const char *buffer, unsigned long count, void *data)
+{
+	FH_MSG("EN: %s",__func__);
+	
+	return 0;
+}
+
+
 
 //static int freqhopping_dumpregs_proc_read(char *page, char **start, off_t off, int count, int *eof, void *data)
 static int freqhopping_dumpregs_proc_read(struct seq_file* m, void* v)
@@ -1799,6 +1838,8 @@ struct mt_fh_hal_driver *mt_get_fh_hal_drv(void)
 	g_fh_hal_drv.proc.dramc_write 		=  freqhopping_dramc_proc_write;	
 	g_fh_hal_drv.proc.dumpregs_read 	=  freqhopping_dumpregs_proc_read;
 
+	g_fh_hal_drv.proc.dvfs_read 		=  freqhopping_dvfs_proc_read;
+	g_fh_hal_drv.proc.dvfs_write 		=  freqhopping_dvfs_proc_write;	
 
 	g_fh_hal_drv.mt_fh_hal_ctrl		= __freqhopping_ctrl;
 	g_fh_hal_drv.mt_fh_lock			= mt_fh_hal_lock;

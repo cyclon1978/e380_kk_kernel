@@ -322,7 +322,8 @@ static int layout_leb_in_gaps(struct ubifs_info *c, int *p)
 				  0, 0, 0);
 	if (err)
 		return err;
-	err = ubifs_leb_change(c, lnum, c->ileb_buf, c->ileb_len);
+	err = ubifs_leb_change(c, lnum, c->ileb_buf, c->ileb_len,
+			       UBI_SHORTTERM);
 	if (err)
 		return err;
 	dbg_gc("LEB %d wrote %d index nodes", lnum, tot_written);
@@ -958,7 +959,8 @@ static int write_index(struct ubifs_info *c)
 		}
 
 		/* The buffer is full or there are no more znodes to do */
-		err = ubifs_leb_write(c, lnum, c->cbuf, buf_offs, blen);
+		err = ubifs_leb_write(c, lnum, c->cbuf, buf_offs, blen,
+				      UBI_SHORTTERM);
 		if (err)
 			return err;
 		buf_offs += blen;

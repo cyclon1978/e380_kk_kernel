@@ -330,34 +330,6 @@ static void disable_ext_md_wakeup_irq(void)
 }
 static void emd_aseert_log_work_func(struct work_struct *data)
 {
-#if defined (CONFIG_MTK_AEE_FEATURE) && defined (CONFIG_MT_ENG_BUILD)
-#if 1
-#define TEST_PHY_SIZE 0x10000
-
-	char log[16]="6280 assert";
-	int i;
-	char *ptr;
-
-    EMD_MSG("Ext MD ASSERT\n");
-	emd_aseert_log_wait_timeout = 1;
-    wake_up_interruptible(&emd_aseert_log_wait);
-	memset(log, 0, sizeof(log));
-	ptr = kmalloc(TEST_PHY_SIZE, GFP_KERNEL);
-	if (ptr == NULL) {
-        printk("ee kmalloc fail\n");
-	}
-	for (i = 0; i < TEST_PHY_SIZE; i++) {
-		ptr[i] = (i % 26) + 'A';
-	}
-	aed_md_exception((int *)log, sizeof(log), (int *)ptr, TEST_PHY_SIZE, __FILE__);
-	kfree(ptr);
-#else
-    EMD_MSG("Ext MD ASSERT\n");
-	emd_aseert_log_wait_timeout = 1;
-    wake_up_interruptible(&emd_aseert_log_wait);
-    aee_kernel_exception("ext-md-ctl", "ext modem assert!");    
-#endif    
-#else
     EMD_MSG("Ext MD ASSERT -> RESET\n");
 	emd_aseert_log_wait_timeout = 1;
     wake_up_interruptible(&emd_aseert_log_wait);
@@ -365,7 +337,6 @@ static void emd_aseert_log_work_func(struct work_struct *data)
 	msleep(1000);
 	power_on_md();	
 	mt_eint_unmask(CUST_EINT_MT6280_WD_NUM);	
-#endif    
 }
 static void ext_md_wdt_irq_cb(void)
 {

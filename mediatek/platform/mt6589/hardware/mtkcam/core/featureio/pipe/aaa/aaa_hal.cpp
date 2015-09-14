@@ -127,20 +127,8 @@ using namespace NSIspTuning;
        return MFALSE;\
    }}\
 
-#if defined(HAVE_AEE_FEATURE)
-#include <aee.h>
-#define AEE_ASSERT_3A_HAL(String) \
-		  do { \
-			  aee_system_exception( \
-				  "Hal3A", \
-				  NULL, \
-				  DB_OPT_DEFAULT, \
-				  String); \
-		  } while(0)
-#else
+// no aee feature
 #define AEE_ASSERT_3A_HAL(String)
-#endif
-
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //
@@ -496,7 +484,6 @@ MBOOL Hal3A::setParams(Param_T const &rNewParam)
    ERROR_CHECK(FlashMgr::getInstance()->setCamMode(rNewParam.u4CamMode))
    ERROR_CHECK(FlashMgr::getInstance()->setEvComp(rNewParam.i4ExpIndex, rNewParam.fExpCompStep))
 
-   FlashMgr::getInstance()->setFocusScroll(rNewParam.i4FocusScroll); //qiaoxiujun,ae/af control UI	
 
 
 

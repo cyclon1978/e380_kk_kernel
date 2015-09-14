@@ -903,12 +903,6 @@
     #define MTK_WCN_HIF_SDIO            0
 #endif
 
-#if (CFG_SUPPORT_AEE == 1)
-    #define CFG_ENABLE_AEE_MSG          1
-#else
-    #define CFG_ENABLE_AEE_MSG          0
-#endif
-
 //2 Flags for Driver Features
 #define CFG_TX_FRAGMENT                 1 /*!< 1: Enable TX fragmentation
                                                        0: Disable */

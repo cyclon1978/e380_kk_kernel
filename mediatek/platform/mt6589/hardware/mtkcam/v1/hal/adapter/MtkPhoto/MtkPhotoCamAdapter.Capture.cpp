@@ -284,8 +284,6 @@ onCaptureThreadLoop()
         shotParam.mu4ZoomRatio              = pParamsMgr->getZoomRatio();
         shotParam.mu4ShotCount              = pParamsMgr->getInt(MtkCameraParameters::KEY_BURST_SHOT_NUM);
         shotParam.mi4Rotation               = pParamsMgr->getInt(CameraParameters::KEY_ROTATION);
-        shotParam.mi4Denoise           	    = pParamsMgr->getStr(MtkCameraParameters::KEY_DENOISE);	//qiaoxiujun,denoise
-			
         //
         //  [3.3] prepare parameters: JpegParam
         JpegParam jpegParam;

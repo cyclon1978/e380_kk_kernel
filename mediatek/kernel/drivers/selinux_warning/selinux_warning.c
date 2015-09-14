@@ -15,10 +15,6 @@
 #include <linux/platform_device.h>
 #include <linux/module.h>
 
-#ifdef CONFIG_MTK_AEE_FEATURE
-#include <linux/aee.h>
-#endif
-
 #define SELINUX_WARNING_C
 #include <mtk_selinux_warning_list.h>  //locate at custom/kernel/seplolicy
 #undef SELINUX_WARNING_C
@@ -105,8 +101,6 @@ static char* mtk_get_process(char * in)
 {
     char scontext[AEE_FILTER_LEN] = {'\0'};
     char *pname = scontext;
-    char printBuf[AEE_FILTER_LEN]  = {'\0'};
-
     	
     int ret = 0;
     
@@ -122,14 +116,7 @@ static char* mtk_get_process(char * in)
 		if(pname !=0)
 		{
 			printk("[selinux]Enforce: %d, In AEE Warning List scontext: %s\n",selinux_enforcing ,pname); 
-			sprintf(printBuf,"Selinux Enforce violation: %s ",pname);
-			#ifdef CONFIG_MTK_AEE_FEATURE
-			if(selinux_enforcing)
-				aee_kernel_warning(printBuf, "\nCR_DISPATCH_PROCESSNAME:%s\n%s",pname,data);
-			#endif
 		}
     }
 }
 EXPORT_SYMBOL(mtk_audit_hook);
-
-

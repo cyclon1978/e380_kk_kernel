@@ -46,20 +46,12 @@ include $(CLEAR_VARS)
 LOCAL_ARM_MODE := arm
 
 #-----------------------------------------------------------
-sinclude $(TOP)/$(MTK_PATH_PLATFORM)/hardware/mtkcam/mtkcam.mk
-
-#-----------------------------------------------------------
 MTKCAM_HAVE_ASD_CLIENT          ?= '1'  # built-in if '1' ; otherwise not built-in
 
 #-----------------------------------------------------------
 LOCAL_SRC_FILES += $(call all-c-cpp-files-under, .)
 
 #-----------------------------------------------------------
-LOCAL_C_INCLUDES += $(MTKCAM_C_INCLUDES)
-#
-LOCAL_C_INCLUDES += $(TOP)/$(MTK_PATH_SOURCE)/hardware/include
-LOCAL_C_INCLUDES += $(TOP)/$(MTK_PATH_PLATFORM)/hardware/include
-#
 LOCAL_C_INCLUDES += $(TOP)/$(MTK_ROOT)/frameworks-ext/av/include
 LOCAL_C_INCLUDES += $(TOP)/$(MTK_PATH_PLATFORM)/hardware/camera/inc
 LOCAL_C_INCLUDES += $(TOP)/$(MTK_PATH_PLATFORM)/hardware/camera/inc/common
@@ -69,14 +61,25 @@ LOCAL_C_INCLUDES += $(TOP)/$(MTK_PATH_PLATFORM)/hardware/mtkcam/v1/hal/client/Ca
 #
 LOCAL_C_INCLUDES += $(TOP)/$(MTK_PATH_PLATFORM)/hardware/camera/inc/common/camutils
 
-LOCAL_C_INCLUDES += $(TOP)/$(MTK_PATH_PLATFORM)/hardware/mtkcam/v1/hal/adapter/Arcsoft/Picauto/inc
-LOCAL_C_INCLUDES += $(TOP)/$(MTK_PATH_PLATFORM)/hardware/mtkcam/v1/hal/adapter/Arcsoft/Platform/inc
+#-----------------------------------------------------------
+LOCAL_MODULE := libcam.client.camclient.asd
+
+#
+# Start of common part ------------------------------------
+sinclude $(TOP)/$(MTK_PATH_PLATFORM)/hardware/mtkcam/mtkcam.mk
 
 #-----------------------------------------------------------
 LOCAL_CFLAGS += $(MTKCAM_CFLAGS)
 
 #-----------------------------------------------------------
-LOCAL_MODULE := libcam.client.camclient.asd
+LOCAL_C_INCLUDES += $(MTKCAM_C_INCLUDES)
+
+#-----------------------------------------------------------
+LOCAL_C_INCLUDES += $(TOP)/$(MTK_PATH_SOURCE)/hardware/include
+LOCAL_C_INCLUDES += $(TOP)/$(MTK_PATH_PLATFORM)/hardware/include
+
+# End of common part ---------------------------------------
+#
 
 #-----------------------------------------------------------
 ifeq "'1'" "$(strip $(MTKCAM_HAVE_ASD_CLIENT))"

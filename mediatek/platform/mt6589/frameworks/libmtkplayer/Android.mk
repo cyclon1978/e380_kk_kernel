@@ -101,12 +101,6 @@ LOCAL_C_INCLUDES+= \
    
 LOCAL_SHARED_LIBRARIES += libaudio.primary.default
 
-ifeq ($(HAVE_AEE_FEATURE),yes)
-    LOCAL_SHARED_LIBRARIES += libaed
-    LOCAL_C_INCLUDES += \
-    $(MTK_PATH_SOURCE)/external/aee/binary/inc
-    LOCAL_CFLAGS += -DHAVE_AEE_FEATURE
-endif
 else
 LOCAL_CFLAGS += -DFAKE_FM
 LOCAL_CFLAGS += -DFAKE_MATV

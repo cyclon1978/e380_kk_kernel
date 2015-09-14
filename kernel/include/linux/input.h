@@ -521,7 +521,7 @@ struct input_keymap_entry {
 #define BTN_EAST		0x131
 #define BTN_B			BTN_EAST
 #define BTN_C			0x132
-	#define BTN_NORTH		0x133
+#define BTN_NORTH		0x133
 #define BTN_X			BTN_NORTH
 #define BTN_WEST		0x134
 #define BTN_Y			BTN_WEST

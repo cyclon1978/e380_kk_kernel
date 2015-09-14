@@ -143,9 +143,6 @@ enum power_supply_property {
 	POWER_SUPPLY_PROP_status_2nd,
 	POWER_SUPPLY_PROP_capacity_2nd,
 	POWER_SUPPLY_PROP_present_2nd,
-#if defined(ACER_C17) //for C17 charger test
-    POWER_SUPPLY_PROP_ChargerTest,
-#endif
 	/* Properties of type `const char *' */
 	POWER_SUPPLY_PROP_MODEL_NAME,
 	POWER_SUPPLY_PROP_MANUFACTURER,

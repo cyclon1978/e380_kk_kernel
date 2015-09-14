@@ -381,20 +381,7 @@ static void ccif_debug_dump(struct physical_channel *pc_ch,DEBUG_INFO_T *debug_i
 	clear_bit(CCCI_RUNNING,&pc_ch->flags);
 
 	ccci_aed(CCCI_AED_DUMP_EX_MEM|CCCI_AED_DUMP_MD_IMG_MEM, ex_info);
-#if 0
-//#ifdef CONFIG_MTK_AEE_FEATURE 
-	aed_md_exception1(debug_info->ext_mem, debug_info->ext_size, 
-		debug_info->md_image, debug_info->md_size, debug_info->name,
-		(debug_info->type==MD_EX_TYPE_ASSERT_DUMP||debug_info->type==MD_EX_TYPE_ASSERT)?debug_info->assert.file_name:NULL,
-		(debug_info->type==MD_EX_TYPE_ASSERT_DUMP||debug_info->type==MD_EX_TYPE_ASSERT)?debug_info->assert.line_num:0,
-		(debug_info->type==MD_EX_TYPE_FATALERR_BUF||debug_info->type==MD_EX_TYPE_FATALERR_TASK)?debug_info->fatal_error.err_code1:0,
-		(debug_info->type==MD_EX_TYPE_FATALERR_BUF||debug_info->type==MD_EX_TYPE_FATALERR_TASK)?debug_info->fatal_error.err_code2:
-		(debug_info->type==MD_EX_TYPE_EMI_CHECK?debug_info->data.reserved:0));
-
-#endif
-
 }
-
 
 #if 0
 static void ccif_tx_fifo_dump(void)

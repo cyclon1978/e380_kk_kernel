@@ -114,15 +114,6 @@ do {	\
 #define CCCI_CCMNI_MSG(fmt, args...)	CCCI_DBG_MSG(CCMNI, "/net", fmt, ##args)
 #endif
 
-
-/******************************************************************************/
-/** AEE function and macro define                                                                                **/
-/******************************************************************************/
-#ifdef CONFIG_MTK_AEE_FEATURE
-extern void aed_md_exception1(int *log, int log_size, int *phy, int phy_size, 
-		char* assert_type, char* filename, unsigned int line, unsigned int fata1, unsigned int fata2);
-#endif
-
 #define CCCI_AED_DUMP_EX_MEM		(0x00000001)
 #define CCCI_AED_DUMP_MD_IMG_MEM	(0x00000002)
 void ccci_aed(unsigned int flag, char* aed_str);

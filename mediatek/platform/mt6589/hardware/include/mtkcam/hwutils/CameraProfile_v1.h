@@ -54,8 +54,8 @@ enum
     // Define the root event of camera
     Event_Camera_Platform_V1_Root = EVENT_CAMERA_PLATFORM_V1,
 
-		// Define the event used in Hal
-		Event_Hal,
+        // Define the event used in Hal
+        Event_Hal,
 
             // Define the event used in Hal::Device
             Event_Hal_Device,
@@ -160,7 +160,7 @@ enum
                     Event_Hal_Adapter_MtkZsdPreview_proc,
                     Event_Hal_Adapter_MtkZsdPreview_precap,
                     Event_Hal_Adapter_MtkZsdPreview_stop,
-                Event_Hal_Adapter_MtkZsdCapture,
+                    Event_Hal_Adapter_MtkZsdCapture,
 
             // Define the event used in Hal::Client
             Event_Hal_Client,
@@ -189,8 +189,8 @@ BUILD_PLATFORM_CPTEVENTINFO_V1 [] =
 
             // Define the event used in Hal::Device
             ,{Event_Hal_Device, Event_Hal, "Device"}
-            // Define the event used in Hal::Device::DefaultCamDevice
-            ,{Event_Hal_DefaultCamDevice, Event_Hal_Device, "DefaultCamDevice"}
+                // Define the event used in Hal::Device::DefaultCamDevice
+                ,{Event_Hal_DefaultCamDevice, Event_Hal_Device, "DefaultCamDevice"}
                 ,{Event_Hal_DefaultCamDevice_init, Event_Hal_DefaultCamDevice, "init"}
                 ,{Event_Hal_DefaultCamDevice_uninit, Event_Hal_DefaultCamDevice, "uninit"}
 
@@ -200,6 +200,7 @@ BUILD_PLATFORM_CPTEVENTINFO_V1 [] =
                 ,{Event_Hal_Adapter_Scenario, Event_Hal_Adapter, "Scenario"}
                     // Define the event used in Hal::Adapter::Scenario::Shot
                     ,{Event_Hal_Adapter_Scenario_Shot, Event_Hal_Adapter_Scenario, "Shot"}
+
                         // --Define the event used in continuous shot
                         ,{Event_CShot, Event_Hal_Adapter_Scenario_Shot, "ContinuousShot"}
                             ,{Event_CShot_capture, Event_CShot, "capture"}
@@ -208,7 +209,7 @@ BUILD_PLATFORM_CPTEVENTINFO_V1 [] =
                             ,{Event_CShot_handleNotifyCb, Event_CShot, "handleNotifyCb"}
                             ,{Event_CShot_handlePVData, Event_CShot, "handlePostViewData"}
                             ,{Event_CShot_handleJpegData, Event_CShot, "handleJpegData"}
-                         // -- Define the event used in normal shot
+                        // -- Define the event used in normal shot
                         ,{Event_Shot,  Event_Hal_Adapter_Scenario_Shot, "NormalShot"}
                             ,{Event_Shot_capture, Event_Shot, "capture"}
                             ,{Event_Shot_sendCmd, Event_Shot, "sendCommand"}
@@ -218,23 +219,23 @@ BUILD_PLATFORM_CPTEVENTINFO_V1 [] =
                             ,{Event_Shot_handleJpegData, Event_Shot, "handleJpegData"}
                         // --Define the event info used in FaceBeautyShot
                         ,{Event_FcaeBeautyShot, Event_Hal_Adapter_Scenario_Shot, "FaceBeautyShot"}
-	                        ,{Event_FBShot_createFullFrame, Event_FcaeBeautyShot, "createFullFrame"}
+            	            ,{Event_FBShot_createFullFrame, Event_FcaeBeautyShot, "createFullFrame"}
                             ,{Event_FBShot_STEP1, Event_FcaeBeautyShot, "STEP1"}
                             ,{Event_FBShot_STEP1Algo, Event_FcaeBeautyShot, "STEP1Algo"}
-		                    ,{Event_FBShot_STEP2, Event_FcaeBeautyShot, "STEP2"}
-		                    ,{Event_FBShot_STEP3, Event_FcaeBeautyShot, "STEP3"}
-		                    ,{Event_FBShot_STEP4, Event_FcaeBeautyShot, "STEP4"}
-		                    ,{Event_FBShot_STEP4Algo, Event_FcaeBeautyShot, "STEP4Algo"}
+            	            ,{Event_FBShot_STEP2, Event_FcaeBeautyShot, "STEP2"}
+            	            ,{Event_FBShot_STEP3, Event_FcaeBeautyShot, "STEP3"}
+            	            ,{Event_FBShot_STEP4, Event_FcaeBeautyShot, "STEP4"}
+            	            ,{Event_FBShot_STEP4Algo, Event_FcaeBeautyShot, "STEP4Algo"}
                             ,{Event_FBShot_STEP5, Event_FcaeBeautyShot, "STEP5"}
                             ,{Event_FBShot_STEP5Algo, Event_FcaeBeautyShot, "STEP5Algo"}
                             ,{Event_FBShot_STEP6, Event_FcaeBeautyShot, "STEP6"}
                             ,{Event_FBShot_createFBJpegImg, Event_FcaeBeautyShot, "createFBJpegImg"}
-		                ,{Event_FBShot_Utility, Event_FcaeBeautyShot, "Utility"}
-		                    ,{Event_FBShot_requestBufs, Event_FBShot_Utility, "requestBufs"}
-		                    ,{Event_FBShot_InitialAlgorithm, Event_FBShot_Utility, "InitialAlgorithm"}
+            	            ,{Event_FBShot_Utility, Event_FcaeBeautyShot, "Utility"}
+            	            ,{Event_FBShot_requestBufs, Event_FBShot_Utility, "requestBufs"}
+            	            ,{Event_FBShot_InitialAlgorithm, Event_FBShot_Utility, "InitialAlgorithm"}
                             ,{Event_FBShot_JpegEncodeImg, Event_FBShot_Utility, "JpegEncodeImg"}
                             ,{Event_FBShot_ResizeImg, Event_FBShot_Utility, "ResizeImg"}
-                         // -- Define the event used in zsd shot
+                        // -- Define the event used in zsd shot
                         ,{Event_ZsdShot,  Event_Hal_Adapter_Scenario_Shot, "ZsdShot"}
                             ,{Event_ZsdShot_capture, Event_ZsdShot, "capture"}
                             ,{Event_ZsdShot_handleJpegData, Event_ZsdShot, "handleJpegData"}
@@ -266,7 +267,7 @@ BUILD_PLATFORM_CPTEVENTINFO_V1 [] =
                     ,{Event_Hal_Adapter_MtkZsdPreview_proc, Event_Hal_Adapter_MtkZsdPreview, "proc"}
                     ,{Event_Hal_Adapter_MtkZsdPreview_precap, Event_Hal_Adapter_MtkZsdPreview, "precap"}
                     ,{Event_Hal_Adapter_MtkZsdPreview_stop, Event_Hal_Adapter_MtkZsdPreview, "stop"}
-                ,{Event_Hal_Adapter_MtkZsdCapture, Event_Hal_Adapter, "MtkZsdCapture"}
+                    ,{Event_Hal_Adapter_MtkZsdCapture, Event_Hal_Adapter, "MtkZsdCapture"}
 
             // Define the event used in Hal::Client
             ,{Event_Hal_Client, Event_Hal, "Client"}

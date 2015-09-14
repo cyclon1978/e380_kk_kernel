@@ -12,9 +12,6 @@ include $(CLEAR_VARS)
 ifeq ($(BUILD_MTK_LDVT),true)
     LOCAL_CFLAGS += -DUSING_MTK_LDVT
 endif
-ifeq ($(HAVE_AEE_FEATURE),yes)
-	LOCAL_CFLAGS += -DHAVE_AEE_FEATURE
-endif
 
 #
 #LOCAL_STATIC_LIBRARIES += \
@@ -34,10 +31,6 @@ LOCAL_SHARED_LIBRARIES += \
 
 ifeq ($(MTK_ION_SUPPORT),yes)
 	LOCAL_SHARED_LIBRARIES += libion
-endif
-
-ifeq ($(HAVE_AEE_FEATURE),yes)
-	LOCAL_SHARED_LIBRARIES += libaed
 endif
 
 ifneq ($(BUILD_MTK_LDVT),true)

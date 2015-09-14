@@ -74,7 +74,7 @@ ifeq ($(strip $(MTK_USE_ANDROID_MM_DEFAULT_CODE)),yes)
 endif
 
 ifeq ($(strip $(DMNR_TUNNING_AT_MODEMSIDE)),yes)
-LOCAL_CFLAGS += -DDMNR_TUNNING_AT_MODEMSIDE
+  LOCAL_CFLAGS += -DDMNR_TUNNING_AT_MODEMSIDE
 endif
 
 
@@ -105,7 +105,6 @@ LOCAL_C_INCLUDES:= \
     $(MTK_PATH_SOURCE)/external/audiodcremoveflt \
     $(MTK_PATH_SOURCE)/external/audiocustparam \
     $(MTK_PATH_SOURCE)/external/AudioSpeechEnhancement/inc \
-    $(MTK_PATH_SOURCE)/external/aee/binary/inc \
     $(MTK_PATH_SOURCE)/kernel/include \
     $(MTK_PATH_SOURCE)/external/dfo/featured \
     $(TARGET_OUT_HEADERS)/dfo \
@@ -367,7 +366,6 @@ LOCAL_C_INCLUDES:= \
     $(MTK_PATH_SOURCE)/frameworks-ext/av/include/media \
     $(MTK_PATH_SOURCE)/frameworks-ext/av/include \
     $(MTK_PATH_SOURCE)/external/audiodcremoveflt \
-    $(MTK_PATH_SOURCE)/external/aee/binary/inc \
     $(MTK_PATH_SOURCE)/external/dfo/featured \
     $(TARGET_OUT_HEADERS)/dfo \
     $(MTK_PATH_SOURCE)/kernel/include \
@@ -441,6 +439,5 @@ endif
 LOCAL_CFLAGS += -DMTK_FM_SUPPORT_WFD_OUTPUT
 
 include $(BUILD_SHARED_LIBRARY)
-
 
 endif

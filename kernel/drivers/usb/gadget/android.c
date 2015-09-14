@@ -31,9 +31,6 @@
 /* Add for HW/SW connect */
 #include <linux/musb/mtk_musb.h>
 /* Add for HW/SW connect */
-/*lirenqi*/
-#include <mach/mt_boot.h>
-
 #include "gadget_chips.h"
 #include "logger.h"
 
@@ -58,14 +55,15 @@
 #include "f_adb.c"
 #include "f_mtp.c"
 #include "f_accessory.c"
+#include "f_hid.h"
+#include "f_hid_android_keyboard.c"
+#include "f_hid_android_mouse.c"
 #define USB_ETH_RNDIS y
 #include "f_rndis.c"
 #include "rndis.c"
 #include "f_ecm.c"
 #include "f_eem.c"
 #include "u_ether.c"
-#include <mach/mt_boot.h>
-
 #ifdef EVDO_DT_VIA_SUPPORT
 #include <mach/viatel_rawbulk.h>
 int rawbulk_bind_config(struct usb_configuration *c, int transfer_id);
@@ -82,13 +80,10 @@ static const char longname[] = "Gadget Android";
 /* Default vendor and product IDs, overridden by userspace */
 #define VENDOR_ID		0x0BB4
 #define PRODUCT_ID		0x0001
-#define ADVMETA_ID		0x0005 //ums+adb+acm
 
 /* Default manufacturer and product string , overridden by userspace */
 #define MANUFACTURER_STRING "MediaTek"
-//xuxiaohui 2014-5-5 modify 
-#define PRODUCT_STRING "Acer E380"
-//#define PRODUCT_STRING "MT65xx Android Phone"
+#define PRODUCT_STRING "MT65xx Android Phone"
 
 #define USB_LOG "USB"
 
@@ -561,15 +556,9 @@ static int
 acm_function_init(struct android_usb_function *f,
 		struct usb_composite_dev *cdev)
 {
-	struct acm_function_config *config;
-
 	f->config = kzalloc(sizeof(struct acm_function_config), GFP_KERNEL);
 	if (!f->config)
 		return -ENOMEM;
-
-	/* default value */
-	config = f->config;
-	config->instances = 1;
 
 	if (!serial_initialized) {
 		serial_initialized = 1;
@@ -1265,31 +1254,24 @@ static int mass_storage_function_init(struct android_usb_function *f,
 		return -ENOMEM;
 
 #ifdef MTK_MULTI_STORAGE_SUPPORT
-#define LUN_MULTI (1)
-#else
-#define LUN_MULTI (0)
-#endif
-
 #ifdef MTK_SHARED_SDCARD
-#define LUN_SHARED_SD (-1)
+#define NLUN_STORAGE 1
 #else
-#define LUN_SHARED_SD (0)
+#define NLUN_STORAGE 2
 #endif
-
-#ifdef MTK_ICUSB_SUPPORT
-#define LUN_ICUSB (1)
 #else
-#define LUN_ICUSB (0)
+#define NLUN_STORAGE 1
 #endif
+#define NLUN_STORAGE 3
 
-#define LUN_NUM LUN_MULTI + LUN_SHARED_SD + LUN_ICUSB + 1
-
-	config->fsg.nluns = LUN_NUM;
+	config->fsg.nluns = NLUN_STORAGE;
 
 	for(i = 0; i < config->fsg.nluns; i++) {
 		config->fsg.luns[i].removable = 1;
 		config->fsg.luns[i].nofua = 1;
 	}
+
+	config->fsg.luns[NLUN_STORAGE-1].cdrom = 1;
 
 	common = fsg_common_init(NULL, cdev, &config->fsg);
 	if (IS_ERR(common)) {
@@ -1310,7 +1292,7 @@ static int mass_storage_function_init(struct android_usb_function *f,
 	 * "i" starts from "1", cuz dont want to change the naming of
 	 * the original path of "lun0".
 	 */
-	for(i = 1; i < config->fsg.nluns; i++) {
+	for(i = 0; i < config->fsg.nluns; i++) {
 		char string_lun[5]={0};
 
 		sprintf(string_lun, "lun%d",i);
@@ -1596,6 +1578,41 @@ static struct android_usb_function audio_source_function = {
 	.attributes	= audio_source_function_attributes,
 };
 
+static int hid_function_init(struct android_usb_function *f, struct usb_composite_dev *cdev)
+{
+	return ghid_setup(cdev->gadget, 2);
+}
+
+static void hid_function_cleanup(struct android_usb_function *f)
+{
+	ghid_cleanup();
+}
+
+static int hid_function_bind_config(struct android_usb_function *f, struct usb_configuration *c)
+{
+	int ret;
+	printk(KERN_INFO "hid keyboard\n");
+	ret = hidg_bind_config(c, &ghid_device_android_keyboard, 0);
+	if (ret) {
+		pr_info("%s: hid_function_bind_config keyboard failed: %d\n", __func__, ret);
+		return ret;
+	}
+	printk(KERN_INFO "hid mouse\n");
+	ret = hidg_bind_config(c, &ghid_device_android_mouse, 1);
+	if (ret) {
+		pr_info("%s: hid_function_bind_config mouse failed: %d\n", __func__, ret);
+		return ret;
+	}
+	return 0;
+}
+
+static struct android_usb_function hid_function = {
+	.name		= "hid",
+	.init		= hid_function_init,
+	.cleanup	= hid_function_cleanup,
+	.bind_config	= hid_function_bind_config,
+};
+
 static struct android_usb_function *supported_functions[] = {
 	&ffs_function,
 	&adb_function,
@@ -1609,6 +1626,7 @@ static struct android_usb_function *supported_functions[] = {
 	&mass_storage_function,
 	&accessory_function,
 	&audio_source_function,
+	&hid_function,
 #ifdef EVDO_DT_VIA_SUPPORT
 	&rawbulk_modem_function,
 	&rawbulk_ets_function,
@@ -1781,6 +1799,7 @@ functions_store(struct device *pdev, struct device_attribute *attr,
 	int err;
 	int is_ffs;
 	int ffs_enabled = 0;
+	int hid_enabled = 0;
 
 	mutex_lock(&dev->mutex);
 
@@ -1795,13 +1814,7 @@ functions_store(struct device *pdev, struct device_attribute *attr,
 	xlog_printk(ANDROID_LOG_DEBUG, USB_LOG, "%s: \n", __func__);
 	/* Added for USB Develpment debug, more log for more debuging help */
 
-	if (unlikely(is_advanced_meta_mode())) {
-		/* force to switch usb when enter ADVMETA boot */
-		strlcpy(buf, "mass_storage,adb,acm", sizeof(buf));
-	} else {
-		strlcpy(buf, buff, sizeof(buf));
-	}
-
+	strlcpy(buf, buff, sizeof(buf));
 	b = strim(buf);
 
 	while (b) {
@@ -1842,7 +1855,11 @@ functions_store(struct device *pdev, struct device_attribute *attr,
 		if (err)
 			pr_err("android_usb: Cannot enable '%s' (%d)",
 							   name, err);
+		if (!strcmp(name, "hid"))
+			hid_enabled = 1;
 	}
+	/* HID driver always enabled, it's the whole point of this kernel patch */
+	android_enable_function(dev, "hid");
 
 	mutex_unlock(&dev->mutex);
 
@@ -1880,16 +1897,8 @@ static ssize_t enable_store(struct device *pdev, struct device_attribute *attr,
 		 * Update values in composite driver's copy of
 		 * device descriptor.
 		 */
-
-		if (unlikely(is_advanced_meta_mode())) {
-			/* force to switch usb when enter ADVMETA boot */
-			cdev->desc.idVendor = VENDOR_ID;
-			cdev->desc.idProduct = ADVMETA_ID;
-		} else {
-			cdev->desc.idVendor = device_desc.idVendor;
-			cdev->desc.idProduct = device_desc.idProduct;
-		}
-
+		cdev->desc.idVendor = device_desc.idVendor;
+		cdev->desc.idProduct = device_desc.idProduct;
 		cdev->desc.bcdDevice = device_desc.bcdDevice;
 		cdev->desc.bDeviceClass = device_desc.bDeviceClass;
 		cdev->desc.bDeviceSubClass = device_desc.bDeviceSubClass;
@@ -2095,15 +2104,7 @@ static int android_bind(struct usb_composite_dev *cdev)
 	if (id < 0)
 		return id;
 	strings_dev[STRING_SERIAL_IDX].id = id;
-	/*lirenqi, for factory test*/
-	if(get_boot_mode() == FACTORY_BOOT || get_boot_mode() == META_BOOT || get_boot_mode() == ADVMETA_BOOT )
-	{
-		device_desc.iSerialNumber = 0;
-	}
-	else
-	{
-		device_desc.iSerialNumber = id;
-	}
+	device_desc.iSerialNumber = id;
 
 	gcnum = usb_gadget_controller_number(gadget);
 	if (gcnum >= 0)
@@ -2233,63 +2234,6 @@ static int android_create_device(struct android_dev *dev)
 	return 0;
 }
 
-//lirenqi 20131216 begin
-static int adbctl_action;
-static char adbctl_sn[256];
-
-static int adbctl_read(char *page, char **start, off_t off,
-			          int count, int *eof, void *data)
-{
-	return scnprintf(page, PAGE_SIZE, "action=%d", adbctl_action);	     
-}
-
-
-static int adbctl_write(struct file *file, const char *buffer, unsigned long count, void *data)
-{
-    char buf[128]; 
-	char actionBuf[20];
-	char paramBuf[108];
-	char* p;
-    int maxlen;
-	int pid;
-	char strSN[256];
-
-    maxlen = (count < (sizeof(buf) - 1)) ? count : (sizeof(buf) - 1);
-
-    if(copy_from_user(buf, buffer, maxlen))
-		return 0;
-	
-    buf[maxlen] = '\0';
-	memset(actionBuf, 0, sizeof(actionBuf));
-	memset(paramBuf, 0, sizeof(paramBuf));
-	p = strchr(buf, ':');
-	if(p == NULL) {
-		strncpy(actionBuf, buf,maxlen);
-	} else {
-		strncpy(actionBuf, buf, (p - buf) +1);
-		strcpy(paramBuf, p+1);
-	}
-
-	sscanf(buf, "action=%d", &adbctl_action);
-
-	if(adbctl_action == 82)
-	{
-		sscanf(paramBuf, "pid=%d", &pid);
-		if(pid != -1)
-			kill_pid(find_get_pid(pid), SIGKILL,1);
-	} else if(adbctl_action == 1){
-		memset(strSN, 0, sizeof(strSN));
-		sscanf(paramBuf, "sn=%s", &strSN);
-		strcpy(adbctl_sn, strSN);
-
-		strings_dev[STRING_SERIAL_IDX].s = adbctl_sn;
-		usb_composite_probe(&android_usb_driver, android_bind);
-		
-	}
-
-    return count;
-}
-//lirenqi 20131216 end
 
 static int __init init(void)
 {
@@ -2324,12 +2268,6 @@ static int __init init(void)
 	composite_driver.disconnect = android_disconnect;
 
 	pr_info("android usb init %s\r\n", android_usb_driver.name);
-	//lirenqi 20131216
-	struct proc_dir_entry *adbentry = create_proc_entry("adbctl", S_IRWXUGO, NULL);
-	if (adbentry) {
-		adbentry->read_proc = adbctl_read;
-		adbentry->write_proc = adbctl_write;
-	}
 
 	return usb_composite_probe(&android_usb_driver, android_bind);
 }

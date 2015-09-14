@@ -323,7 +323,6 @@ struct ShotParam
     //
     // Example value: "0" or "90" or "180" or "270".
     int32_t                         mi4Rotation;
-	String8                         mi4Denoise;	//qiaoxiujun,denoise
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //  Interfaces.
@@ -342,8 +341,7 @@ public:     ////                    Instantiation.
                                         String8 const&          rs8ShotFileName         = String8::empty(), 
                                         uint32_t const          u4ZoomRatio             = 100, 
                                         uint32_t const          u4ShotCount             = 1, 
-                                        int32_t const           i4Rotation              = 0,
-                                        String8 const&          i4Denoise         		= String8::empty()	//qiaoxiujun,denoise
+                                        int32_t const           i4Rotation              = 0
                                     )
                                         : ms8PictureFormat(s8PictureFormat)
                                         , mi4PictureWidth(i4PictureWidth)
@@ -358,7 +356,6 @@ public:     ////                    Instantiation.
                                         , mu4ZoomRatio(u4ZoomRatio)
                                         , mu4ShotCount(u4ShotCount)
                                         , mi4Rotation(i4Rotation)
-                                        , mi4Denoise(i4Denoise)	//qiaoxiujun,denoise
                                         //
                                     {
                                     }
@@ -378,7 +375,6 @@ public:     ////                    Instantiation.
                                         mu4ZoomRatio        = rhs.mu4ZoomRatio;
                                         mu4ShotCount        = rhs.mu4ShotCount;
                                         mi4Rotation         = rhs.mi4Rotation;
-										mi4Denoise         	= rhs.mi4Denoise;	//qiaoxiujun,denoise
                                         //
                                         return  (*this);
                                     }

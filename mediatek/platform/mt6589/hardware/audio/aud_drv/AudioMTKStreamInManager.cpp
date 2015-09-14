@@ -61,7 +61,6 @@ namespace android
     do { \
         if (!(exp)) { \
             ALOGE("ASSERT_FTRACE("#exp") fail: \""  __FILE__ "\", %uL", __LINE__); \
-            aee_system_exception("libaudio.primary.default.so", NULL, DB_OPT_FTRACE, "AudioMTkRecordThread is block?"); \
         } \
     } while(0)
 

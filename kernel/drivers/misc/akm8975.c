@@ -32,7 +32,9 @@
 #include <linux/workqueue.h>
 #include <linux/freezer.h>
 #include <linux/akm8975.h>
+#ifdef CONFIG_POWERSUSPEND
 #include <linux/powersuspend.h>
+#endif
 
 #define AK8975DRV_CALL_DBG 0
 #if AK8975DRV_CALL_DBG
@@ -504,6 +506,7 @@ static void akm8975_power_resume(struct power_suspend *handler)
 #endif
 
 
+
 static int akm8975_init_client(struct i2c_client *client)
 {
 	struct akm8975_data *data;
@@ -701,7 +704,7 @@ MODULE_DEVICE_TABLE(i2c, akm8975_id);
 static struct i2c_driver akm8975_driver = {
 	.probe = akm8975_probe,
 	.remove = akm8975_remove,
-#ifndef CONFIG_POWERSUSPEND
+#ifndef (CONFIG_POWERSUSPEND)
 	.resume = akm8975_resume,
 	.suspend = akm8975_suspend,
 #endif

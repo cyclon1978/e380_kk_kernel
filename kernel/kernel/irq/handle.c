@@ -25,12 +25,6 @@
 #ifdef CONFIG_MTPROF_CPUTIME
 /*  cputime monitor en/disable value */
 extern int mtsched_enabled;
-#ifdef CONFIG_MT_ENG_BUILD
-#define MAX_THREAD_COUNT 6000	// max debug thread count, if reach the level, stop store new thread informaiton.
-#else
-#define MAX_THREAD_COUNT 3000
-#endif
-extern int proc_count;
 #endif
 
 /**
@@ -186,7 +180,7 @@ handle_irq_event_percpu(struct irq_desc *desc, struct irqaction *action)
 				mtk_isr_point = mtk_isr_point -> next;
 			}
 
-			if((isr_find == 0) && (proc_count < MAX_THREAD_COUNT))
+			if((current->se.mtk_isr!= NULL) && (isr_find == 0))
 			{
 				mtk_isr_point =  kmalloc(sizeof(struct mtk_isr_info), GFP_ATOMIC);
 				if(mtk_isr_point == NULL)

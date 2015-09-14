@@ -63,10 +63,6 @@ LOCAL_C_INCLUDES += $(TOP)/$(MTK_PATH_PLATFORM)/hardware/mtkcam/core/featureio/p
 LOCAL_C_INCLUDES += $(MTK_PATH_CUSTOM)/hal/inc/aaa
 LOCAL_C_INCLUDES += $(MTK_PATH_CUSTOM)/hal/inc/debug_exif/aaa
 
-
-LOCAL_C_INCLUDES += $(TOP)/$(MTK_PATH_PLATFORM)/hardware/mtkcam/v1/hal/adapter/Arcsoft/Denoise/inc
-LOCAL_C_INCLUDES += $(TOP)/$(MTK_PATH_PLATFORM)/hardware/mtkcam/v1/hal/adapter/Arcsoft/Platform/inc
-
 #-----------------------------------------------------------
 LOCAL_CFLAGS += $(MTKCAM_CFLAGS)
 

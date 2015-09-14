@@ -249,9 +249,11 @@ static inline cputime64_t get_cpu_iowait_time(unsigned int cpu, cputime64_t *wal
 	return iowait_time;
 }
 
-void force_two_core(void)
+void force_two_core()
 {
+    unsigned int input;
     bool raise_freq = false;
+    int ret;
 
     mutex_lock(&hp_mutex);
     g_cpu_down_count = 0;
@@ -774,7 +776,7 @@ static void dbs_freq_increase(struct cpufreq_policy *p, unsigned int freq)
 			CPUFREQ_RELATION_L : CPUFREQ_RELATION_H);
 }
 
-int mt_cpufreq_cur_load(void)
+int mt_cpufreq_cur_load()
 {
     return cpu_loading;
 }
@@ -1485,8 +1487,8 @@ static void __exit cpufreq_gov_dbs_exit(void)
 	cpufreq_unregister_governor(&cpufreq_gov_balance);
 
 	#if INPUT_BOOST
-	kthread_stop(freq_up_task);
-	put_task_struct(freq_up_task);
+	kthread_stop(touch_freq_up_task);
+	put_task_struct(touch_freq_up_task);
 	#endif
 }
 

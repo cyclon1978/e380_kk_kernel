@@ -166,18 +166,6 @@ createInstance_ZsdShot(
     int32_t const       i4OpenId
 );
 
-//qiaoxiujun,bright magic plus mode
-/******************************************************************************
- *  Bright magic Shot
- ******************************************************************************/
-extern "C"
-sp<IShot>
-createInstance_BrightMagicShot(
-    char const*const    pszShotName, 
-    uint32_t const      u4ShotMode, 
-    int32_t const       i4OpenId
-);
-
 ////////////////////////////////////////////////////////////////////////////////
 //  Shot Factory
 ////////////////////////////////////////////////////////////////////////////////
@@ -249,7 +237,6 @@ createShotInstance(
     case eShotMode_ContinuousShot:
         rpShot = createInstance_ContinuousShot("ContinuousShotNcc", u4ShotMode, i4OpenId);
         break;
-        
     //  Continuous Shot Cc
     case eShotMode_ContinuousShotCc:
         rpShot = createInstance_ContinuousShot("ContinuousShotCc", u4ShotMode, i4OpenId);
@@ -275,11 +262,6 @@ createShotInstance(
     case eShotMode_ZsdShot:
         rpShot = createInstance_ZsdShot("ZSD", u4ShotMode, i4OpenId);
         break;
-	//
-    //  Bright magic Plus Shot
-    case eShotMode_BrightMagicShot:	//qiaoxiujun,bright magic plus mode
-        rpShot = createInstance_BrightMagicShot("BrightMagicShot", u4ShotMode, i4OpenId);
-        break;	
     //
     //  Face-beautifier Shot
     case eShotMode_FaceBeautyShot: {

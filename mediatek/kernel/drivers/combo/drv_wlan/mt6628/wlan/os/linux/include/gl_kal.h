@@ -1648,15 +1648,10 @@ typedef UINT_32             KAL_WAKE_LOCK_T, *P_KAL_WAKE_LOCK_T;
         panic("Oops"); \
     } while(0)
 
-#if CFG_ENABLE_AEE_MSG
-#define kalSendAeeException                         aee_kernel_exception
-#define kalSendAeeWarning                           aee_kernel_warning
-#define kalSendAeeReminding                         aee_kernel_reminding
-#else
+// no aee support
 #define kalSendAeeException(_module, _desc, ...)
 #define kalSendAeeWarning(_module, _desc, ...)
 #define kalSendAeeReminding(_module, _desc, ...)
-#endif
 
 #define PRINTF_ARG(...)                             __VA_ARGS__
 #define SPRINTF(buf, arg)                           {buf += sprintf((char *)(buf), PRINTF_ARG arg);}

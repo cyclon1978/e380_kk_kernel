@@ -426,9 +426,11 @@ EXPORT_SYMBOL_GPL(ubi_leb_read);
  * @buf: data to write
  * @offset: offset within the logical eraseblock where to write
  * @len: how many bytes to write
+ * @dtype: expected data type
  *
  * This function writes @len bytes of data from @buf to offset @offset of
- * logical eraseblock @lnum.
+ * logical eraseblock @lnum. The @dtype argument describes expected lifetime of
+ * the data.
  *
  * This function takes care of physical eraseblock write failures. If write to
  * the physical eraseblock write operation fails, the logical eraseblock is
@@ -445,7 +447,7 @@ EXPORT_SYMBOL_GPL(ubi_leb_read);
  * returns immediately with %-EBADF code.
  */
 int ubi_leb_write(struct ubi_volume_desc *desc, int lnum, const void *buf,
-		  int offset, int len)
+		  int offset, int len, int dtype)
 {
 	struct ubi_volume *vol = desc->vol;
 	struct ubi_device *ubi = vol->ubi;
@@ -464,13 +466,17 @@ int ubi_leb_write(struct ubi_volume_desc *desc, int lnum, const void *buf,
 	    offset & (ubi->min_io_size - 1) || len & (ubi->min_io_size - 1))
 		return -EINVAL;
 
+	if (dtype != UBI_LONGTERM && dtype != UBI_SHORTTERM &&
+	    dtype != UBI_UNKNOWN)
+		return -EINVAL;
+
 	if (vol->upd_marker)
 		return -EBADF;
 
 	if (len == 0)
 		return 0;
 
-	return ubi_eba_write_leb(ubi, vol, lnum, buf, offset, len);
+	return ubi_eba_write_leb(ubi, vol, lnum, buf, offset, len, dtype);
 }
 EXPORT_SYMBOL_GPL(ubi_leb_write);
 
@@ -480,6 +486,7 @@ EXPORT_SYMBOL_GPL(ubi_leb_write);
  * @lnum: logical eraseblock number to change
  * @buf: data to write
  * @len: how many bytes to write
+ * @dtype: expected data type
  *
  * This function changes the contents of a logical eraseblock atomically. @buf
  * has to contain new logical eraseblock data, and @len - the length of the
@@ -490,7 +497,7 @@ EXPORT_SYMBOL_GPL(ubi_leb_write);
  * code in case of failure.
  */
 int ubi_leb_change(struct ubi_volume_desc *desc, int lnum, const void *buf,
-		   int len)
+		   int len, int dtype)
 {
 	struct ubi_volume *vol = desc->vol;
 	struct ubi_device *ubi = vol->ubi;
@@ -508,13 +515,17 @@ int ubi_leb_change(struct ubi_volume_desc *desc, int lnum, const void *buf,
 	    len > vol->usable_leb_size || len & (ubi->min_io_size - 1))
 		return -EINVAL;
 
+	if (dtype != UBI_LONGTERM && dtype != UBI_SHORTTERM &&
+	    dtype != UBI_UNKNOWN)
+		return -EINVAL;
+
 	if (vol->upd_marker)
 		return -EBADF;
 
 	if (len == 0)
 		return 0;
 
-	return ubi_eba_atomic_leb_change(ubi, vol, lnum, buf, len);
+	return ubi_eba_atomic_leb_change(ubi, vol, lnum, buf, len, dtype);
 }
 EXPORT_SYMBOL_GPL(ubi_leb_change);
 
@@ -615,6 +626,7 @@ EXPORT_SYMBOL_GPL(ubi_leb_unmap);
  * ubi_leb_map - map logical eraseblock to a physical eraseblock.
  * @desc: volume descriptor
  * @lnum: logical eraseblock number
+ * @dtype: expected data type
  *
  * This function maps an un-mapped logical eraseblock @lnum to a physical
  * eraseblock. This means, that after a successful invocation of this
@@ -627,7 +639,7 @@ EXPORT_SYMBOL_GPL(ubi_leb_unmap);
  * eraseblock is already mapped, and other negative error codes in case of
  * other failures.
  */
-int ubi_leb_map(struct ubi_volume_desc *desc, int lnum)
+int ubi_leb_map(struct ubi_volume_desc *desc, int lnum, int dtype)
 {
 	struct ubi_volume *vol = desc->vol;
 	struct ubi_device *ubi = vol->ubi;
@@ -640,13 +652,17 @@ int ubi_leb_map(struct ubi_volume_desc *desc, int lnum)
 	if (lnum < 0 || lnum >= vol->reserved_pebs)
 		return -EINVAL;
 
+	if (dtype != UBI_LONGTERM && dtype != UBI_SHORTTERM &&
+	    dtype != UBI_UNKNOWN)
+		return -EINVAL;
+
 	if (vol->upd_marker)
 		return -EBADF;
 
 	if (vol->eba_tbl[lnum] >= 0)
 		return -EBADMSG;
 
-	return ubi_eba_write_leb(ubi, vol, lnum, NULL, 0, 0);
+	return ubi_eba_write_leb(ubi, vol, lnum, NULL, 0, 0, dtype);
 }
 EXPORT_SYMBOL_GPL(ubi_leb_map);
 

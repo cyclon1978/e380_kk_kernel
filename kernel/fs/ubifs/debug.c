@@ -2676,7 +2676,7 @@ static void cut_data(const void *buf, unsigned int len)
 }
 
 int dbg_leb_write(struct ubifs_info *c, int lnum, const void *buf,
-		  int offs, int len)
+		  int offs, int len, int dtype)
 {
 	int err, failing;
 
@@ -2686,7 +2686,7 @@ int dbg_leb_write(struct ubifs_info *c, int lnum, const void *buf,
 	failing = power_cut_emulated(c, lnum, 1);
 	if (failing)
 		cut_data(buf, len);
-	err = ubi_leb_write(c->ubi, lnum, buf, offs, len);
+	err = ubi_leb_write(c->ubi, lnum, buf, offs, len, dtype);
 	if (err)
 		return err;
 	if (failing)
@@ -2695,7 +2695,7 @@ int dbg_leb_write(struct ubifs_info *c, int lnum, const void *buf,
 }
 
 int dbg_leb_change(struct ubifs_info *c, int lnum, const void *buf,
-		   int len)
+		   int len, int dtype)
 {
 	int err;
 
@@ -2703,7 +2703,7 @@ int dbg_leb_change(struct ubifs_info *c, int lnum, const void *buf,
 		return -EROFS;
 	if (power_cut_emulated(c, lnum, 1))
 		return -EROFS;
-	err = ubi_leb_change(c->ubi, lnum, buf, len);
+	err = ubi_leb_change(c->ubi, lnum, buf, len, dtype);
 	if (err)
 		return err;
 	if (power_cut_emulated(c, lnum, 1))
@@ -2727,7 +2727,7 @@ int dbg_leb_unmap(struct ubifs_info *c, int lnum)
 	return 0;
 }
 
-int dbg_leb_map(struct ubifs_info *c, int lnum)
+int dbg_leb_map(struct ubifs_info *c, int lnum, int dtype)
 {
 	int err;
 
@@ -2735,7 +2735,7 @@ int dbg_leb_map(struct ubifs_info *c, int lnum)
 		return -EROFS;
 	if (power_cut_emulated(c, lnum, 0))
 		return -EROFS;
-	err = ubi_leb_map(c->ubi, lnum);
+	err = ubi_leb_map(c->ubi, lnum, dtype);
 	if (err)
 		return err;
 	if (power_cut_emulated(c, lnum, 0))
@@ -2863,7 +2863,7 @@ static int provide_lca_user_output(int val, char __user *u, size_t count,
 static int dbg_show_all_tnc_info(int val, char __user *u, size_t count,
 			       loff_t *ppos)
 {
-	struct ubifs_info *c=NULL;
+	struct ubifs_info *c;
 	struct list_head *p;
 	struct list_head *pFirst;
 	char buf[512];
@@ -2871,7 +2871,7 @@ static int dbg_show_all_tnc_info(int val, char __user *u, size_t count,
 	uint32_t total_cleanable_tnc = 0;
 	uint32_t total_tnc_memory = 0;
 	
-	//int freed = 0;
+	int freed = 0;
 	struct ubifs_znode *znode;
 	int level;
 	int u_id = 0;
@@ -2882,7 +2882,7 @@ static int dbg_show_all_tnc_info(int val, char __user *u, size_t count,
 	/* Iterate over all mounted UBIFS file-systems to get all tnc information*/
 	p = ubifs_infos.next;
 	pFirst = p;
-	printk(KERN_ERR "dbg_show_all_tnc_info first p  = 0x%x,&ubifs_infos = 0x%x\n",(unsigned int)p,(unsigned int)&ubifs_infos);
+	printk(KERN_ERR "dbg_show_all_tnc_info first p  = 0x%x,&ubifs_infos = 0x%x\n",p,&ubifs_infos);
 
 
 	memset(&g_dbg_tnc_info,0, sizeof(g_dbg_tnc_info));
@@ -2927,15 +2927,15 @@ static int dbg_show_all_tnc_info(int val, char __user *u, size_t count,
 		
 		printk(KERN_ERR "\n");
 		printk(KERN_ERR "(pid %d) start dumping TNC tree, u_id = %d\n", current->pid,u_id);
-	    printk(KERN_ERR "c->zroot.znode = 0x%x\n", (unsigned int)c->zroot.znode);
+	    printk(KERN_ERR "c->zroot.znode = 0x%x\n", c->zroot.znode);
 
 		if (c->zroot.znode)
 		{
-			printk(KERN_ERR "c->zroot.znode = 0x%x #2\n", (unsigned int)c->zroot.znode);
+			printk(KERN_ERR "c->zroot.znode = 0x%x #2\n", c->zroot.znode);
 		
     		znode = ubifs_tnc_levelorder_next(c->zroot.znode, NULL);
     		level = znode->level;
-			printk(KERN_ERR "c->zroot.znode = 0x%x #3\n", (unsigned int)c->zroot.znode);
+			printk(KERN_ERR "c->zroot.znode = 0x%x #3\n", c->zroot.znode);
 			
     		while (znode) {
     		
@@ -2943,7 +2943,7 @@ static int dbg_show_all_tnc_info(int val, char __user *u, size_t count,
     			znode = ubifs_tnc_levelorder_next(c->zroot.znode, znode);
     		}
     
-	        printk(KERN_ERR "c->zroot.znode = 0x%x #4\n", (unsigned int)c->zroot.znode);
+	        printk(KERN_ERR "c->zroot.znode = 0x%x #4\n", c->zroot.znode);
 			
     		printk(KERN_ERR "u[%d],total_znode = %d, total_tnc_leaf_lens = %d, c->max_znode_sz = %d,total_clean_znode = %d,total_clean_tnc_leaf_lens = %d\n",u_id,total_znode,total_tnc_leaf_lens,c->max_znode_sz,
     		total_clean_znode,total_clean_tnc_leaf_lens);
@@ -2957,7 +2957,7 @@ static int dbg_show_all_tnc_info(int val, char __user *u, size_t count,
 		}
 		else
 		{
-			printk(KERN_ERR "c->zroot.znode = 0x%x error!!\n",(unsigned int)c->zroot.znode);
+			printk(KERN_ERR "c->zroot.znode = 0x%x error!!\n",c->zroot.znode);
 		}
 		u_id++;
 
@@ -2972,7 +2972,7 @@ static int dbg_show_all_tnc_info(int val, char __user *u, size_t count,
 		p = p->next;
 
 
-		printk(KERN_ERR "dbg_show_all_tnc_info next p	= 0x%x\n",(unsigned int)p);
+		printk(KERN_ERR "dbg_show_all_tnc_info next p	= 0x%x\n",p);
 		
 		mutex_unlock(&c->umount_mutex);		
 		if (pFirst == p)
@@ -2994,8 +2994,8 @@ static int dbg_show_all_tnc_info(int val, char __user *u, size_t count,
 	total_tnc_memory = g_dbg_tnc_info.total_tnc_leaf_lens + g_dbg_tnc_info.total_znode*c->max_znode_sz;
 
     
-    snprintf(buf, 512, "total_ubifs_vol = %d\r\ntotal_znode = %d\r\ntotal_tnc_leaf_lens = %d\r\nc->max_znode_sz = %d\r\ntotal_clean_znode = %d\r\ntotal_cleanable_tnc = %d\r\nubifs_max_clean_zn_cnt = %ld\r\ntotal_tnc_memory = %d\r\nubifs_clean_zn_cnt = %ld\r\n",g_dbg_tnc_info.total_ubifs_volume,g_dbg_tnc_info.total_znode,g_dbg_tnc_info.total_tnc_leaf_lens,c->max_znode_sz,
-        g_dbg_tnc_info.total_clean_znode,total_cleanable_tnc,ubifs_max_clean_zn_cnt,total_tnc_memory,atomic_long_read(&ubifs_clean_zn_cnt));
+    snprintf(buf, 512, "total_ubifs_vol = %d\r\ntotal_znode = %d\r\ntotal_tnc_leaf_lens = %d\r\nc->max_znode_sz = %d\r\ntotal_clean_znode = %d\r\ntotal_cleanable_tnc = %d\r\nubifs_max_clean_zn_cnt = %d\r\ntotal_tnc_memory = %d\r\nubifs_clean_zn_cnt = %d\r\n",g_dbg_tnc_info.total_ubifs_volume,g_dbg_tnc_info.total_znode,g_dbg_tnc_info.total_tnc_leaf_lens,c->max_znode_sz,
+        g_dbg_tnc_info.total_clean_znode,total_cleanable_tnc,ubifs_max_clean_zn_cnt,total_tnc_memory,ubifs_clean_zn_cnt);
 
 	lens = strlen(buf);
 
@@ -3093,26 +3093,6 @@ static ssize_t dfs_file_read(struct file *file, char __user *u, size_t count,
 	  return provide_lca_tnc_output(val, u, count, ppos,c);
 	  
 	}	
-	else if (dent == d->dfs_wbuf_count)
-	{	
-	  	char buf[100];
-	  	int i,len;
-		len = snprintf(buf, 100, "GC/BASE/DATA: ");
-		for(i = 0 ; i < c->jhead_cnt ; i++) {
-			len += snprintf(buf+len, 100-len, "%lld/", c->jheads[i].wbuf.w_count);
-		}
-		snprintf(buf+len-1, 100-len+1, "\n");
-	  	return simple_read_from_buffer(u, count, ppos, buf, len);
-	} 
-	else if (dent == d->dfs_host_wcount)
-	{
-	  	char buf[100];
-	  	int len;
-		len = snprintf(buf, 100, "host write: ");
-		len += snprintf(buf+len, 100-len, "%d\n", c->host_wcount);
-	  	return simple_read_from_buffer(u, count, ppos, buf, len);
-	
-	}
 	else
 		return -EINVAL;
 
@@ -3323,24 +3303,6 @@ int dbg_debugfs_init_fs(struct ubifs_info *c)
         goto out_remove;
 
     d->dfs_lca_show_tnc = dent;
-
-    fname = "wbuf_count";
-    dent = debugfs_create_file(fname, S_IRUSR , d->dfs_dir, c,
-                   &dfs_fops);
-
-    if (IS_ERR_OR_NULL(dent))
-        goto out_remove;
-
-    d->dfs_wbuf_count = dent;
-
-    fname = "host_wcount";
-    dent = debugfs_create_file(fname, S_IRUSR , d->dfs_dir, c,
-                   &dfs_fops);
-
-    if (IS_ERR_OR_NULL(dent))
-        goto out_remove;
-
-    d->dfs_host_wcount = dent;
 
 
     return 0;

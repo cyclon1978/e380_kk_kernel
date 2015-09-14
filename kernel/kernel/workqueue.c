@@ -1487,12 +1487,19 @@ static void destroy_worker(struct worker *worker)
 	if (worker->flags & WORKER_IDLE)
 		gcwq->nr_idle--;
 
+	/*
+	 * Once WORKER_DIE is set, the kworker may destroy itself at any
+	 * point.  Pin to ensure the task stays until we're done with it.
+	 */
+	get_task_struct(worker->task);
+
 	list_del_init(&worker->entry);
 	worker->flags |= WORKER_DIE;
 
 	spin_unlock_irq(&gcwq->lock);
 
 	kthread_stop(worker->task);
+	put_task_struct(worker->task);
 	kfree(worker);
 
 	spin_lock_irq(&gcwq->lock);
@@ -1854,8 +1861,6 @@ __acquires(&gcwq->lock)
 	bool cpu_intensive = cwq->wq->flags & WQ_CPU_INTENSIVE;
 	int work_color;
 	struct worker *collision;
-	unsigned long long exec_start;
-	char func[128];
 #ifdef CONFIG_LOCKDEP
 	/*
 	 * It is permissible to free the struct work_struct from
@@ -1919,9 +1924,6 @@ __acquires(&gcwq->lock)
 
 	lock_map_acquire_read(&cwq->wq->lockdep_map);
 	lock_map_acquire(&lockdep_map);
-	exec_start = sched_clock();
-	sprintf(func, "%pf", work->func);
-
 	trace_workqueue_execute_start(work);
 #ifdef CONFIG_MTK_WQ_DEBUG
 	mttrace_workqueue_execute_work(work);
@@ -1936,10 +1938,6 @@ __acquires(&gcwq->lock)
 #ifdef CONFIG_MTK_WQ_DEBUG
 	mttrace_workqueue_execute_end(work);
 #endif //CONFIG_MTK_WQ_DEBUG
-
-	if ((sched_clock() - exec_start)> 1000000000) // dump log if execute more than 1 sec
-		printk(KERN_DEBUG "WQ warning! work (%s, %x) execute more than 1 sec, time: %llu ns\n", func, work, sched_clock() - exec_start);
-	
 	lock_map_release(&lockdep_map);
 	lock_map_release(&cwq->wq->lockdep_map);
 
@@ -1951,6 +1949,15 @@ __acquires(&gcwq->lock)
 		debug_show_held_locks(current);
 		dump_stack();
 	}
+
+	/*
+	 * The following prevents a kworker from hogging CPU on !PREEMPT
+	 * kernels, where a requeueing work item waiting for something to
+	 * happen could deadlock with stop_machine as such work item could
+	 * indefinitely requeue itself while all other CPUs are trapped in
+	 * stop_machine.
+	 */
+	cond_resched();
 
 	spin_lock_irq(&gcwq->lock);
 

@@ -334,7 +334,8 @@ static ssize_t vol_cdev_direct_write(struct file *file, const char __user *buf,
 			break;
 		}
 
-		err = ubi_eba_write_leb(ubi, vol, lnum, tbuf, off, len);
+		err = ubi_eba_write_leb(ubi, vol, lnum, tbuf, off, len,
+					UBI_UNKNOWN);
 		if (err)
 			break;
 
@@ -476,6 +477,9 @@ static long vol_cdev_ioctl(struct file *file, unsigned int cmd,
 		if (req.lnum < 0 || req.lnum >= vol->reserved_pebs ||
 		    req.bytes < 0 || req.lnum >= vol->usable_leb_size)
 			break;
+		if (req.dtype != UBI_LONGTERM && req.dtype != UBI_SHORTTERM &&
+		    req.dtype != UBI_UNKNOWN)
+			break;
 
 		err = get_exclusive(desc);
 		if (err < 0)
@@ -528,7 +532,7 @@ static long vol_cdev_ioctl(struct file *file, unsigned int cmd,
 			err = -EFAULT;
 			break;
 		}
-		err = ubi_leb_map(desc, req.lnum);
+		err = ubi_leb_map(desc, req.lnum, req.dtype);
 		break;
 	}
 

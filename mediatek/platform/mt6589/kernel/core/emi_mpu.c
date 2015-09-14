@@ -10,9 +10,6 @@
 #include <linux/irq.h>
 #include <linux/sched.h>
 #include <linux/list.h>
-#ifdef CONFIG_MTK_AEE_FEATURE
-#include <linux/aee.h>
-#endif  
 
 #include <mach/mt_reg_base.h>
 #include <mach/emi_mpu.h>
@@ -470,11 +467,6 @@ static irqreturn_t mpu_violation_irq(int irq, void *dev_id)
         printk(KERN_CRIT "Out of range violation.\n");
     }      
     
-#ifdef CONFIG_MTK_AEE_FEATURE
-    //aee_kernel_exception("EMI MPU", "EMI MPU violation.\nEMP_MPUS = 0x%x, EMI_MPUT = 0x%x, EMI_MPU(PQR).\n", dbg_s, dbg_t+EMI_PHY_OFFSET, dbg_pqry);
-    aee_kernel_exception("EMI MPU", "EMI MPU violation.\nEMP_MPUS = 0x%x, EMI_MPUT = 0x%x, module is %s.\n", dbg_s, dbg_t+EMI_PHY_OFFSET, master_name);    
-#endif
-
     __clear_emi_mpu_vio();
         
     // Device APC 

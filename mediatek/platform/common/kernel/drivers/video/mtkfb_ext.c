@@ -41,7 +41,6 @@
 #include "mtkfb_info.h"
 #include "ddp_ovl.h"
 #include "disp_drv_platform.h"
-#include <linux/aee.h>
 // Fence Sync Object
 #if defined (MTK_FB_SYNC_SUPPORT)
 #include "disp_sync_ext.h"
@@ -1478,11 +1477,6 @@ EXIT:
 }
 
 
-#include <linux/aee.h>
-#define mtkfb_aee_print(string, args...) do{\
-    aee_kernel_warning_api(__FILE__, __LINE__, DB_OPT_MMPROFILE_BUFFER, "sf-mtkfb blocked", string, ##args);  \
-}while(0)
-
 void mtkfb_dump_layer_info(void)
 {
 #if 0
@@ -1528,9 +1522,6 @@ void mtkfb_dump_layer_info(void)
 	    realtime_layer_config[i].connected_type, 
 	    realtime_layer_config[i].security);	
 	}
-	    
-	// dump mmp data
-	//mtkfb_aee_print("surfaceflinger-mtkfb blocked");
 #endif
 }
 
@@ -1711,7 +1702,6 @@ static int mtkfb_ioctl(struct file *file, struct fb_info *info, unsigned int cmd
         printk("[DDP] mtkfb_ioctl():MTKFB_ERROR_INDEX_UPDATE_TIMEOUT  \n");
         // call info dump function here
         mtkfb_dump_layer_info();
-        mtkfb_aee_print("surfaceflinger-mtkfb blocked");
         return (r);
     }
         
@@ -3095,7 +3085,6 @@ static void mtkfb_early_suspend(struct power_suspend *h)
     printk("[FB Driver] leave early_suspend\n");
 
     MSG_FUNC_LEAVE();
-	aee_kernel_wdt_kick_Powkey_api("mtkfb_early_suspend",WDT_SETBY_Display); 
 }
 #endif
 
@@ -3165,7 +3154,6 @@ static void mtkfb_late_resume(struct power_suspend *h)
     printk("[FB Driver] leave late_resume\n");
 
     MSG_FUNC_LEAVE();
-	aee_kernel_wdt_kick_Powkey_api("mtkfb_late_resume",WDT_SETBY_Display); 
 }
 #endif
 

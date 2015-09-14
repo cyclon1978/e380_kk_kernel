@@ -48,24 +48,6 @@ using namespace NSAsdClient;
 MINT32 Buffer_width =320; 
 MINT32 Buffer_height = 240;
 
-#ifdef ARCSOFT_CAMERA_FEATURE
-#define PICAUTO_FEATURE   (1)
-#endif
-
-#if PICAUTO_FEATURE
-#include "arcsoft_asd.h"
-#include "asvloffscreen.h"
-#include "ammem.h"
-#include "merror.h"
-
-//#define ASD_DEBUG
-#define ASD_STATIC_MEM  (10*1024*1024)
-MVoid*  g_pMem = MNull;
-MHandle g_hMemMgr = MNull;
-MHandle g_hAsd = MNull;
-int g_imageIndex = 0;
-#endif
-
 /******************************************************************************
 *
 *******************************************************************************/
@@ -134,41 +116,7 @@ bool
 AsdClient::
 init()
 {
-	bool ret = true;
-#if PICAUTO_FEATURE
-	g_pMem = MMemAlloc(MNull, ASD_STATIC_MEM);
-	if (MNull == g_pMem)
-	{
-		MY_LOGE("Asd MMemAlloc failed");
-		return false;
-	}
-		
-	g_hMemMgr = MMemMgrCreate(g_pMem, ASD_STATIC_MEM); 
-	if (MNull == g_hMemMgr)
-	{
-		MY_LOGE("Asd MMemMgrCreate failed");
-		if(MNull != g_hMemMgr)
-		{
-			MMemMgrDestroy(g_hMemMgr);
-			g_hMemMgr = MNull;
-		}
-
-		if(MNull != g_pMem) 
-		{
-			MMemFree(MNull, g_pMem);
-			g_pMem = MNull;
-		}
-			
-		return false;
-	}
-
-	int res = 0;
-	if (0 != (res = ASD_Init(g_hMemMgr, &g_hAsd)))
-	{
-		MY_LOGE("Asd ASD_Init failed res = %d", res);
-		return false;
-	}
-#endif
+    bool ret = true;
 
     //Get Sensor Type
     //MINT32 i4SensorDevId = DevMetaInfo::queryHalSensorDev(mpParamsMgr->getOpenId());
@@ -238,26 +186,6 @@ uninit()
 {
     bool ret = true;
 
-#if PICAUTO_FEATURE
-	if(MNull != g_hAsd)
-	{
-		ASD_UnInit(g_hAsd);
-		g_hAsd = MNull;
-	}
-    
-	if(MNull != g_hMemMgr)
-	{
-		MMemMgrDestroy(g_hMemMgr);
-		g_hMemMgr = MNull;
-	}
-
-	if(MNull != g_pMem) 
-	{
-		MMemFree(MNull, g_pMem);
-		g_pMem = MNull;
-	}
-#endif
-	
     if(mpHalASDObj != NULL)
     {
         mpHalASDObj->mHalAsdUnInit();
@@ -400,104 +328,12 @@ update(MUINT8 * OT_Buffer, MINT32 a_Buffer_width, MINT32 a_Buffer_height)
         mpHalASDObj->mHalAsdInit((void*)&ASDInfo, mpWorkingBuf, (eSensorType==SENSOR_TYPE_RAW)?0:1, Buffer_width/2, Buffer_height/2);
     }
 
-#if PICAUTO_FEATURE
-#ifdef ASD_DEBUG
-	char path[256];
-	sprintf(path, "/mnt/sdcard/DCIM/asd_%dx%d_src_%d.rgb16", Buffer_width, Buffer_height, g_imageIndex);
-	FILE* file = MNull;
-	file = fopen(path, "wb");
-	if(file == MNull)
-	{
-		MY_LOGE("file open failed path = %s", path);
-		return;
-	}
-	fwrite(OT_Buffer, Buffer_width * Buffer_height * 2, 1, file);
-	fclose(file);
-	g_imageIndex ++;
-#endif //ASD_DEBUG
-
-	if(MNull == g_hAsd)
-	{
-		MY_LOGE("MNull == g_hAsd");
-		return;
-	}
-	
-	ASD_SCENETYPE scene_type = ASD_AUTO;
-	ASD_HW_PARAM hardwareParam = {0};
-
-	int faceCount = mpFaceInfo->number_of_faces  <= MAXFACECOUNT ? mpFaceInfo->number_of_faces  : MAXFACECOUNT;
-	hardwareParam.wFaces = faceCount;
-	for (int i=0; i<faceCount; ++i)
-	{
-		MY_LOGD("before, image face[%d] = %d, %d, %d, %d", i, mpFaceInfo->faces[i].rect[0], 
-			mpFaceInfo->faces[i].rect[1], mpFaceInfo->faces[i].rect[2],mpFaceInfo->faces[i].rect[3]);
-         
-		int tempLeft = (mpFaceInfo->faces[i].rect[0] + 1000) * Buffer_width /2000;
-		int tempTop = (mpFaceInfo->faces[i].rect[1] + 1000) * Buffer_height / 2000;
-		int tempRight = (mpFaceInfo->faces[i].rect[2] + 1000) * Buffer_width /2000;
-		int tempBottom = (mpFaceInfo->faces[i].rect[3] + 1000) * Buffer_height / 2000;
-         
-		hardwareParam.stFaces[i].wLeftTopX			= tempLeft;
-		hardwareParam.stFaces[i].wLeftTopY			= tempTop;
-		hardwareParam.stFaces[i].wRightBottomX		= tempRight;
-		hardwareParam.stFaces[i].wRightBottomY		= tempBottom;
-
-		MY_LOGD("after, image face[%d] = %d, %d, %d, %d", i, hardwareParam.stFaces[i].wLeftTopX, 
-			hardwareParam.stFaces[i].wLeftTopY,          hardwareParam.stFaces[i].wRightBottomX,hardwareParam.stFaces[i].wRightBottomY);
-	}
-	hardwareParam.wOrientation = 0;
-
-	ASVLOFFSCREEN inputImg = {0};
-	inputImg.u32PixelArrayFormat = ASVL_PAF_RGB16_B5G6R5;
-	inputImg.i32Width = Buffer_width;
-	inputImg.i32Height = Buffer_height;
-	inputImg.pi32Pitch[0] = inputImg.i32Width * 2;
-	inputImg.ppu8Plane[0] = (MUInt8*)OT_Buffer;
-
-	int res = MOK;
-	res = ASD_SceneDetector(g_hAsd, &inputImg, &hardwareParam, &scene_type);
-	MY_LOGD("ASD_SceneDetector Out res=%d scene_type=%d", res, scene_type);
-	if(MOK != res)
-	{
-		MY_LOGE("ASD_SceneDetector process failed res=%d", res);
-		return;
-	}
-
-	switch (scene_type) 
-	{
-	case ASD_PORTRAIT:
-		u4Scene = mhal_ASD_DECIDER_UI_P;
-		break;
-		
-	case ASD_BACKLIT:
-		u4Scene = mhal_ASD_DECIDER_UI_B;
-		break;
-
-	case ASD_PORTRAIT_NIGHT:
-		u4Scene = mhal_ASD_DECIDER_UI_NP;
-		break;
-
-	case ASD_PORTRAIT_BACKLIT:
-		u4Scene = mhal_ASD_DECIDER_UI_BP;
-		break;
-
-	case ASD_NIGHT:
-		u4Scene = mhal_ASD_DECIDER_UI_N;
-		break;
-
-	case ASD_AUTO:
-	default:
-		u4Scene = mhal_ASD_DECIDER_UI_AUTO;
-	}
-	
-#else
-	//Asd Pipe Decider
+    //Asd Pipe Decider
     mpHalASDObj->mHalAsdDecider((void*)&ASDInfo,(void*)mpFaceInfo,mSceneCur);
     //MY_LOGD("ASDInfo.bAEBacklit:%d ", ASDInfo.bAEBacklit);
     //MY_LOGD("mSceneCur:%d ", mSceneCur);
 
     u4Scene = mSceneCur;
-#endif	
 
     MY_LOGD("u4Scene:%d ", u4Scene);
 

@@ -58,9 +58,6 @@ LOCAL_C_INCLUDES += $(MTKCAM_C_INCLUDES)
 LOCAL_C_INCLUDES += $(TOP)/$(MTK_PATH_SOURCE)/hardware/include
 LOCAL_C_INCLUDES += $(TOP)/$(MTK_PATH_PLATFORM)/hardware/include
 
-LOCAL_LDFLAGS += $(TOP)/$(MTK_PATH_PLATFORM)/hardware/mtkcam/v1/hal/adapter/Arcsoft/Picauto/lib/arcsoft_asd.a
-LOCAL_LDFLAGS += $(TOP)/$(MTK_PATH_PLATFORM)/hardware/mtkcam/v1/hal/adapter/Arcsoft/Platform/lib/mpbase.a
-
 #-----------------------------------------------------------
 LOCAL_CFLAGS += $(MTKCAM_CFLAGS)
 

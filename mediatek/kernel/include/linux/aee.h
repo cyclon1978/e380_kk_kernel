@@ -18,9 +18,9 @@ typedef enum {
 } AE_DEFECT_ATTR;
 
 typedef enum {
-    AE_KE = 0, /* Fatal Exception */
-    AE_NE, 
-    AE_JE, 
+    AE_KE = 0, /* Kernel panic, HWT-REBOOT  */
+    AE_NE,     /* Process received signal and terminate abnormally */
+    AE_JE,
     AE_SWT,
     AE_EE, 
     AE_EXP_ERR_END,
@@ -133,8 +133,7 @@ void aee_oops_free(struct aee_oops *oops);
 
 
 
-
-// QHQ RT Monitor    
+// QHQ RT Monitor begin
 #define AEEIOCTL_RT_MON_Kick _IOR('p', 0x0A, int)
 #define AE_WDT_DEVICE_PATH      "/dev/RT_Monitor"
 // QHQ RT Monitor    end
@@ -189,7 +188,7 @@ void aee_kernel_dal_api(const char *file, const int line, const char *msg);
 void aed_md_exception(const int *log, int log_size, const int *phy, int phy_size, const char* detail);
 void aed_combo_exception(const int *log, int log_size, const int *phy, int phy_size, const char* detail);
 
-void aee_kernel_wdt_kick_Powkey_api(const char *module, int msg);
+// void aee_kernel_wdt_kick_Powkey_api(const char *module, int msg);
 int  aee_kernel_wdt_kick_api(int kinterval);
 void aee_powerkey_notify_press(unsigned long pressed);
 int  aee_kernel_Powerkey_is_press(void);

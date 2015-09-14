@@ -1966,11 +1966,6 @@ static int prctl_set_vma(unsigned long opt, unsigned long start,
 	unsigned long len;
 	unsigned long end;
 
-#ifndef CONFIG_MT_ENG_BUILD
-	/* Do not do prctl_set_vma in !eng load */
-	return 0;
-#endif 
-
 	if (start & ~PAGE_MASK)
 		return -EINVAL;
 	len = (len_in + ~PAGE_MASK) & PAGE_MASK;
@@ -2108,6 +2103,9 @@ SYSCALL_DEFINE5(prctl, int, option, unsigned long, arg2, unsigned long, arg3,
 		case PR_GET_TIMERSLACK:
 			error = current->timer_slack_ns;
 			break;
+		case PR_GET_EFFECTIVE_TIMERSLACK:
+			error = task_get_effective_timer_slack(current);
+			break;
 		case PR_SET_TIMERSLACK:
 			if (arg2 <= 0)
 				current->timer_slack_ns =
@@ -2163,7 +2161,9 @@ SYSCALL_DEFINE5(prctl, int, option, unsigned long, arg2, unsigned long, arg3,
 					 (int __user *) arg2);
 			break;
 		case PR_SET_VMA:
+#ifdef CONFIG_MT_ENG_BUILD
 			error = prctl_set_vma(arg2, arg3, arg4, arg5);
+#endif 
 			break;
 		case PR_SET_TIMERSLACK_PID:
 			if (current->pid != (pid_t)arg3 &&
