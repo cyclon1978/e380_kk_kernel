@@ -645,6 +645,14 @@ static int tpd_gesture_handle2(struct touch_info *cinfo)
 #ifdef TP_GESTURE_SUPPORT
 		cinfo->xy[i] =  data[3+6*i+4];
 #endif
+
+	printk(" tpd_gesture_handle2 RAW cinfo->x[0] = %d, cinfo->y[0] = %d, cinfo->p[0] = %d, cinfo->xy[0]=%d\n", cinfo->x[0], cinfo->y[0], cinfo->p[0],cinfo->xy[0]);	
+
+		// remap directly
+		cinfo->y[i]= cinfo->y[i] * 2276 >> 11;
+
+	printk(" tpd_gesture_handle2 MAPPED cinfo->x[0] = %d, cinfo->y[0] = %d, cinfo->p[0] = %d, cinfo->xy[0]=%d\n", cinfo->x[0], cinfo->y[0], cinfo->p[0],cinfo->xy[0]);	
+
 	}
 	printk(" tpd_gesture_handle2 cinfo->x[0] = %d, cinfo->y[0] = %d, cinfo->p[0] = %d, cinfo->xy[0]=%d\n", cinfo->x[0], cinfo->y[0], cinfo->p[0],cinfo->xy[0]);	
 	//TPD_DEBUG(" cinfo->x[1] = %d, cinfo->y[1] = %d, cinfo->p[1] = %d\n", cinfo->x[1], cinfo->y[1], cinfo->p[1]);		
@@ -898,6 +906,31 @@ static int tpd_touchinfo(struct touch_info *cinfo, struct touch_info *pinfo)
 
 		 //cinfo->y[i]=  cinfo->y[i] * 800 >> 11;
 
+		if (i == 0) {
+		printk(" DATA high %d, low %d\n",  data[3+6*i+2], data[3+6*i+3]);
+
+		printk(" RAW cinfo->x[0] = %d, cinfo->y[0] = %d, cinfo->p[0] = %d, point_num=%d\n", cinfo->x[0], cinfo->y[0], cinfo->p[0],point_num);	
+		}
+
+		// remap directly
+		cinfo->y[i]= cinfo->y[i] * 2276 >> 11;
+		if (high_byte == 4) {
+			cinfo->y[i]= cinfo->y[i] - 20;
+		} 
+		if (high_byte == 3) {
+			cinfo->y[i]= cinfo->y[i] - 10;
+		} 
+		if (high_byte == 1) {
+			cinfo->y[i]= cinfo->y[i] + 10;
+		} 
+		if (high_byte == 0) {
+			cinfo->y[i]= cinfo->y[i] + 20;
+		} 
+
+		if (i == 0) {
+		printk(" CAL cinfo->x[0] = %d, cinfo->y[0] = %d, cinfo->p[0] = %d, point_num=%d\n", cinfo->x[0], cinfo->y[0], cinfo->p[0],point_num);	
+		}
+
 	}
 	printk(" cinfo->x[0] = %d, cinfo->y[0] = %d, cinfo->p[0] = %d, point_num=%d\n", cinfo->x[0], cinfo->y[0], cinfo->p[0],point_num);	
 	//TPD_DEBUG(" cinfo->x[1] = %d, cinfo->y[1] = %d, cinfo->p[1] = %d\n", cinfo->x[1], cinfo->y[1], cinfo->p[1]);		
@@ -1046,6 +1079,10 @@ void tpd_enable_hallsensor_dov(u8 enable)
 
 	return;
 }
+#else
+void tpd_enable_hallsensor_dov(u8 enable)
+{
+}
 #endif
  static int touch_event_handler(void *unused)
  { 
@@ -1134,7 +1171,7 @@ void tpd_enable_hallsensor_dov(u8 enable)
 			    for(i =0; i<point_num; i++)//only support 3 point
 			    {
 			        // tpd_down(cinfo.x[i], cinfo.y[i], cinfo.id[i]);
-				if(cinfo.y[i]<80) //button area
+				if(cinfo.y[i]<88) //button area, needs to be calibrated
 					tpd_down(cinfo.x[i], TPD_WARP_Y_BUTTONS(cinfo.y[i]), cinfo.id[i]);
 				else	//lcd area
 					tpd_down(TPD_WARP_X(cinfo.x[i]), TPD_WARP_Y(cinfo.y[i]), cinfo.id[i]);
@@ -1145,7 +1182,7 @@ void tpd_enable_hallsensor_dov(u8 enable)
 			else  
     		{
 			    //tpd_up(cinfo.x[0], cinfo.y[0]);
-				if(cinfo.y[0]<80) //button area
+				if(cinfo.y[0]<88) //button area
 					tpd_up(cinfo.x[0], TPD_WARP_Y_BUTTONS(cinfo.y[0]));
 				else	//lcd area
 					tpd_up(TPD_WARP_X(cinfo.x[0]), TPD_WARP_Y(cinfo.y[0]));			    
@@ -1240,7 +1277,7 @@ reset_proc:
  
 	msleep(100);
  #ifdef TP_GESTURE_SUPPORT
-	init_para(720,1280,50,0,0); 
+	init_para(720,1180,50,0,0); 
  #endif
 	if((i2c_smbus_read_i2c_block_data(i2c_client, 0x00, 1, &data))< 0)
 	{
@@ -1283,9 +1320,6 @@ reset_proc:
 	i2c_smbus_read_i2c_block_data(i2c_client, FT6x06_REG_FW_VER, 1, &data);
 	TPD_DMESG("[FTS] Firmware version = 0x%x\n", data);
 
-
-	
-	
 #ifdef FT5336_DOWNLOAD
 			FTS_I2c_Read_Function fun_i2c_read = ft5x0x_download_i2c_Read;
 			FTS_I2c_Write_Function fun_i2c_write = ft5x0x_download_i2c_Write;

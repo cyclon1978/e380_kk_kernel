@@ -44,9 +44,14 @@
 #define TPD_RES_X                		720
 #define TPD_RES_Y                		1180
 
+// remap 0..1259 -> 0..1399
+// (1259 * 2276)  >> 11 = 1399
+
+
 // y goes from 80 to 1259 -> 1180 is "resolution", original touchpad has 1280 resolution; 
 //#define TPD_WARP_Y(y) (((((1260-y)) * 1280) / 1180)-1)
-#define TPD_WARP_Y(y) (((((1259-y)) * 1280) / 1180))
+//#define TPD_WARP_Y(y) (((((1259-y)) * 1280) / 1180))
+#define TPD_WARP_Y(y) (1399-y)
 #define TPD_WARP_X(x) x 
 
 // y is always 1 for buttons but should be 1400
@@ -68,7 +73,7 @@
 
 /**************************step3: define func****************************************************/
 //#define TPD_PROXIMITY					// if need the PS funtion,enable this MACRO
-#define TPD_SUPPORT_DOOV					// if need the DOOV funtion,enable this MACRO
+// disabled for now #define TPD_SUPPORT_DOOV					// if need the DOOV funtion,enable this MACRO
 
 #define TPD_SYSFS_DEBUG
 #define FTS_CTL_IIC
