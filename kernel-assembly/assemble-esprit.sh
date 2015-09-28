@@ -17,7 +17,7 @@ cp ../out/Download/flash/kernel_simcom89_we_kk.bin ./boot.img-kernel.img
 #find ./system/lib/modules/ -type f -name '*.ko' | xargs -n 1 $TOOLCHAIN/arm-eabi-strip --strip-unneeded
 # fix permissions
 chmod 755 ./boot.img-ramdisk/ -R
-~/pvt/tools/mtk-tools/repack-MTK.pl -boot boot.img-kernel.img boot.img-ramdisk boot.img
+/home/esprit/tools/mtk-tools/repack-MTK.pl -boot boot.img-kernel.img boot.img-ramdisk boot.img
 cp ./testkernel_template.zip ./testkernel.zip
 zip -u -r ./testkernel.zip ./boot.img
 
