@@ -253,6 +253,7 @@ foreach $uAct (@acts)
       }
     }
     die "the target behind mm must be snod, not $snod" if (($snod ne "") && ($snod ne "snod"));
+    @arguments = ();
   }
   ($uAct = "new") if ($uAct eq "n");
   ($uAct = "clean") if ($uAct eq "c");

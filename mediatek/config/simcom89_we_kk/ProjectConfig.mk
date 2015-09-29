@@ -675,7 +675,7 @@ MTK_ENABLE_MD5=no
 MTK_ENABLE_S263_DECODER=no
 
 # enable video editor native and java apk
-MTK_ENABLE_VIDEO_EDITOR=yes
+MTK_ENABLE_VIDEO_EDITOR=no
 
 # A utility application on phone that provide convenience supporting method for RDs and customers to debug, test their project.
 MTK_ENGINEERMODE_APP=yes
@@ -1247,7 +1247,7 @@ MTK_TETHERINGIPV6_SUPPORT=yes
 MTK_TETHERING_EEM_SUPPORT=no
 
 # Whether to enable/disable ThemeManager feature, ThemeManager is a feature which maintains themes exist in device, and make it possible for user to change the current skin of device.
-MTK_THEMEMANAGER_APP=yes
+MTK_THEMEMANAGER_APP=no
 MTK_THERMAL_PA_VIA_ATCMD=no
 MTK_TINY_UTIL=no
 MTK_TLR_SUPPORT=no

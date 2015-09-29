@@ -265,6 +265,20 @@ FTABLE_SCENE_INDEP()
         ), 
     )
 #endif
+	//==========================================================================
+#if defined(ACER_C17)	//qiaoxiujun,denoise
+    //  Denoise
+    FTABLE_CONFIG_AS_TYPE_OF_DEFAULT_VALUES(
+        KEY_AS_(MtkCameraParameters::KEY_DENOISE), 
+        SCENE_AS_DEFAULT_SCENE(
+            ITEM_AS_DEFAULT_(MtkCameraParameters::OFF), 
+            ITEM_AS_VALUES_(
+                MtkCameraParameters::OFF, 
+                MtkCameraParameters::ON
+            )
+        ), 
+    )
+#endif
     //==========================================================================
 #if defined(ACER_C17)	//20140507,qiaoxiujun
     //  (Shot) Capture Mode
@@ -282,6 +296,7 @@ FTABLE_SCENE_INDEP()
                 MtkCameraParameters::CAPTURE_MODE_AUTO_PANORAMA_SHOT, 
 				MtkCameraParameters::CAPTURE_MODE_ASD_SHOT,
 				MtkCameraParameters::CAPTURE_MODE_MAV_SHOT,
+				MtkCameraParameters::CAPTURE_MODE_BRIGHT_MAGIC,	//qiaoxiujun,bright magic plus mode
             )
         ), 
     )

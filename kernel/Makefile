@@ -52,7 +52,7 @@ ifndef KBUILD_VERBOSE
 endif
 
 #TEMP/CUSTOMIZED override to enable verbose
-KBUILD_VERBOSE = 1
+### KBUILD_VERBOSE = 1
 
 # Call a source code checker (by default, "sparse") as part of the
 # C compilation.
